@@ -32,6 +32,9 @@ protected:
 	UPROPERTY(VisibleAnywhere, BlueprintReadOnly, Category = "GAS", meta = (AllowPrivateAccess = "true"))
 	TObjectPtr<class UAttributeHealthSet> HealthSet;
 
+	UPROPERTY(VisibleAnywhere, BlueprintReadOnly, Category = "GAS", meta = (AllowPrivateAccess = "true"))
+	TObjectPtr<class UAttributeDamageModifiersSet> DamageModifiersSet;
+
 	UPROPERTY(EditDefaultsOnly, BlueprintReadOnly, Category = "GAS", meta = (AllowPrivateAccess = "true"))
 	TSubclassOf<UGameplayAbility> AbilityOne;
 
@@ -52,10 +55,13 @@ public:
 
 	UFUNCTION(BlueprintCallable, Category = "GAS")
 	virtual void ActivateAbility(TSubclassOf<UGameplayAbility> AbilityClass);
+	UFUNCTION(BlueprintCallable, Category = "GAS")
+	virtual void ActivateAbilityWithTarget(TSubclassOf<UGameplayAbility> AbilityClass, AActor* InTargetActor);
 protected:
 	virtual UAbilitySystemComponent* GetAbilitySystemComponent() const override;
 
-	
+	UPROPERTY(BlueprintReadOnly, Category = "GAS")
+	AActor* TargetActor;
 
 	virtual void InitialiseAbilities();
 	virtual void InitialiseEffects();
@@ -70,4 +76,15 @@ protected:
 	UFUNCTION(BlueprintImplementableEvent, Category = "GAS")
 	void OnCurrentHealthChanged(float OldValue, float NewValue);
 
+	UFUNCTION(BlueprintCallable, Category = "GAS")
+	float GetCurrentHealth() const;
+
+	UFUNCTION(BlueprintCallable, Category = "GAS")
+	float GetMaxHealth() const;
+
+	UFUNCTION(BlueprintCallable, Category = "GAS")
+	float GetFlatDamageModifier() const;
+
+	UFUNCTION(BlueprintCallable, Category = "GAS")
+	float GetMultiDamageModifier() const;
 };

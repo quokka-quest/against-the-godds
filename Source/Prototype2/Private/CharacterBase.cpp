@@ -4,6 +4,7 @@
 #include "CharacterBase.h"
 #include "AbilitySystemComponent.h"
 #include "AttributeHealthSet.h"
+#include "AttributeDamageModifiersSet.h"
 
 // Sets default values
 ACharacterBase::ACharacterBase()
@@ -14,6 +15,7 @@ ACharacterBase::ACharacterBase()
 	// Create the GAS components
 	AbilitySystemComponent = CreateDefaultSubobject<UAbilitySystemComponent>(TEXT("AbilitySystemComponent"));
 	HealthSet = CreateDefaultSubobject<UAttributeHealthSet>(TEXT("HealthSet"));
+	DamageModifiersSet = CreateDefaultSubobject<UAttributeDamageModifiersSet>(TEXT("DamageModifiersSet"));
 }
 
 // Called when the game starts or when spawned
@@ -60,8 +62,17 @@ void ACharacterBase::ActivateAbility(const TSubclassOf<UGameplayAbility> Ability
 {
 	// Early exit case if the class is empty
 	if (!AbilityClass) return;
+	
+	AbilitySystemComponent->TryActivateAbilityByClass(AbilityClass, false);
+}
 
-	AbilitySystemComponent->TryActivateAbilityByClass(AbilityClass);
+void ACharacterBase::ActivateAbilityWithTarget(TSubclassOf<UGameplayAbility> AbilityClass, AActor* InTargetActor)
+{
+	// Early exit case if the class is empty
+	if (!AbilityClass) return;
+	
+	TargetActor = InTargetActor;
+	AbilitySystemComponent->TryActivateAbilityByClass(AbilityClass, false);
 }
 
 void ACharacterBase::InitialiseAbilities()
@@ -104,5 +115,25 @@ void ACharacterBase::OnDamageTakenChanged(AActor* DamageInstigator, AActor* Dama
 void ACharacterBase::OnCurrentHealthAttributeChanged(const FOnAttributeChangeData& Data)
 {
 	OnCurrentHealthChanged(Data.OldValue, Data.NewValue);
+}
+
+float ACharacterBase::GetCurrentHealth() const
+{
+	return(HealthSet->GetCurrentHealth());
+}
+
+float ACharacterBase::GetMaxHealth() const
+{
+	return(HealthSet->GetMaxHealth());
+}
+
+float ACharacterBase::GetFlatDamageModifier() const
+{
+	return(DamageModifiersSet->GetFlatModifier());
+}
+
+float ACharacterBase::GetMultiDamageModifier() const
+{
+	return(DamageModifiersSet->GetMultiModifier());
 }
 
