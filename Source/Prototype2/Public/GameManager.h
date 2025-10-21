@@ -17,13 +17,13 @@ struct FMapNodeData
 
 public:
 	UPROPERTY(EditAnywhere, BlueprintReadWrite, Category = "Map")
-	EMapRoomType RoomType;
+	EMapRoomCPP RoomType;
 
 	UPROPERTY(EditANywhere, BlueprintReadWrite, Category = "Map")
 	bool bVisited = false;
 
 	FMapNodeData()
-		: RoomType(EMapRoomType::Combat), bVisited(false)
+		: RoomType(EMapRoomCPP::Empty), bVisited(false)
 	{}
 };
 
@@ -35,11 +35,15 @@ class PROTOTYPE2_API UGameManager : public UGameInstance
 public:
 
 	UFUNCTION(BlueprintCallable, Category = "GameManager")
-	TArray<EMapRoomType> GenerateMap();
-	void ShuffleArray(TArray<EMapRoomType>& ArrayToShuffle);
+	TArray<FMapNodeData> GenerateMap();
+	void ShuffleArray(TArray<EMapRoomCPP>& ArrayToShuffle);
+	UFUNCTION(BlueprintCallable, Category = "GameManager")
+	TArray<FMapNodeData> GetMapNodes() const { return MapNodes; }
+	UFUNCTION(BlueprintCallable, Category = "GameManager")
+	int GetCurrentNodeIndex() const { return CurrentNodeIndex; }
 
 private:
-	TArray<EMapRoomType> AllRooms;
+	TArray<EMapRoomCPP> AllRooms;
 	TArray<FMapNodeData> MapNodes;
 	FMapNodeData MapDataStruct;
 	int TotalRooms = 10;

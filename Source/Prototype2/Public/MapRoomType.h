@@ -4,10 +4,11 @@
 #include "MapRoomType.generated.h"
 
 UENUM(BlueprintType)
-enum class EMapRoomType : uint8
+enum class EMapRoomCPP : uint8
 {
 	Combat UMETA(DisplayName = "Combat"),
 	Non_Combat UMETA(DisplayName = "Non-Combat"),
-	Rest UMETA(DisplayName = "Rest"),
-	Boss UMETA(DisplayName = "Boss")
+	Shop UMETA(DisplayName = "Shop"),
+	Boss UMETA(DisplayName = "Boss"),
+	Empty UMETA(DisplayName = "Empty")
 };

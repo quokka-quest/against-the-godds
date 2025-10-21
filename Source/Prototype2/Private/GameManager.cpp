@@ -3,30 +3,38 @@
 
 #include "GameManager.h"
 
-TArray<EMapRoomType> UGameManager::GenerateMap()
+TArray<FMapNodeData> UGameManager::GenerateMap()
 {
 	if(AllRooms.Num() == 0)
 	{
 		// Populate AllRooms with the required number of each room type
 		for(int i = 0; i < CombatCount; i++)
 		{
-			AllRooms.Add(EMapRoomType::Combat);
+			AllRooms.Add(EMapRoomCPP::Combat);
+			//UE_LOG(LogTemp, Warning, TEXT("Added Combat Room %d"), i);
 		}
 		for(int i = 0; i < NonCombatCount; i++)
 		{
-			AllRooms.Add(EMapRoomType::Non_Combat);
+			AllRooms.Add(EMapRoomCPP::Non_Combat);
+			//UE_LOG(LogTemp, Warning, TEXT("Added NonCombat Room %d"), i);
 		}
 		for(int i = 0; i < RestCount; i++)
 		{
-			AllRooms.Add(EMapRoomType::Rest);
+			AllRooms.Add(EMapRoomCPP::Shop);
+			//UE_LOG(LogTemp, Warning, TEXT("Added Shop Room %d"), i);
 		}
 
 		// Shuffle the rooms to randomize their order
 		ShuffleArray(AllRooms);
 
+		for (int i = 0; i < AllRooms.Num(); i++)
+		{
+			//UE_LOG(LogTemp, Warning, TEXT("Shuffled Room %d: %d"), i, (AllRooms[i]));
+		}
+
 		// Add the guaranteed Rest and Boss rooms at the end
-		AllRooms.Add(EMapRoomType::Rest);
-		AllRooms.Add(EMapRoomType::Boss);
+		AllRooms.Add(EMapRoomCPP::Shop);
+		AllRooms.Add(EMapRoomCPP::Boss);
 
 		for (int i = 0; i < AllRooms.Num(); i++)
 		{
@@ -34,17 +42,22 @@ TArray<EMapRoomType> UGameManager::GenerateMap()
 			MapNodes.Add(MapDataStruct);
 		}
 
+		for(int i = 0; i < MapNodes.Num(); i++)
+		{
+			UE_LOG(LogTemp, Warning, TEXT("Map Node %d: %d"), i, (int)MapNodes[i].RoomType);
+		}
+
 		// Set the first room as visited
 		MapNodes[0].bVisited = true;
-		return AllRooms;
+		return MapNodes;
 	}
 	else
 	{
-		return AllRooms;
+		return MapNodes;
 	}
 }
 
-void UGameManager::ShuffleArray(TArray<EMapRoomType>& ArrayToShuffle)
+void UGameManager::ShuffleArray(TArray<EMapRoomCPP>& ArrayToShuffle)
 {
 	int32 LastIndex = ArrayToShuffle.Num() - 1;
 	for (int32 i = 0; i <= LastIndex; i++)
