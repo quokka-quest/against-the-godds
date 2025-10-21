@@ -17,5 +17,5 @@ class PROTOTYPE2_API UGameplayAbilityBase : public UGameplayAbility
 
 public:
 	UFUNCTION(BlueprintCallable, Category = "Ability")
-	float CalculateDamageWithMods(float BaseDamage);
+	virtual float CalculateDamageWithMods(float BaseDamage);
 };
