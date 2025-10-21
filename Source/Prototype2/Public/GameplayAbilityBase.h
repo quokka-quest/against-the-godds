@@ -18,4 +18,7 @@ class PROTOTYPE2_API UGameplayAbilityBase : public UGameplayAbility
 public:
 	UFUNCTION(BlueprintCallable, Category = "Ability")
 	virtual float CalculateDamageWithMods(float BaseDamage);
+
+	UFUNCTION(BlueprintCallable, Category = "Ability")
+	virtual void RollDice();
 };

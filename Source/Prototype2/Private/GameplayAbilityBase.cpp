@@ -25,3 +25,7 @@ float UGameplayAbilityBase::CalculateDamageWithMods(float BaseDamage)
 
 	return NewDamage;
 }
+
+void UGameplayAbilityBase::RollDice()
+{
+}
