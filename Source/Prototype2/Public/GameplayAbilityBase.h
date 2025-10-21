@@ -6,6 +6,13 @@
 #include "Abilities/GameplayAbility.h"
 #include "GameplayAbilityBase.generated.h"
 
+UENUM()
+enum class ETargetType : uint8
+{
+	TT_Character UMETA(DisplayName = "Character"),
+	TT_Tile UMETA(DisplayName = "Tile")
+};
+
 /**
  * 
  */
@@ -21,4 +28,7 @@ public:
 
 	UFUNCTION(BlueprintCallable, Category = "Ability")
 	virtual void RollDice();
+
+	UPROPERTY(BlueprintReadOnly, Category = "Ability")
+	ETargetType TargetType;
 };
