@@ -57,6 +57,12 @@ public:
 	virtual void ActivateAbility(TSubclassOf<UGameplayAbility> AbilityClass);
 	UFUNCTION(BlueprintCallable, Category = "GAS")
 	virtual void ActivateAbilityWithTarget(TSubclassOf<UGameplayAbility> AbilityClass, AActor* InTargetActor);
+
+	UFUNCTION(BlueprintCallable, Category = "GAS")
+	float GetFlatDamageModifier() const;
+
+	UFUNCTION(BlueprintCallable, Category = "GAS")
+	float GetMultiDamageModifier() const;
 protected:
 	virtual UAbilitySystemComponent* GetAbilitySystemComponent() const override;
 
@@ -82,9 +88,5 @@ protected:
 	UFUNCTION(BlueprintCallable, Category = "GAS")
 	float GetMaxHealth() const;
 
-	UFUNCTION(BlueprintCallable, Category = "GAS")
-	float GetFlatDamageModifier() const;
-
-	UFUNCTION(BlueprintCallable, Category = "GAS")
-	float GetMultiDamageModifier() const;
+	
 };
