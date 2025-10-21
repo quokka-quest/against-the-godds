@@ -29,3 +29,16 @@ float UGameplayAbilityBase::CalculateDamageWithMods(float BaseDamage)
 void UGameplayAbilityBase::RollDice()
 {
 }
+
+TArray<AActor*> UGameplayAbilityBase::GetTargets() const
+{
+	const ACharacterBase* Owner = Cast<ACharacterBase>(GetOwningActorFromActorInfo());
+
+	if (!Owner)
+	{
+		UE_LOG(LogTemp, Warning, TEXT("UGameplayAbilityBase::GetTargets: Owner is null"));
+		return TArray<AActor*>();
+	}
+
+	return Owner->GetTargets();
+}

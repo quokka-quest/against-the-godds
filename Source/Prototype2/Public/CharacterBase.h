@@ -56,18 +56,20 @@ public:
 	UFUNCTION(BlueprintCallable, Category = "GAS")
 	virtual void ActivateAbility(TSubclassOf<UGameplayAbility> AbilityClass);
 	UFUNCTION(BlueprintCallable, Category = "GAS")
-	virtual void ActivateAbilityWithTarget(TSubclassOf<UGameplayAbility> AbilityClass, AActor* InTargetActor);
+	virtual void ActivateAbilityWithTargets(TSubclassOf<UGameplayAbility> AbilityClass, const TArray<AActor*> InTargetsActor);
 
 	UFUNCTION(BlueprintCallable, Category = "GAS")
 	float GetFlatDamageModifier() const;
 
 	UFUNCTION(BlueprintCallable, Category = "GAS")
 	float GetMultiDamageModifier() const;
+
+	TArray<AActor*> GetTargets() const;
 protected:
 	virtual UAbilitySystemComponent* GetAbilitySystemComponent() const override;
 
 	UPROPERTY(BlueprintReadOnly, Category = "GAS")
-	AActor* TargetActor;
+	TArray<AActor*> Targets;
 
 	virtual void InitialiseAbilities();
 	virtual void InitialiseEffects();

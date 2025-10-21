@@ -29,6 +29,9 @@ public:
 	UFUNCTION(BlueprintCallable, Category = "Ability")
 	virtual void RollDice();
 
+	UFUNCTION(BlueprintCallable, Category = "Ability")
+	TArray<AActor*> GetTargets() const;
+
 	UPROPERTY(BlueprintReadOnly, Category = "Ability")
 	ETargetType TargetType;
 };

@@ -66,12 +66,13 @@ void ACharacterBase::ActivateAbility(const TSubclassOf<UGameplayAbility> Ability
 	AbilitySystemComponent->TryActivateAbilityByClass(AbilityClass, false);
 }
 
-void ACharacterBase::ActivateAbilityWithTarget(TSubclassOf<UGameplayAbility> AbilityClass, AActor* InTargetActor)
+void ACharacterBase::ActivateAbilityWithTargets(TSubclassOf<UGameplayAbility> AbilityClass,
+	const TArray<AActor*> InTargetsActor)
 {
 	// Early exit case if the class is empty
 	if (!AbilityClass) return;
 	
-	TargetActor = InTargetActor;
+	Targets = InTargetsActor;
 	AbilitySystemComponent->TryActivateAbilityByClass(AbilityClass, false);
 }
 
@@ -135,5 +136,10 @@ float ACharacterBase::GetFlatDamageModifier() const
 float ACharacterBase::GetMultiDamageModifier() const
 {
 	return(DamageModifiersSet->GetMultiModifier());
+}
+
+TArray<AActor*> ACharacterBase::GetTargets() const
+{
+	return Targets;
 }
 
