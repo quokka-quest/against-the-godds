@@ -6,7 +6,7 @@
 
 float UGameplayAbilityBase::CalculateDamageWithMods(float BaseDamage)
 {
-	ACharacterBase* Owner = Cast<ACharacterBase>(GetOwningActorFromActorInfo());
+	const ACharacterBase* Owner = Cast<ACharacterBase>(GetOwningActorFromActorInfo());
 
 	if (!Owner)
 	{
