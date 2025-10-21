@@ -4,7 +4,7 @@
 #include "GameplayAbilityBase.h"
 #include "CharacterBase.h"
 
-float UGameplayAbilityBase::CalculateDamageWithMods(float BaseDamage)
+float UGameplayAbilityBase::CalculateDamageWithMods(const float BaseDamage)
 {
 	const ACharacterBase* Owner = Cast<ACharacterBase>(GetOwningActorFromActorInfo());
 
