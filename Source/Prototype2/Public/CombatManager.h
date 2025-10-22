@@ -17,6 +17,9 @@ class PROTOTYPE2_API ACombatManager : public AGameModeBase
 public:
 	virtual void BeginPlay() override;
 
+	UPROPERTY(EditAnywhere, BlueprintReadWrite, category = "Combat")
+	FName TurnEventQueueName;
+
 private:
 	void EnablePlayerLocationPicking();
 	
