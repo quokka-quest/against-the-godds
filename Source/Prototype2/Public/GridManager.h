@@ -1,0 +1,49 @@
+// Fill out your copyright notice in the Description page of Project Settings.
+
+#pragma once
+
+#include "CoreMinimal.h"
+#include "GameFramework/Actor.h"
+#include "GridCell.h"
+#include "GridManager.generated.h"
+
+UENUM(BlueprintType)
+enum EEditorGridDisplayType
+{
+	Default,
+	PlayerSpawnTile,
+	HazardTile,
+};
+
+UCLASS()
+class PROTOTYPE2_API AGridManager : public AActor
+{
+	GENERATED_BODY()
+	
+public:	
+	// Sets default values for this actor's properties
+	AGridManager();
+
+	UPROPERTY(EditAnywhere, BlueprintReadWrite, Category = "Grid")
+	TEnumAsByte<EEditorGridDisplayType> GridDisplayType;
+	
+	UPROPERTY(BlueprintReadWrite, Category = "Grid")
+	TMap<FIntVector, AGridCell*> GridCells;
+
+private:
+	UPROPERTY()
+	UMaterialInterface* DefaulMat = LoadObject<UMaterialInterface>(nullptr, TEXT("/Game/Materials/M_TileGreen.M_TileGreen"));
+	UPROPERTY()
+	UMaterialInterface* TargetMat = LoadObject<UMaterialInterface>(nullptr, TEXT("/Game/Materials/M_TargetTile.M_TargetTile"));
+
+protected:
+	// Called when the game starts or when spawned
+	virtual void BeginPlay() override;
+
+	virtual void OnConstruction(const FTransform& Transform) override;
+
+public:	
+	// Called every frame
+	virtual void Tick(float DeltaTime) override;
+
+};

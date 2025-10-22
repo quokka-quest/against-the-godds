@@ -17,6 +17,10 @@ public:
 
 	UPROPERTY(EditAnywhere, BlueprintReadWrite, Category = "Grid")
 	FIntVector GridCellCoord;
+	UPROPERTY(EditAnywhere, BlueprintReadWrite, Category = "Grid")
+	bool IsPlayerSpawnTile;
+	UPROPERTY(EditAnywhere, BlueprintReadWrite, Category = "Grid")
+	bool IsEnviroHazardTile;
 
 private:
 	float cellSize = 100.0f;
