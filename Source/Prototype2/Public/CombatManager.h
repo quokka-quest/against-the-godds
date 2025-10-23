@@ -10,6 +10,18 @@
 /**
  * 
  */
+
+USTRUCT(Blueprintable)
+struct FPlayerInitiativeData
+{
+	GENERATED_BODY()
+	
+	UPROPERTY(BlueprintReadWrite)
+	AEntityBase* Entity;
+	UPROPERTY(BlueprintReadWrite)
+	int Initiative;
+};
+
 UCLASS()
 class PROTOTYPE2_API ACombatManager : public AGameModeBase
 {
@@ -21,6 +33,15 @@ public:
 	UPROPERTY(EditAnywhere, BlueprintReadWrite, category = "Combat")
 	FName TurnEventQueueName;
 
+	UPROPERTY(BlueprintReadWrite, category = "Combat")
+	TArray<AEntityBase*> Combatants;
+
+	UPROPERTY(BlueprintReadWrite, category = "Combat")
+	TArray<FPlayerInitiativeData> DefaultTurnOrder;
+
+	UPROPERTY(BlueprintReadWrite, category = "Combat")
+	TArray<FPlayerInitiativeData> CurrentTurnOrder;
+	
 	void FinishPlayerLocationPicking(TArray<AGridCell*> &playerStartCells);
 
 private:
@@ -30,5 +51,9 @@ private:
 
 	UFUNCTION()
 	void InitialiseCombat();
+
+	void RollDiceForInitiative();
+
+	void EstablishTurnOrder();
 	
 };
