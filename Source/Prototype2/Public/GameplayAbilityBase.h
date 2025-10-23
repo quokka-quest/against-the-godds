@@ -27,10 +27,9 @@ public:
 	virtual float CalculateDamageWithMods(float BaseDamage);
 
 	UFUNCTION(BlueprintCallable, Category = "Ability")
-	virtual void RollDice();
+	virtual int RollDice();
 
-	UFUNCTION(BlueprintCallable, Category = "Ability")
-	TArray<AActor*> GetTargets() const;
+	
 
 	UPROPERTY(EditAnywhere, BlueprintReadWrite, Category = "Ability")
 	ETargetType TargetType;
