@@ -27,5 +27,8 @@ private:
 
 	UPROPERTY()
 	AGridManager* GridManager;
+
+	UFUNCTION()
+	void InitialiseCombat();
 	
 };

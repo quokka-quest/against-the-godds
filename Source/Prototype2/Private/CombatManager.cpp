@@ -25,5 +25,23 @@ void ACombatManager::FinishPlayerLocationPicking(TArray<AGridCell*> &playerStart
 		FTransform Transform = FTransform(Rot, Loc);
 		GetWorld()->SpawnActor<APlayerEntity>(APlayerEntity::StaticClass(), Transform);
 	}
+
+	InitialiseCombat();
 }
+
+void ACombatManager::InitialiseCombat()
+{
+	GridManager->ChangeAllTilesDisplay(EEditorGridDisplayType::Default);
+	
+	for (auto& Cell: GridManager->GridCells)
+	{
+		AGridCell* Value = Cell.Value;
+		if (Value->IsEnemySpawnTile)
+		{
+			FTransform form = Value->GetTransform();
+			GetWorld()->SpawnActor<AEnemyEntity>(Value->EnemyToSpawn, form);
+		}
+	}
+}
+
 
