@@ -4,6 +4,7 @@
 
 #include "CoreMinimal.h"
 #include "GameFramework/GameModeBase.h"
+#include "GridManager.h"
 #include "CombatManager.generated.h"
 
 /**
@@ -22,5 +23,8 @@ public:
 
 private:
 	void EnablePlayerLocationPicking();
+
+	UPROPERTY()
+	AGridManager* GridManager;
 	
 };

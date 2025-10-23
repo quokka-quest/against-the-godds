@@ -7,7 +7,15 @@
 #include "GameFramework/PlayerController.h"
 #include "GridCell.h"
 #include "TileHighlight.h"
+#include "GridManager.h"
 #include "PlayerCombatLevelPawn.generated.h"
+
+UENUM(BlueprintType)
+enum ETileSelectionType
+{
+	SpawnSelection,
+	Movement
+};
 
 UCLASS()
 class PROTOTYPE2_API APlayerCombatLevelPawn : public APawn
@@ -29,6 +37,9 @@ public:
 	// Called to bind functionality to input
 	virtual void SetupPlayerInputComponent(class UInputComponent* PlayerInputComponent) override;
 
+	UPROPERTY()
+	TEnumAsByte<ETileSelectionType> TileSelectionType;
+
 private:
 	UPROPERTY()
 	APlayerController* PlayerCon;
@@ -38,5 +49,16 @@ private:
 	
 	UPROPERTY()
 	AGridCell* HighlightedCell;
+
+	UPROPERTY()
+	TArray<AGridCell*> SelectedStartCells;
+
+	UPROPERTY()
+	AGridManager* GridManager;
+
+	UFUNCTION(BlueprintCallable)
+	void OnTileClick();
+
+	void TryAddTileToSpawnSelection();
 
 };

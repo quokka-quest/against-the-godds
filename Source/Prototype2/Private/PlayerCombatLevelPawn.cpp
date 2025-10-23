@@ -16,12 +16,17 @@ APlayerCombatLevelPawn::APlayerCombatLevelPawn()
 	PlayerCon = nullptr;
 	TileHighlight = nullptr;
 
+	TileSelectionType = ETileSelectionType::SpawnSelection;
+
 }
 
 // Called when the game starts or when spawned
 void APlayerCombatLevelPawn::BeginPlay()
 {
 	Super::BeginPlay();
+
+	GridManager = Cast<AGridManager>(UGameplayStatics::GetActorOfClass(GetWorld(), AGridManager::StaticClass()));
+	if (!GridManager) {UE_LOG(LogTemp, Error, TEXT("GridManager is NULL")) return;}
 
 	TileHighlight = Cast<ATileHighlight>(UGameplayStatics::GetActorOfClass(GetWorld(), ATileHighlight::StaticClass()));
 	if (!TileHighlight) {UE_LOG(LogTemp, Error, TEXT("TileHighlight is null")) return;}
@@ -48,7 +53,6 @@ void APlayerCombatLevelPawn::Tick(float DeltaTime)
 		return;
 	}
 	
-	UE_LOG(LogTemp, Error, TEXT("TileHighlight is valid"));
 	HighlightedCell = Cast<AGridCell>(Hit.GetActor());
 	TileHighlight->ToggleHighlight(true);
 	TileHighlight->MoveToPosition(HighlightedCell->GetActorLocation());
@@ -60,4 +64,36 @@ void APlayerCombatLevelPawn::SetupPlayerInputComponent(UInputComponent* PlayerIn
 	Super::SetupPlayerInputComponent(PlayerInputComponent);
 
 }
+
+void APlayerCombatLevelPawn::OnTileClick()
+{
+	if (!HighlightedCell) return;
+
+	if (TileSelectionType == ETileSelectionType::SpawnSelection) TryAddTileToSpawnSelection();
+	
+}
+
+void APlayerCombatLevelPawn::TryAddTileToSpawnSelection()
+{
+	int playerCount = 3;
+
+	// if the tile clicked is not a valid spawn tile then do nothing
+	if (!HighlightedCell->IsPlayerSpawnTile) return;
+
+	// if the tile clicked is already in the spawn array then remove it
+	if (SelectedStartCells.Contains(HighlightedCell))
+	{
+		SelectedStartCells.Remove(HighlightedCell);
+		GridManager->ChangeTilesMaterial(HighlightedCell, ETileMaterial::Highlighted);
+		return;
+	};
+
+	// if the spawn tile array is full then do nothing
+	if (SelectedStartCells.Num() >= playerCount) return;
+
+	// otherwise add the tile to the spawn tile array
+	SelectedStartCells.Add(HighlightedCell);
+	GridManager->ChangeTilesMaterial(HighlightedCell, ETileMaterial::Target);
+}
+
 

@@ -15,6 +15,14 @@ enum EEditorGridDisplayType
 	HazardTile,
 };
 
+UENUM(BlueprintType)
+enum ETileMaterial
+{
+	Base,
+	Target,
+	Highlighted
+};
+
 UCLASS()
 class PROTOTYPE2_API AGridManager : public AActor
 {
@@ -32,9 +40,13 @@ public:
 
 private:
 	UPROPERTY()
-	UMaterialInterface* DefaulMat = LoadObject<UMaterialInterface>(nullptr, TEXT("/Game/Materials/M_TileGreen.M_TileGreen"));
+	UMaterialInterface* DefaultMat = LoadObject<UMaterialInterface>(nullptr, TEXT("/Game/Materials/M_TileRed.M_TileRed"));
 	UPROPERTY()
 	UMaterialInterface* TargetMat = LoadObject<UMaterialInterface>(nullptr, TEXT("/Game/Materials/M_TargetTile.M_TargetTile"));
+	UPROPERTY()
+	UMaterialInterface* HighlightedMat = LoadObject<UMaterialInterface>(nullptr, TEXT("/Game/Materials/M_TileGreen.M_TileGreen"));
+
+	void InitialiseGridManagement();
 
 protected:
 	// Called when the game starts or when spawned
@@ -45,5 +57,11 @@ protected:
 public:	
 	// Called every frame
 	virtual void Tick(float DeltaTime) override;
+
+	UFUNCTION()
+	void ToggleTileVisibility(EEditorGridDisplayType DisplayType);
+
+	UFUNCTION()
+	void ChangeTilesMaterial(AGridCell* Tile, ETileMaterial Material);
 
 };
