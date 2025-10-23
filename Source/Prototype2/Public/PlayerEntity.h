@@ -16,6 +16,6 @@ class PROTOTYPE2_API APlayerEntity : public AEntityBase
 public:
 	APlayerEntity();
 
-private:
+protected:
 	virtual UStaticMesh* GetCharMesh() const { return LoadObject<UStaticMesh>(nullptr, TEXT("/Game/Art/Static_Meshes/PlayerCharacters/SM_Fighter.SM_Fighter")); }
 };

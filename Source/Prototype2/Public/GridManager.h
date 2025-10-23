@@ -13,6 +13,7 @@ enum EEditorGridDisplayType
 	Default,
 	PlayerSpawnTile,
 	HazardTile,
+	EnemySpawnTile
 };
 
 UENUM(BlueprintType)

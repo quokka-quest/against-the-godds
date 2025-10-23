@@ -76,12 +76,14 @@ void AGridManager::ChangeAllTilesDisplay(EEditorGridDisplayType DisplayType)
 		{
 			CellMesh->SetMaterial(0, HighlightedMat);
 		}
+		else if (DisplayType == EEditorGridDisplayType::EnemySpawnTile && value->IsEnemySpawnTile)
+		{
+			CellMesh->SetMaterial(0, HighlightedMat);
+		}
 		else
 		{
 			CellMesh->SetMaterial(0, DefaultMat);
 		}
-
-		//UE_LOG(LogTemp, Warning, TEXT("toggled a tiles display material"));
 	}
 }
 

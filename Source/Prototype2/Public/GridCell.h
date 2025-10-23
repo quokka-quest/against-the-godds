@@ -4,6 +4,7 @@
 
 #include "CoreMinimal.h"
 #include "GameFramework/Actor.h"
+#include "EnemyEntity.h"
 #include "GridCell.generated.h"
 
 UCLASS()
@@ -21,6 +22,10 @@ public:
 	bool IsPlayerSpawnTile;
 	UPROPERTY(EditAnywhere, BlueprintReadWrite, Category = "Grid")
 	bool IsEnviroHazardTile;
+	UPROPERTY(EditAnywhere, BlueprintReadWrite, Category = "Grid")
+	bool IsEnemySpawnTile;
+	UPROPERTY(EditAnywhere, BlueprintReadWrite, Category = "Grid")
+	TSubclassOf<AEnemyEntity> EnemyToSpawn;
 
 private:
 	float cellSize = 100.0f;
