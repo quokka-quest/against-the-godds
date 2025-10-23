@@ -24,7 +24,13 @@ public:
 	// Called every frame
 	virtual void Tick(float DeltaTime) override;
 
-	UPROPERTY(VisibleAnywhere, BlueprintReadWrite, Category = "Grid")
-	UStaticMeshComponent* HighlightMesh;
+	UFUNCTION()
+	void MoveToPosition(FVector TargetPos);
 
+	UFUNCTION(Blueprintable, BlueprintImplementableEvent)
+	void ToggleHighlight(bool IsVisible);
+
+private:
+	UPROPERTY()
+	FVector HeightOffset;
 };

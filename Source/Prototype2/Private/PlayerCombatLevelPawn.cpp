@@ -25,6 +25,7 @@ void APlayerCombatLevelPawn::BeginPlay()
 
 	TileHighlight = Cast<ATileHighlight>(UGameplayStatics::GetActorOfClass(GetWorld(), ATileHighlight::StaticClass()));
 	if (!TileHighlight) {UE_LOG(LogTemp, Error, TEXT("TileHighlight is null")) return;}
+	TileHighlight->SetActorLocation(FVector(0, 0, 0));
 	
 	PlayerCon = Cast<APlayerController>(GetController());
 	if (!PlayerCon) {UE_LOG(LogTemp, Error, TEXT("PlayerController is null")) return;}
@@ -39,10 +40,18 @@ void APlayerCombatLevelPawn::Tick(float DeltaTime)
 
 	FHitResult Hit;
 	PlayerCon->GetHitResultUnderCursorByChannel(ETraceTypeQuery::TraceTypeQuery1, true, Hit);
-	if (!Cast<AGridCell>(Hit.GetActor())) {return;}
 
+	if (!Cast<AGridCell>(Hit.GetActor()))
+	{
+		TileHighlight->ToggleHighlight(false);
+		HighlightedCell = nullptr;
+		return;
+	}
+	
+	UE_LOG(LogTemp, Error, TEXT("TileHighlight is valid"));
 	HighlightedCell = Cast<AGridCell>(Hit.GetActor());
-	TileHighlight->SetActorLocation(HighlightedCell->GetActorLocation());
+	TileHighlight->ToggleHighlight(true);
+	TileHighlight->MoveToPosition(HighlightedCell->GetActorLocation());
 }
 
 // Called to bind functionality to input
