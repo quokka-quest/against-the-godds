@@ -50,6 +50,9 @@ private:
 	int RestCount = TotalRooms / 5;
 	int CombatCount = (TotalRooms - RestCount) / 2;
 	int NonCombatCount = (TotalRooms - RestCount) / 2;
+
+protected:
+	UPROPERTY(BlueprintReadWrite, Category="Map")
 	int CurrentNodeIndex = 0;
 
 	
