@@ -59,7 +59,7 @@ public:
 	virtual void Tick(float DeltaTime) override;
 
 	UFUNCTION()
-	void ToggleTileVisibility(EEditorGridDisplayType DisplayType);
+	void ChangeAllTilesDisplay(EEditorGridDisplayType DisplayType);
 
 	UFUNCTION()
 	void ChangeTilesMaterial(AGridCell* Tile, ETileMaterial Material);

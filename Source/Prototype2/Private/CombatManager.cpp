@@ -2,19 +2,28 @@
 
 
 #include "CombatManager.h"
-
+#include "PlayerEntity.h"
 #include "Kismet/GameplayStatics.h"
 
+// Sets references to needed manager classes on start
 void ACombatManager::BeginPlay()
 {
 	Super::BeginPlay();
 
 	GridManager = Cast<AGridManager>(UGameplayStatics::GetActorOfClass(GetWorld(), AGridManager::StaticClass()));
-	
-	EnablePlayerLocationPicking();
+	GridManager->ChangeAllTilesDisplay(EEditorGridDisplayType::PlayerSpawnTile);
 }
 
-void ACombatManager::EnablePlayerLocationPicking()
+// Called when the player locks in there start location choices
+// spawns the player characters on the chosen tiles
+void ACombatManager::FinishPlayerLocationPicking(TArray<AGridCell*> &playerStartCells)
 {
-	GridManager->ToggleTileVisibility(EEditorGridDisplayType::PlayerSpawnTile);
+	for (AGridCell*& Cell : playerStartCells)
+	{
+		FVector Loc = Cell->GetActorLocation();
+		FRotator Rot = Cell->GetActorRotation();
+		FTransform Transform = FTransform(Rot, Loc);
+		GetWorld()->SpawnActor<APlayerEntity>(APlayerEntity::StaticClass(), Transform);
+	}
 }
+

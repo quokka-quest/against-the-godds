@@ -26,14 +26,17 @@ void APlayerCombatLevelPawn::BeginPlay()
 	Super::BeginPlay();
 
 	GridManager = Cast<AGridManager>(UGameplayStatics::GetActorOfClass(GetWorld(), AGridManager::StaticClass()));
-	if (!GridManager) {UE_LOG(LogTemp, Error, TEXT("GridManager is NULL")) return;}
+	if (!GridManager) UE_LOG(LogTemp, Error, TEXT("GridManager is NULL"))
+
+	CombatManager = Cast<ACombatManager>(UGameplayStatics::GetActorOfClass(GetWorld(), ACombatManager::StaticClass()));
+	if (!CombatManager) UE_LOG(LogTemp, Error, TEXT("CombatManager is NULL"))
 
 	TileHighlight = Cast<ATileHighlight>(UGameplayStatics::GetActorOfClass(GetWorld(), ATileHighlight::StaticClass()));
-	if (!TileHighlight) {UE_LOG(LogTemp, Error, TEXT("TileHighlight is null")) return;}
+	if (!TileHighlight) UE_LOG(LogTemp, Error, TEXT("TileHighlight is null"))
 	TileHighlight->SetActorLocation(FVector(0, 0, 0));
 	
 	PlayerCon = Cast<APlayerController>(GetController());
-	if (!PlayerCon) {UE_LOG(LogTemp, Error, TEXT("PlayerController is null")) return;}
+	if (!PlayerCon) UE_LOG(LogTemp, Error, TEXT("PlayerController is null"))
 
 	PlayerCon->bShowMouseCursor = true;
 }
@@ -95,5 +98,15 @@ void APlayerCombatLevelPawn::TryAddTileToSpawnSelection()
 	SelectedStartCells.Add(HighlightedCell);
 	GridManager->ChangeTilesMaterial(HighlightedCell, ETileMaterial::Target);
 }
+
+bool APlayerCombatLevelPawn::AttemptToFinishPlayerStartPlacement()
+{
+	int playerCount = 3;
+	if (SelectedStartCells.Num() != playerCount) return false;
+
+	CombatManager->FinishPlayerLocationPicking(SelectedStartCells);
+	return true;
+}
+
 
 

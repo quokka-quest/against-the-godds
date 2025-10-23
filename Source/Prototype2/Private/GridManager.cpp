@@ -34,7 +34,7 @@ void AGridManager::OnConstruction(const FTransform& Transform)
 	Super::OnConstruction(Transform);
 
 	InitialiseGridManagement();
-	ToggleTileVisibility(GridDisplayType);
+	ChangeAllTilesDisplay(GridDisplayType);
 }
 
 void AGridManager::InitialiseGridManagement()
@@ -58,7 +58,7 @@ void AGridManager::InitialiseGridManagement()
 }
 
 
-void AGridManager::ToggleTileVisibility(EEditorGridDisplayType DisplayType)
+void AGridManager::ChangeAllTilesDisplay(EEditorGridDisplayType DisplayType)
 {
 	for (auto& Cell : GridCells)
 	{

@@ -21,8 +21,9 @@ public:
 	UPROPERTY(EditAnywhere, BlueprintReadWrite, category = "Combat")
 	FName TurnEventQueueName;
 
+	void FinishPlayerLocationPicking(TArray<AGridCell*> &playerStartCells);
+
 private:
-	void EnablePlayerLocationPicking();
 
 	UPROPERTY()
 	AGridManager* GridManager;

@@ -8,6 +8,7 @@
 #include "GridCell.h"
 #include "TileHighlight.h"
 #include "GridManager.h"
+#include "CombatManager.h"
 #include "PlayerCombatLevelPawn.generated.h"
 
 UENUM(BlueprintType)
@@ -56,9 +57,15 @@ private:
 	UPROPERTY()
 	AGridManager* GridManager;
 
+	UPROPERTY()
+	ACombatManager* CombatManager;
+
 	UFUNCTION(BlueprintCallable)
 	void OnTileClick();
 
 	void TryAddTileToSpawnSelection();
+
+	UFUNCTION(BlueprintCallable)
+	bool AttemptToFinishPlayerStartPlacement();
 
 };
