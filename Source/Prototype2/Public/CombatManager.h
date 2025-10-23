@@ -11,7 +11,7 @@
  * 
  */
 
-USTRUCT(Blueprintable)
+USTRUCT(BlueprintType)
 struct FPlayerInitiativeData
 {
 	GENERATED_BODY()
@@ -44,6 +44,9 @@ public:
 	
 	void FinishPlayerLocationPicking(TArray<AGridCell*> &playerStartCells);
 
+	UFUNCTION(BlueprintImplementableEvent)
+	void EnableCombatUI();
+
 private:
 
 	UPROPERTY()
@@ -54,6 +57,8 @@ private:
 
 	void RollDiceForInitiative();
 
-	void EstablishTurnOrder();
+	void SortTurnOrderArray();
+
+	void SpawnEnemies();
 	
 };

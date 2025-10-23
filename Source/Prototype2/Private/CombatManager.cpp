@@ -34,6 +34,15 @@ void ACombatManager::InitialiseCombat()
 {
 	GridManager->ChangeAllTilesDisplay(EEditorGridDisplayType::Default);
 	
+	SpawnEnemies();
+	RollDiceForInitiative();
+	SortTurnOrderArray();
+	EnableCombatUI();
+}
+
+// spawns enemies on the relevant tiles and populates the turn order array
+void ACombatManager::SpawnEnemies()
+{
 	for (auto& Cell: GridManager->GridCells)
 	{
 		AGridCell* Value = Cell.Value;
@@ -53,9 +62,8 @@ void ACombatManager::InitialiseCombat()
 		Data.Initiative = 0;
 		DefaultTurnOrder.Add(Data);
 	}
-
-	RollDiceForInitiative();
 }
+
 
 void ACombatManager::RollDiceForInitiative()
 {
@@ -63,12 +71,10 @@ void ACombatManager::RollDiceForInitiative()
 	{
 		DefaultTurnOrder[i].Initiative = FMath::RandRange(1, 20);
 	}
-
-	EstablishTurnOrder();
 }
 
 // a simple bubble sort for sorting the turn order
-void ACombatManager::EstablishTurnOrder()
+void ACombatManager::SortTurnOrderArray()
 {
 	bool Swapped = false;
 
@@ -86,10 +92,7 @@ void ACombatManager::EstablishTurnOrder()
 		if (!Swapped) break;
 	}
 
-	for (int i = 0; i < DefaultTurnOrder.Num(); i++)
-	{
-		UE_LOG(LogTemp, Warning, TEXT("Entity: %s, Init: %d"), *DefaultTurnOrder[i].Entity->GetName(), DefaultTurnOrder[i].Initiative);
-	}
+	CurrentTurnOrder = DefaultTurnOrder;
 }
 
 
