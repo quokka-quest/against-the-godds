@@ -40,5 +40,37 @@ TArray<AActor*> UGameplayAbilityBase::GetTargets() const
 		return TArray<AActor*>();
 	}
 
+	TArray<AActor*> NewTargets = Owner->GetTargets();
+	
+	for (AActor* NewTarget : NewTargets)
+	{
+		if (!NewTarget)
+		{
+			UE_LOG(LogTemp, Warning, TEXT("UGameplayAbilityBase::GetTargets: One of the targets is null"));
+			return TArray<AActor*>();
+		}
+
+		if (NewTarget->IsA(ACharacterBase::StaticClass()))
+		{
+			if (TargetType != ETargetType::TT_Character)
+			{
+				UE_LOG(LogTemp, Warning, TEXT("UGameplayAbilityBase::GetTargets: TargetType mismatch, expected Tile but got Character"));
+				return TArray<AActor*>();
+			}
+		}
+		// elif (NewTarget->IsA(ATile::StaticClass()))
+		// {
+		// 	if (TargetType != ETargetType::TT_Tile)
+		// 	{
+		// 		UE_LOG(LogTemp, Warning, TEXT("UGameplayAbilityBase::GetTargets: TargetType mismatch, expected Character but got Tile"));
+		// 		return TArray<AActor*>();
+		// 	}
+		// }
+		else
+		{
+			return TArray<AActor*>();
+		}
+	}
+
 	return Owner->GetTargets();
 }

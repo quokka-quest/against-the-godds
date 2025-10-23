@@ -32,6 +32,6 @@ public:
 	UFUNCTION(BlueprintCallable, Category = "Ability")
 	TArray<AActor*> GetTargets() const;
 
-	UPROPERTY(BlueprintReadOnly, Category = "Ability")
+	UPROPERTY(EditAnywhere, BlueprintReadWrite, Category = "Ability")
 	ETargetType TargetType;
 };
