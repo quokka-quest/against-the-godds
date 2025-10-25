@@ -45,20 +45,29 @@ public:
 	void FinishPlayerLocationPicking(TArray<AGridCell*> &playerStartCells);
 
 	UFUNCTION(BlueprintImplementableEvent)
-	void EnableCombatUI();
+	void OnPlayerSpawnLocsPicked();
 
-private:
-
-	UPROPERTY()
+protected:
+	UPROPERTY(BlueprintReadWrite)
 	AGridManager* GridManager;
 
-	UFUNCTION()
-	void InitialiseCombat();
+	UPROPERTY(BlueprintReadWrite)
+	int CurrentCombatantTurnIndex;
 
+	UFUNCTION(BlueprintCallable)
 	void RollDiceForInitiative();
 
 	void SortTurnOrderArray();
 
+	UFUNCTION(BlueprintCallable)
 	void SpawnEnemies();
+
+	UFUNCTION(BlueprintCallable)
+	void StartCurrentTurn();
+
+	UFUNCTION(BlueprintCallable)
+	void EndCurrentTurn();
+
+	void IncrementTurnIndex();
 	
 };

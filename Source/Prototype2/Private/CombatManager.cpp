@@ -12,6 +12,8 @@ void ACombatManager::BeginPlay()
 
 	GridManager = Cast<AGridManager>(UGameplayStatics::GetActorOfClass(GetWorld(), AGridManager::StaticClass()));
 	GridManager->ChangeAllTilesDisplay(EEditorGridDisplayType::PlayerSpawnTile);
+
+	CurrentCombatantTurnIndex = 0;
 }
 
 // Called when the player locks in there start location choices
@@ -27,17 +29,7 @@ void ACombatManager::FinishPlayerLocationPicking(TArray<AGridCell*> &playerStart
 		Combatants.Add(player);
 	}
 
-	InitialiseCombat();
-}
-
-void ACombatManager::InitialiseCombat()
-{
-	GridManager->ChangeAllTilesDisplay(EEditorGridDisplayType::Default);
-	
-	SpawnEnemies();
-	RollDiceForInitiative();
-	SortTurnOrderArray();
-	EnableCombatUI();
+	OnPlayerSpawnLocsPicked();
 }
 
 // spawns enemies on the relevant tiles and populates the turn order array
@@ -64,16 +56,18 @@ void ACombatManager::SpawnEnemies()
 	}
 }
 
-
+// Sets random initiative values for all combatants then sorts the array
 void ACombatManager::RollDiceForInitiative()
 {
 	for (int i = 0; i < DefaultTurnOrder.Num(); i++)
 	{
 		DefaultTurnOrder[i].Initiative = FMath::RandRange(1, 20);
 	}
+
+	SortTurnOrderArray();
 }
 
-// a simple bubble sort for sorting the turn order
+// a simple bubble sort for sorting the turn order array
 void ACombatManager::SortTurnOrderArray()
 {
 	bool Swapped = false;
@@ -93,6 +87,33 @@ void ACombatManager::SortTurnOrderArray()
 	}
 
 	CurrentTurnOrder = DefaultTurnOrder;
+}
+
+void ACombatManager::StartCurrentTurn()
+{
+	AEntityBase* Combatant = CurrentTurnOrder[CurrentCombatantTurnIndex].Entity;
+	AEnemyEntity* EnemyRef = Cast<AEnemyEntity>(Combatant);
+	APlayerEntity* PlayerRef = Cast<APlayerEntity>(Combatant);
+
+	if (EnemyRef)
+	{
+		UE_LOG(LogTemp, Display, TEXT("Starting Turn Order for enemy"));
+	}
+	if (PlayerRef)
+	{
+		UE_LOG(LogTemp, Display, TEXT("Starting Turn Order for player"));
+	}
+}
+
+void ACombatManager::EndCurrentTurn()
+{
+	IncrementTurnIndex();
+}
+
+void ACombatManager::IncrementTurnIndex()
+{
+	CurrentCombatantTurnIndex += 1;
+	CurrentCombatantTurnIndex %= CurrentTurnOrder.Num();
 }
 
 
