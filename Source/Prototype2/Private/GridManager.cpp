@@ -9,7 +9,6 @@ AGridManager::AGridManager()
 {
  	// Set this actor to call Tick() every frame.  You can turn this off to improve performance if you don't need it.
 	PrimaryActorTick.bCanEverTick = true;
-
 }
 
 // Called when the game starts or when spawned
@@ -19,13 +18,6 @@ void AGridManager::BeginPlay()
 
 	InitialiseGridManagement();
 	
-}
-
-// Called every frame
-void AGridManager::Tick(float DeltaTime)
-{
-	Super::Tick(DeltaTime);
-
 }
 
 // called in the editor when variables are changed. Useful for displaying the right information
@@ -92,6 +84,41 @@ void AGridManager::ChangeTilesMaterial(AGridCell* Tile, ETileMaterial Material)
 	UStaticMeshComponent* CellMesh = Tile->FindComponentByClass<UStaticMeshComponent>();
 	CellMesh->SetMaterial(0, (Material == ETileMaterial::Target)? TargetMat : (Material == ETileMaterial::Highlighted)? HighlightedMat : DefaultMat);
 }
+
+void AGridManager::DisplayWalkableTiles(FIntVector CurrentCellCoord, int AvailableMovement)
+{
+	AvailableMovement--;
+	AGridCell* CurrentCell = GridCells[CurrentCellCoord];
+	
+	for (int i = 0; i < NeighbourOffsets.Num(); i++)
+	{
+		FIntVector neightbourCell = CurrentCell->GridCellCoord + NeighbourOffsets[i];
+		if (!GridCells.Contains(neightbourCell)) continue;
+
+		AGridCell* NewCell = GridCells[neightbourCell];
+		NewCell->QueryIfTileIsWalkable(CurrentCell);
+
+		if (NewCell->isWalkable)
+		{
+			NewCell->FindComponentByClass<UStaticMeshComponent>()->SetMaterial(0, HighlightedMat);
+		}
+
+		if (AvailableMovement > 0)
+		{
+			DisplayWalkableTiles(neightbourCell, AvailableMovement);
+		}
+	}
+}
+
+void AGridManager::ResetWalkableTiles()
+{
+	for (auto& Cell : GridCells)
+	{
+		Cell.Value->isWalkable = false;
+	}
+}
+
+
 
 
 

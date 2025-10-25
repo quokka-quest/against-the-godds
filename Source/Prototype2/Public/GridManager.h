@@ -49,20 +49,39 @@ private:
 
 	void InitialiseGridManagement();
 
+	TArray<FIntVector> NeighbourOffsets = {
+		FIntVector(1,0,0),
+		FIntVector(-1,0,0),
+		FIntVector(1,0,1),
+		FIntVector(1,0,-1),
+		FIntVector(-1,0,1),
+		FIntVector(-1,0,-1),
+		FIntVector(0,1,0),
+		FIntVector(0,-1,0),
+		FIntVector(0,1,1),
+		FIntVector(0,1,-1),
+		FIntVector(0,-1,1),
+		FIntVector(0,-1,-1)
+	};
+
 protected:
 	// Called when the game starts or when spawned
 	virtual void BeginPlay() override;
 
 	virtual void OnConstruction(const FTransform& Transform) override;
 
-public:	
-	// Called every frame
-	virtual void Tick(float DeltaTime) override;
+public:
 
 	UFUNCTION(BlueprintCallable)
 	void ChangeAllTilesDisplay(EEditorGridDisplayType DisplayType);
 
 	UFUNCTION()
 	void ChangeTilesMaterial(AGridCell* Tile, ETileMaterial Material);
+
+	UFUNCTION(BlueprintCallable)
+	void DisplayWalkableTiles(FIntVector CurrentCellCoord, int AvailableMovement);
+
+	UFUNCTION(BlueprintCallable)
+	void ResetWalkableTiles();
 
 };

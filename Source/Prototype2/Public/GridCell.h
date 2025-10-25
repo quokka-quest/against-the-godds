@@ -16,6 +16,9 @@ public:
 	// Sets default values for this actor's properties
 	AGridCell();
 
+	UFUNCTION(BlueprintCallable)
+	void QueryIfTileIsWalkable(AGridCell* FromCell);
+
 	UPROPERTY(EditAnywhere, BlueprintReadWrite, Category = "Grid")
 	FIntVector GridCellCoord;
 	UPROPERTY(EditAnywhere, BlueprintReadWrite, Category = "Grid")
@@ -27,18 +30,18 @@ public:
 	UPROPERTY(EditAnywhere, BlueprintReadWrite, Category = "Grid")
 	TSubclassOf<AEnemyEntity> EnemyToSpawn;
 
+	UPROPERTY(BlueprintReadWrite, Category = "Grid")
+	bool IsOccupied;
+	UPROPERTY(BlueprintReadWrite, Category = "Grid")
+	AEntityBase* OccupyingEntity;
+	UPROPERTY(BlueprintReadWrite, Category = "Grid")
+	bool isWalkable;
+
 private:
 	float cellSize = 100.0f;
 	float cellHeight = 50.0f;
 
 protected:
-	// Called when the game starts or when spawned
-	virtual void BeginPlay() override;
 
 	virtual void OnConstruction(const FTransform& Transform) override;
-
-public:	
-	// Called every frame
-	virtual void Tick(float DeltaTime) override;
-
 };

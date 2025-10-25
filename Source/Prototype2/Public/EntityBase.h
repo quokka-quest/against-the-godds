@@ -24,6 +24,15 @@ public:
 	UFUNCTION(BlueprintImplementableEvent, BlueprintCallable)
 	void OnTurnEnd();
 
+	UPROPERTY(BlueprintReadWrite, Category="PlayerInfo")
+	FIntVector PositionCoord;
+
+	UPROPERTY(EditAnywhere, BlueprintReadWrite, Category="PlayerInfo")
+	int MaxMovement;
+
+	UPROPERTY(BlueprintReadWrite, Category="PlayerInfo")
+	int AvailableMovement;
+
 protected:
 	UPROPERTY()
 	UStaticMeshComponent* BaseplateMesh;

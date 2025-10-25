@@ -15,7 +15,8 @@ UENUM(BlueprintType)
 enum ETileSelectionType
 {
 	SpawnSelection,
-	Movement
+	Movement,
+	None
 };
 
 UCLASS()
@@ -38,7 +39,7 @@ public:
 	// Called to bind functionality to input
 	virtual void SetupPlayerInputComponent(class UInputComponent* PlayerInputComponent) override;
 
-	UPROPERTY()
+	UPROPERTY(BlueprintReadWrite)
 	TEnumAsByte<ETileSelectionType> TileSelectionType;
 
 	UFUNCTION(BlueprintImplementableEvent, BlueprintCallable)

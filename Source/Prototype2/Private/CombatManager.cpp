@@ -30,6 +30,8 @@ void ACombatManager::FinishPlayerLocationPicking(TArray<AGridCell*> &playerStart
 		FTransform Transform = FTransform(Rot, Loc);
 		AEntityBase* player = GetWorld()->SpawnActor<AEntityBase>(PlayerClass, Transform);
 		Combatants.Add(player);
+		player->PositionCoord = Cell->GridCellCoord;
+		Cell->IsOccupied = true;
 	}
 
 	OnPlayerSpawnLocsPicked();
@@ -46,6 +48,8 @@ void ACombatManager::SpawnEnemies()
 			FTransform form = Value->GetTransform();
 			AEnemyEntity* enemy = GetWorld()->SpawnActor<AEnemyEntity>(Value->EnemyToSpawn, form);
 			Combatants.Add(enemy);
+			enemy->PositionCoord = Value->GridCellCoord;
+			Value->IsOccupied = true;
 		}
 	}
 
@@ -98,6 +102,8 @@ void ACombatManager::StartCurrentTurn()
 	AEnemyEntity* EnemyRef = Cast<AEnemyEntity>(CurrentTurnCombatant);
 	APlayerEntity* PlayerRef = Cast<APlayerEntity>(CurrentTurnCombatant);
 
+	CurrentTurnCombatant->AvailableMovement = CurrentTurnCombatant->MaxMovement;
+	
 	CurrentTurnCombatant->SetupTurnStart();
 
 	// for additional Enemy specific logic
@@ -118,6 +124,8 @@ void ACombatManager::EndCurrentTurn()
 {
 	AEnemyEntity* EnemyRef = Cast<AEnemyEntity>(CurrentTurnCombatant);
 	APlayerEntity* PlayerRef = Cast<APlayerEntity>(CurrentTurnCombatant);
+
+	GridManager->ChangeAllTilesDisplay(EEditorGridDisplayType::Default);
 	
 	// for additional Enemy specific logic
 	if (EnemyRef)
