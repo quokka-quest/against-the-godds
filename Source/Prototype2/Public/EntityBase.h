@@ -21,6 +21,9 @@ public:
 	UFUNCTION(BlueprintImplementableEvent, BlueprintCallable)
 	void SetupTurnStart();
 
+	UFUNCTION(BlueprintImplementableEvent, BlueprintCallable)
+	void OnTurnEnd();
+
 protected:
 	UPROPERTY()
 	UStaticMeshComponent* BaseplateMesh;

@@ -133,6 +133,7 @@ void ACombatManager::EndCurrentTurn()
 	}
 	
 	IncrementTurnIndex();
+	StartCurrentTurn();
 }
 
 void ACombatManager::IncrementTurnIndex()
