@@ -18,4 +18,3 @@ AEntityBase::AEntityBase()
 	BaseplateMesh->SetCollisionEnabled(ECollisionEnabled::NoCollision);
 }
 
-

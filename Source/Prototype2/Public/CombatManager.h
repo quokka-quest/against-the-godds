@@ -5,6 +5,7 @@
 #include "CoreMinimal.h"
 #include "GameFramework/GameModeBase.h"
 #include "GridManager.h"
+#include "PlayerEntity.h"
 #include "CombatManager.generated.h"
 
 /**
@@ -41,6 +42,9 @@ public:
 
 	UPROPERTY(BlueprintReadWrite, category = "Combat")
 	TArray<FPlayerInitiativeData> CurrentTurnOrder;
+
+	UPROPERTY(BlueprintReadWrite, category = "Combat")
+	AEntityBase* CurrentTurnCombatant;
 	
 	void FinishPlayerLocationPicking(TArray<AGridCell*> &playerStartCells);
 
@@ -53,6 +57,9 @@ protected:
 
 	UPROPERTY(BlueprintReadWrite)
 	int CurrentCombatantTurnIndex;
+
+	UPROPERTY(BlueprintReadWrite, EditAnywhere, category = "Combat")
+	TSubclassOf<APlayerEntity> PlayerClass;
 
 	UFUNCTION(BlueprintCallable)
 	void RollDiceForInitiative();

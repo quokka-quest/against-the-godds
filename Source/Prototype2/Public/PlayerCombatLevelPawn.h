@@ -41,6 +41,9 @@ public:
 	UPROPERTY()
 	TEnumAsByte<ETileSelectionType> TileSelectionType;
 
+	UFUNCTION(BlueprintImplementableEvent, BlueprintCallable)
+	void ToggleTurnInputMapping(bool EnableInputs);
+
 private:
 	UPROPERTY()
 	APlayerController* PlayerCon;

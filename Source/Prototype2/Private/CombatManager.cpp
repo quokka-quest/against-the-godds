@@ -2,8 +2,11 @@
 
 
 #include "CombatManager.h"
+
+#include "PlayerCombatLevelPawn.h"
 #include "PlayerEntity.h"
 #include "Kismet/GameplayStatics.h"
+
 
 // Sets references to needed manager classes on start
 void ACombatManager::BeginPlay()
@@ -25,7 +28,7 @@ void ACombatManager::FinishPlayerLocationPicking(TArray<AGridCell*> &playerStart
 		FVector Loc = Cell->GetActorLocation();
 		FRotator Rot = Cell->GetActorRotation();
 		FTransform Transform = FTransform(Rot, Loc);
-		APlayerEntity* player = GetWorld()->SpawnActor<APlayerEntity>(APlayerEntity::StaticClass(), Transform);
+		AEntityBase* player = GetWorld()->SpawnActor<AEntityBase>(PlayerClass, Transform);
 		Combatants.Add(player);
 	}
 
@@ -91,22 +94,44 @@ void ACombatManager::SortTurnOrderArray()
 
 void ACombatManager::StartCurrentTurn()
 {
-	AEntityBase* Combatant = CurrentTurnOrder[CurrentCombatantTurnIndex].Entity;
-	AEnemyEntity* EnemyRef = Cast<AEnemyEntity>(Combatant);
-	APlayerEntity* PlayerRef = Cast<APlayerEntity>(Combatant);
+	CurrentTurnCombatant = CurrentTurnOrder[CurrentCombatantTurnIndex].Entity;
+	AEnemyEntity* EnemyRef = Cast<AEnemyEntity>(CurrentTurnCombatant);
+	APlayerEntity* PlayerRef = Cast<APlayerEntity>(CurrentTurnCombatant);
 
+	CurrentTurnCombatant->SetupTurnStart();
+
+	// for additional Enemy specific logic
 	if (EnemyRef)
 	{
-		UE_LOG(LogTemp, Display, TEXT("Starting Turn Order for enemy"));
+		
 	}
+	// for additional player specific logic
 	if (PlayerRef)
 	{
-		UE_LOG(LogTemp, Display, TEXT("Starting Turn Order for player"));
+		APlayerCombatLevelPawn* Player = Cast<APlayerCombatLevelPawn>(UGameplayStatics::GetActorOfClass(GetWorld(), APlayerCombatLevelPawn::StaticClass()));
+		if (!Player) {UE_LOG(LogTemp, Error, TEXT("Player pawn doesn't exist")) return;}
+		Player->ToggleTurnInputMapping(true);
 	}
 }
 
 void ACombatManager::EndCurrentTurn()
 {
+	AEnemyEntity* EnemyRef = Cast<AEnemyEntity>(CurrentTurnCombatant);
+	APlayerEntity* PlayerRef = Cast<APlayerEntity>(CurrentTurnCombatant);
+	
+	// for additional Enemy specific logic
+	if (EnemyRef)
+	{
+		
+	}
+	// for additional player specific logic
+	if (PlayerRef)
+	{
+		APlayerCombatLevelPawn* Player = Cast<APlayerCombatLevelPawn>(UGameplayStatics::GetActorOfClass(GetWorld(), APlayerCombatLevelPawn::StaticClass()));
+		if (!Player) {UE_LOG(LogTemp, Error, TEXT("Player pawn doesn't exist")) return;}
+		Player->ToggleTurnInputMapping(false);
+	}
+	
 	IncrementTurnIndex();
 }
 

@@ -18,6 +18,9 @@ class PROTOTYPE2_API AEntityBase : public ACharacterBase
 public:
 	AEntityBase();
 
+	UFUNCTION(BlueprintImplementableEvent, BlueprintCallable)
+	void SetupTurnStart();
+
 protected:
 	UPROPERTY()
 	UStaticMeshComponent* BaseplateMesh;
