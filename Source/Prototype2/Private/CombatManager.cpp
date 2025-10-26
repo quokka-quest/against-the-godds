@@ -141,7 +141,7 @@ void ACombatManager::EndCurrentTurn()
 	}
 	
 	IncrementTurnIndex();
-	StartCurrentTurn();
+	BlueprintEndTurnEvents();
 }
 
 void ACombatManager::IncrementTurnIndex()

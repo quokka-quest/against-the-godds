@@ -78,5 +78,8 @@ protected:
 	void EndCurrentTurn();
 
 	void IncrementTurnIndex();
+
+	UFUNCTION(BlueprintImplementableEvent)
+	void BlueprintEndTurnEvents();
 	
 };
