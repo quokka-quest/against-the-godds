@@ -79,4 +79,10 @@ private:
 	UFUNCTION(BlueprintCallable)
 	bool AttemptToFinishPlayerStartPlacement();
 
+	UFUNCTION()
+	void OnPlayerTurnEnd();
+
+	UFUNCTION()
+	void OnMoveButtonClicked();
+
 };

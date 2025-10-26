@@ -138,6 +138,7 @@ void ACombatManager::EndCurrentTurn()
 		APlayerCombatLevelPawn* Player = Cast<APlayerCombatLevelPawn>(UGameplayStatics::GetActorOfClass(GetWorld(), APlayerCombatLevelPawn::StaticClass()));
 		if (!Player) {UE_LOG(LogTemp, Error, TEXT("Player pawn doesn't exist")) return;}
 		Player->ToggleTurnInputMapping(false);
+		OnPlayerTurnEnd.Broadcast();
 	}
 	
 	IncrementTurnIndex();
@@ -167,11 +168,21 @@ void ACombatManager::MoveCurrentCombatant(FIntVector TargetPos)
 	GridManager->ChangeAllTilesDisplay(EEditorGridDisplayType::Default);
 }
 
+// displays the path to be taken by a combatant if they were to move to the target position
 void ACombatManager::DisplayPathForCurrentCombatant(FIntVector TargetPos)
 {
 	FIntVector StartPos = CurrentTurnCombatant->PositionCoord;
 	GridManager->DisplayTilePath(StartPos, TargetPos);
 }
+
+// displays the movement options for the current combatant
+void ACombatManager::DisplayCurrentCombatantsMovement()
+{
+	OnMoveButtonClicked.Broadcast();
+	GridManager->ResetWalkableTiles();
+	GridManager->DisplayWalkableTiles(CurrentTurnCombatant->PositionCoord, CurrentTurnCombatant->AvailableMovement);
+}
+
 
 
 

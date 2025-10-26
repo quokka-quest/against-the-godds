@@ -39,6 +39,9 @@ void APlayerCombatLevelPawn::BeginPlay()
 	if (!PlayerCon) UE_LOG(LogTemp, Error, TEXT("PlayerController is null"))
 
 	PlayerCon->bShowMouseCursor = true;
+
+	CombatManager->OnPlayerTurnEnd.AddDynamic(this, &APlayerCombatLevelPawn::OnPlayerTurnEnd);
+	CombatManager->OnMoveButtonClicked.AddDynamic(this, &APlayerCombatLevelPawn::OnMoveButtonClicked);
 }
 
 // Called every frame
@@ -134,8 +137,22 @@ void APlayerCombatLevelPawn::DisplayPathToTile()
 	if (!HighlightedCell) return;
 	if (!HighlightedCell->isWalkable) return;
 
+	CombatManager->DisplayCurrentCombatantsMovement();
 	CombatManager->DisplayPathForCurrentCombatant(HighlightedCell->GridCellCoord);
 }
+
+void APlayerCombatLevelPawn::OnPlayerTurnEnd()
+{
+	SelectedCell = nullptr;
+	TileSelectionType = ETileSelectionType::None;
+}
+
+void APlayerCombatLevelPawn::OnMoveButtonClicked()
+{
+	SelectedCell = nullptr;
+	TileSelectionType = ETileSelectionType::Movement;
+}
+
 
 
 

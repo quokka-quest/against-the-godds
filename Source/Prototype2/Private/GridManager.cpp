@@ -124,6 +124,7 @@ void AGridManager::ResetWalkableTiles()
 	{
 		Cell.Value->isWalkable = false;
 		Cell.Value->MovementCost = 0;
+		Cell.Value->FindComponentByClass<UStaticMeshComponent>()->SetMaterial(0, DefaultMat);
 	}
 
 	InitialMovement = 0;

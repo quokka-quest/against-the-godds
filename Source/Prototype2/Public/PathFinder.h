@@ -16,6 +16,11 @@ struct FTileInfo
 	int CostFromStart;
 	int MinCostToTarget;
 	FIntVector PreviousTile;
+
+	bool operator==(const FTileInfo& Other) const
+	{
+		return (Coord == Other.Coord);
+	}
 };
 
 // NOTE: Currently this pathfinding ignores the idea of Z levels

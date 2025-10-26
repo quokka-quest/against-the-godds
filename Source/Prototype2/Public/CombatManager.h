@@ -23,6 +23,9 @@ struct FPlayerInitiativeData
 	int Initiative;
 };
 
+DECLARE_DYNAMIC_MULTICAST_DELEGATE(FOnPlayerTurnEnd);
+DECLARE_DYNAMIC_MULTICAST_DELEGATE(FOnMoveButtonClicked);
+
 UCLASS()
 class PROTOTYPE2_API ACombatManager : public AGameModeBase
 {
@@ -30,6 +33,12 @@ class PROTOTYPE2_API ACombatManager : public AGameModeBase
 
 public:
 	virtual void BeginPlay() override;
+
+	UPROPERTY(BlueprintAssignable, category = "Combat")
+	FOnPlayerTurnEnd OnPlayerTurnEnd;
+
+	UPROPERTY(BlueprintAssignable, category = "Combat")
+	FOnMoveButtonClicked OnMoveButtonClicked;
 
 	UPROPERTY(EditAnywhere, BlueprintReadWrite, category = "Combat")
 	FName TurnEventQueueName;
@@ -54,6 +63,9 @@ public:
 	void MoveCurrentCombatant(FIntVector TargetPos);
 
 	void DisplayPathForCurrentCombatant(FIntVector TargetPos);
+
+	UFUNCTION(BlueprintCallable)
+	void DisplayCurrentCombatantsMovement();
 
 protected:
 	UPROPERTY(BlueprintReadWrite)
@@ -83,5 +95,6 @@ protected:
 
 	UFUNCTION(BlueprintImplementableEvent)
 	void BlueprintEndTurnEvents();
+	
 	
 };

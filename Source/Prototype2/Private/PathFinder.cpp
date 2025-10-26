@@ -26,18 +26,27 @@ TArray<FIntVector> APathFinder::FindPath(FIntVector Start, FIntVector End)
 
 	DiscoverTile(StartCoord, StartCoord);
 
+	int loopCount = 0;
 	while (DiscoveredTiles.Num() > 0)
 	{
+		loopCount++;
 		bool FoundEndPoint = AnalyseNextTile();
+
+		if (loopCount >= 500) {UE_LOG(LogTemp, Error, TEXT("Infinite loop in analysing tiles")) return result;}
+		
 		if (!FoundEndPoint) continue;
 
 		result.Add(TileMap[EndCoord].Coord);
 		FIntVector PrevCoord = EndCoord;
-			
+
+		int loopCount2 = 0;
 		while (PrevCoord != StartCoord)
 		{
+			loopCount2++;
 			PrevCoord = TileMap[PrevCoord].PreviousTile;
 			result.Add(PrevCoord);
+
+			if (loopCount2 >= 500) {UE_LOG(LogTemp, Error, TEXT("Infinite loop back tracing")) return result;}
 		}
 			
 		return result;
@@ -95,7 +104,7 @@ bool APathFinder::AnalyseNextTile()
 		FIntVector NeighbourTile = Tile.Coord + Offset;
 		if (!GridManager->GridCells.Contains(NeighbourTile)) continue;
 		if (IsTileAlreadyDiscovered(NeighbourTile)) continue;
-
+		
 		DiscoverTile(NeighbourTile, Tile.Coord);
 
 		if (NeighbourTile == EndCoord) {return true;}
@@ -111,7 +120,8 @@ bool APathFinder::IsTileAlreadyDiscovered(FIntVector TileCoord)
 
 void APathFinder::MoveTileFromDiscoveredToAnalysed(FTileInfo Tile)
 {
-	
+	DiscoveredTiles.Remove(Tile);
+	AnalysedTiles.Add(Tile);
 }
 
 
