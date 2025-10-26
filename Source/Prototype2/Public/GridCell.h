@@ -17,7 +17,7 @@ public:
 	AGridCell();
 
 	UFUNCTION(BlueprintCallable)
-	void QueryIfTileIsWalkable(AGridCell* FromCell);
+	void QueryIfTileIsWalkable(AGridCell* FromCell, int CostToReach);
 
 	UPROPERTY(EditAnywhere, BlueprintReadWrite, Category = "Grid")
 	FIntVector GridCellCoord;
@@ -36,6 +36,8 @@ public:
 	AEntityBase* OccupyingEntity;
 	UPROPERTY(BlueprintReadWrite, Category = "Grid")
 	bool isWalkable;
+	UPROPERTY(BlueprintReadWrite, Category = "Grid")
+	int MovementCost;
 
 private:
 	float cellSize = 100.0f;

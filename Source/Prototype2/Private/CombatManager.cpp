@@ -150,4 +150,21 @@ void ACombatManager::IncrementTurnIndex()
 	CurrentCombatantTurnIndex %= CurrentTurnOrder.Num();
 }
 
+void ACombatManager::MoveCurrentCombatant(FIntVector TargetPos)
+{
+	FVector StartPos = GridManager->GridCells[CurrentTurnCombatant->PositionCoord]->GetActorLocation();
+	FVector EndPos = GridManager->GridCells[TargetPos]->GetActorLocation();
+	GridManager->GridCells[CurrentTurnCombatant->PositionCoord]->IsOccupied = false;
+	GridManager->GridCells[CurrentTurnCombatant->PositionCoord]->OccupyingEntity = nullptr;
+	GridManager->GridCells[TargetPos]->IsOccupied = true;
+	GridManager->GridCells[TargetPos]->OccupyingEntity = CurrentTurnCombatant;
+
+	
+	CurrentTurnCombatant->EnqueueMovement(StartPos, EndPos);
+	CurrentTurnCombatant->PositionCoord = TargetPos;
+	CurrentTurnCombatant->AvailableMovement -= GridManager->GridCells[TargetPos]->MovementCost;
+
+	GridManager->ChangeAllTilesDisplay(EEditorGridDisplayType::Default);
+}
+
 

@@ -73,6 +73,8 @@ void APlayerCombatLevelPawn::OnTileClick()
 	if (!HighlightedCell) return;
 
 	if (TileSelectionType == ETileSelectionType::SpawnSelection) TryAddTileToSpawnSelection();
+
+	if (TileSelectionType == ETileSelectionType::Movement) TryMoveToTile();
 	
 }
 
@@ -106,6 +108,15 @@ bool APlayerCombatLevelPawn::AttemptToFinishPlayerStartPlacement()
 
 	CombatManager->FinishPlayerLocationPicking(SelectedStartCells);
 	return true;
+}
+
+void APlayerCombatLevelPawn::TryMoveToTile()
+{
+	if (!HighlightedCell) return;
+	if (!HighlightedCell->isWalkable) return;
+
+	CombatManager->MoveCurrentCombatant(HighlightedCell->GridCellCoord);
+	TileSelectionType = ETileSelectionType::None;
 }
 
 

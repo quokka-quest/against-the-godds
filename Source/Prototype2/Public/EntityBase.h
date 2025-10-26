@@ -24,6 +24,9 @@ public:
 	UFUNCTION(BlueprintImplementableEvent, BlueprintCallable)
 	void OnTurnEnd();
 
+	UFUNCTION(BlueprintImplementableEvent, BlueprintCallable)
+	void EnqueueMovement(FVector StartPos, FVector EndPos);
+
 	UPROPERTY(BlueprintReadWrite, Category="PlayerInfo")
 	FIntVector PositionCoord;
 

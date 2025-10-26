@@ -9,6 +9,9 @@ AGridCell::AGridCell()
  	// Set this actor to call Tick() every frame.  You can turn this off to improve performance if you don't need it.
 	PrimaryActorTick.bCanEverTick = true;
 	IsOccupied = false;
+	OccupyingEntity = nullptr;
+	isWalkable = false;
+	MovementCost = 0;
 
 }
 
@@ -25,7 +28,7 @@ void AGridCell::OnConstruction(const FTransform& Transform)
 }
 
 
-void AGridCell::QueryIfTileIsWalkable(AGridCell* FromCell)
+void AGridCell::QueryIfTileIsWalkable(AGridCell* FromCell, int CostToReach)
 {
 	if (!IsOccupied)
 	{
@@ -33,6 +36,7 @@ void AGridCell::QueryIfTileIsWalkable(AGridCell* FromCell)
 		if (HeightDiff == 1 || HeightDiff == 0)
 		{
 			isWalkable = true;
+			MovementCost = CostToReach;
 		}
 	}
 }

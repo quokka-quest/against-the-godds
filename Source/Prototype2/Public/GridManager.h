@@ -47,6 +47,9 @@ private:
 	UPROPERTY()
 	UMaterialInterface* HighlightedMat = LoadObject<UMaterialInterface>(nullptr, TEXT("/Game/Materials/M_TileGreen.M_TileGreen"));
 
+	UPROPERTY()
+	int InitialMovement;
+	
 	void InitialiseGridManagement();
 
 	TArray<FIntVector> NeighbourOffsets = {

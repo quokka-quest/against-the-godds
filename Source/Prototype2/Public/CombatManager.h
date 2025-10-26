@@ -50,6 +50,8 @@ public:
 
 	UFUNCTION(BlueprintImplementableEvent)
 	void OnPlayerSpawnLocsPicked();
+	
+	void MoveCurrentCombatant(FIntVector TargetPos);
 
 protected:
 	UPROPERTY(BlueprintReadWrite)

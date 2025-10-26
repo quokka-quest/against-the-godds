@@ -69,6 +69,8 @@ private:
 
 	void TryAddTileToSpawnSelection();
 
+	void TryMoveToTile();
+
 	UFUNCTION(BlueprintCallable)
 	bool AttemptToFinishPlayerStartPlacement();
 

@@ -9,6 +9,7 @@ AGridManager::AGridManager()
 {
  	// Set this actor to call Tick() every frame.  You can turn this off to improve performance if you don't need it.
 	PrimaryActorTick.bCanEverTick = true;
+	InitialMovement = 0;
 }
 
 // Called when the game starts or when spawned
@@ -87,6 +88,9 @@ void AGridManager::ChangeTilesMaterial(AGridCell* Tile, ETileMaterial Material)
 
 void AGridManager::DisplayWalkableTiles(FIntVector CurrentCellCoord, int AvailableMovement)
 {
+	if (AvailableMovement <= 0) return;
+	if (InitialMovement == 0) InitialMovement = AvailableMovement;
+	
 	AvailableMovement--;
 	AGridCell* CurrentCell = GridCells[CurrentCellCoord];
 	
@@ -96,7 +100,7 @@ void AGridManager::DisplayWalkableTiles(FIntVector CurrentCellCoord, int Availab
 		if (!GridCells.Contains(neightbourCell)) continue;
 
 		AGridCell* NewCell = GridCells[neightbourCell];
-		NewCell->QueryIfTileIsWalkable(CurrentCell);
+		NewCell->QueryIfTileIsWalkable(CurrentCell, InitialMovement - AvailableMovement);
 
 		if (NewCell->isWalkable)
 		{
@@ -115,7 +119,10 @@ void AGridManager::ResetWalkableTiles()
 	for (auto& Cell : GridCells)
 	{
 		Cell.Value->isWalkable = false;
+		Cell.Value->MovementCost = 0;
 	}
+
+	InitialMovement = 0;
 }
 
 
