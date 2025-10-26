@@ -163,11 +163,10 @@ void ACombatManager::MoveCurrentCombatant(FIntVector TargetPos)
 		FVector StartPos = GridManager->GridCells[PathForCombatantToFollow[i]]->GetActorLocation();
 		FVector EndPos = GridManager->GridCells[PathForCombatantToFollow[i-1]]->GetActorLocation();
 		CurrentTurnCombatant->EnqueueMovement(StartPos, EndPos);
+		CurrentTurnCombatant->AvailableMovement -= GridManager->GridCells[PathForCombatantToFollow[i-1]]->MovementCost;
 	}
 
 	CurrentTurnCombatant->PositionCoord = TargetPos;
-	CurrentTurnCombatant->AvailableMovement -= GridManager->GridCells[TargetPos]->MovementCost;
-
 	GridManager->ChangeAllTilesDisplay(EEditorGridDisplayType::Default);
 }
 
