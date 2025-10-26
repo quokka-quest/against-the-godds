@@ -10,6 +10,7 @@ AGridManager::AGridManager()
  	// Set this actor to call Tick() every frame.  You can turn this off to improve performance if you don't need it.
 	PrimaryActorTick.bCanEverTick = true;
 	InitialMovement = 0;
+	PathFinder = nullptr;
 }
 
 // Called when the game starts or when spawned
@@ -45,9 +46,12 @@ void AGridManager::InitialiseGridManagement()
 		}
 	}
 
+	PathFinder = GetWorld()->SpawnActor<APathFinder>();
+
 	if (!DefaultMat) UE_LOG(LogTemp, Warning, TEXT("Default Material could not be found"))
 	if (!TargetMat) UE_LOG(LogTemp, Warning, TEXT("Target Material could not be found"))
 	if (!HighlightedMat) UE_LOG(LogTemp, Warning, TEXT("Highlight Material could not be found"))
+	if (!PathMat) UE_LOG(LogTemp, Warning, TEXT("Path Material could not be found"))
 }
 
 
@@ -123,6 +127,17 @@ void AGridManager::ResetWalkableTiles()
 	}
 
 	InitialMovement = 0;
+}
+
+void AGridManager::DisplayTilePath(FIntVector StartCoord, FIntVector EndCoord)
+{
+	TArray<FIntVector> Path = PathFinder->FindPath(StartCoord, EndCoord);
+	if (Path.IsEmpty()) { UE_LOG(LogTemp, Error, TEXT("Path could not be found")) return; }
+
+	for (int i = 0; i < Path.Num(); i++)
+	{
+		GridCells[Path[i]]->FindComponentByClass<UStaticMeshComponent>()->SetMaterial(0, PathMat);
+	}
 }
 
 

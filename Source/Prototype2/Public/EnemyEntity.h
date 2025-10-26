@@ -25,4 +25,7 @@ protected:
 
 	UFUNCTION(BlueprintCallable)
 	void DeterminePlayerTarget();
+
+	UFUNCTION(BlueprintCallable)
+	void DetermineMovement();
 };

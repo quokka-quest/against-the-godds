@@ -167,4 +167,11 @@ void ACombatManager::MoveCurrentCombatant(FIntVector TargetPos)
 	GridManager->ChangeAllTilesDisplay(EEditorGridDisplayType::Default);
 }
 
+void ACombatManager::DisplayPathForCurrentCombatant(FIntVector TargetPos)
+{
+	FIntVector StartPos = CurrentTurnCombatant->PositionCoord;
+	GridManager->DisplayTilePath(StartPos, TargetPos);
+}
+
+
 

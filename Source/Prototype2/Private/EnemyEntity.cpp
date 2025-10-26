@@ -39,3 +39,18 @@ void AEnemyEntity::DeterminePlayerTarget()
 	UE_LOG(LogTemp, Warning, TEXT("Player target is: %s"), *ClosestPlayer->GetName())
 }
 
+void AEnemyEntity::DetermineMovement()
+{
+	if (!PlayerTarget) return;
+
+	int XDiff = abs(PlayerTarget->PositionCoord.X - PositionCoord.X);
+	int YDiff = abs(PlayerTarget->PositionCoord.Y - PositionCoord.Y);
+	int ZDiff = abs(PlayerTarget->PositionCoord.Z - PositionCoord.Z);
+
+	int XYDiff = XDiff + YDiff;
+	if (XYDiff == 1 && ZDiff <= 1) return;
+
+	
+}
+
+

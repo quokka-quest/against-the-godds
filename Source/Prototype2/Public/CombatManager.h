@@ -53,6 +53,8 @@ public:
 	
 	void MoveCurrentCombatant(FIntVector TargetPos);
 
+	void DisplayPathForCurrentCombatant(FIntVector TargetPos);
+
 protected:
 	UPROPERTY(BlueprintReadWrite)
 	AGridManager* GridManager;

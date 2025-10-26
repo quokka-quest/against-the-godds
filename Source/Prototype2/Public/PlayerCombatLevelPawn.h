@@ -56,6 +56,9 @@ private:
 	AGridCell* HighlightedCell;
 
 	UPROPERTY()
+	AGridCell* SelectedCell;
+
+	UPROPERTY()
 	TArray<AGridCell*> SelectedStartCells;
 
 	UPROPERTY()
@@ -70,6 +73,8 @@ private:
 	void TryAddTileToSpawnSelection();
 
 	void TryMoveToTile();
+
+	void DisplayPathToTile();
 
 	UFUNCTION(BlueprintCallable)
 	bool AttemptToFinishPlayerStartPlacement();

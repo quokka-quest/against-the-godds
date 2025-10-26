@@ -70,9 +70,18 @@ void APlayerCombatLevelPawn::SetupPlayerInputComponent(UInputComponent* PlayerIn
 
 void APlayerCombatLevelPawn::OnTileClick()
 {
-	if (!HighlightedCell) return;
+	if (!HighlightedCell) {SelectedCell = nullptr; return;}
 
 	if (TileSelectionType == ETileSelectionType::SpawnSelection) TryAddTileToSpawnSelection();
+	
+	if (SelectedCell != HighlightedCell)
+	{
+		SelectedCell = HighlightedCell;
+
+		if (TileSelectionType == ETileSelectionType::Movement) DisplayPathToTile();
+		
+		return;
+	}
 
 	if (TileSelectionType == ETileSelectionType::Movement) TryMoveToTile();
 	
@@ -117,7 +126,17 @@ void APlayerCombatLevelPawn::TryMoveToTile()
 
 	CombatManager->MoveCurrentCombatant(HighlightedCell->GridCellCoord);
 	TileSelectionType = ETileSelectionType::None;
+	SelectedCell = nullptr;
 }
+
+void APlayerCombatLevelPawn::DisplayPathToTile()
+{
+	if (!HighlightedCell) return;
+	if (!HighlightedCell->isWalkable) return;
+
+	CombatManager->DisplayPathForCurrentCombatant(HighlightedCell->GridCellCoord);
+}
+
 
 
 

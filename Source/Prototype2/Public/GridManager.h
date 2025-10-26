@@ -5,6 +5,7 @@
 #include "CoreMinimal.h"
 #include "GameFramework/Actor.h"
 #include "GridCell.h"
+#include "PathFinder.h"
 #include "GridManager.generated.h"
 
 UENUM(BlueprintType)
@@ -46,7 +47,12 @@ private:
 	UMaterialInterface* TargetMat = LoadObject<UMaterialInterface>(nullptr, TEXT("/Game/Materials/M_TargetTile.M_TargetTile"));
 	UPROPERTY()
 	UMaterialInterface* HighlightedMat = LoadObject<UMaterialInterface>(nullptr, TEXT("/Game/Materials/M_TileGreen.M_TileGreen"));
+	UPROPERTY()
+	UMaterialInterface* PathMat = LoadObject<UMaterialInterface>(nullptr, TEXT("/Game/Materials/M_TileGold.M_TileGold"));
 
+	UPROPERTY()
+	APathFinder* PathFinder;
+	
 	UPROPERTY()
 	int InitialMovement;
 	
@@ -86,5 +92,8 @@ public:
 
 	UFUNCTION(BlueprintCallable)
 	void ResetWalkableTiles();
+
+	UFUNCTION(BlueprintCallable)
+	void DisplayTilePath(FIntVector StartCoord, FIntVector EndCoord);
 
 };
