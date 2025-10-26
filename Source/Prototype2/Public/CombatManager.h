@@ -70,6 +70,9 @@ public:
 	UFUNCTION(BlueprintCallable)
 	void BroadcastOnMoveClickedEvent();
 
+	UFUNCTION(BlueprintCallable, BlueprintPure)
+	AEntityBase* GetCurrentCombatant();
+
 protected:
 	UPROPERTY(BlueprintReadWrite)
 	AGridManager* GridManager;
@@ -98,6 +101,8 @@ protected:
 
 	UFUNCTION(BlueprintImplementableEvent)
 	void BlueprintEndTurnEvents();
+
+	TArray<FIntVector> PathForCombatantToFollow;
 	
 	
 };

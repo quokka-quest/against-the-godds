@@ -143,9 +143,7 @@ void APlayerCombatLevelPawn::DisplayPathToTile()
 	if (!HighlightedCell) return;
 	if (!HighlightedCell->isWalkable) return;
 
-	UE_LOG(LogTemp, Warning, TEXT("DisplayPathToTile before movement"));
 	CombatManager->DisplayCurrentCombatantsMovement();
-	UE_LOG(LogTemp, Warning, TEXT("Displayed movement from player pawn"));
 	CombatManager->DisplayPathForCurrentCombatant(HighlightedCell->GridCellCoord);
 }
 

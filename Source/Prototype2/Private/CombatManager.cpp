@@ -153,15 +153,18 @@ void ACombatManager::IncrementTurnIndex()
 
 void ACombatManager::MoveCurrentCombatant(FIntVector TargetPos)
 {
-	FVector StartPos = GridManager->GridCells[CurrentTurnCombatant->PositionCoord]->GetActorLocation();
-	FVector EndPos = GridManager->GridCells[TargetPos]->GetActorLocation();
 	GridManager->GridCells[CurrentTurnCombatant->PositionCoord]->IsOccupied = false;
 	GridManager->GridCells[CurrentTurnCombatant->PositionCoord]->OccupyingEntity = nullptr;
 	GridManager->GridCells[TargetPos]->IsOccupied = true;
 	GridManager->GridCells[TargetPos]->OccupyingEntity = CurrentTurnCombatant;
 
-	
-	CurrentTurnCombatant->EnqueueMovement(StartPos, EndPos);
+	for (int i = PathForCombatantToFollow.Num()-1; i > 0; i--)
+	{
+		FVector StartPos = GridManager->GridCells[PathForCombatantToFollow[i]]->GetActorLocation();
+		FVector EndPos = GridManager->GridCells[PathForCombatantToFollow[i-1]]->GetActorLocation();
+		CurrentTurnCombatant->EnqueueMovement(StartPos, EndPos);
+	}
+
 	CurrentTurnCombatant->PositionCoord = TargetPos;
 	CurrentTurnCombatant->AvailableMovement -= GridManager->GridCells[TargetPos]->MovementCost;
 
@@ -171,9 +174,8 @@ void ACombatManager::MoveCurrentCombatant(FIntVector TargetPos)
 // displays the path to be taken by a combatant if they were to move to the target position
 void ACombatManager::DisplayPathForCurrentCombatant(FIntVector TargetPos)
 {
-	UE_LOG(LogTemp, Warning, TEXT("Displaying Path from combat manager"));
 	FIntVector StartPos = CurrentTurnCombatant->PositionCoord;
-	GridManager->DisplayTilePath(StartPos, TargetPos);
+	PathForCombatantToFollow = GridManager->DisplayTilePath(StartPos, TargetPos);
 }
 
 // displays the movement options for the current combatant
@@ -187,6 +189,12 @@ void ACombatManager::BroadcastOnMoveClickedEvent()
 {
 	OnMoveButtonClicked.Broadcast();
 }
+
+AEntityBase* ACombatManager::GetCurrentCombatant()
+{
+	return CurrentTurnCombatant;
+}
+
 
 
 

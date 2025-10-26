@@ -112,16 +112,17 @@ void AGridManager::ResetWalkableTiles()
 	}
 }
 
-void AGridManager::DisplayTilePath(FIntVector StartCoord, FIntVector EndCoord)
+TArray<FIntVector> AGridManager::DisplayTilePath(FIntVector StartCoord, FIntVector EndCoord)
 {
-	UE_LOG(LogTemp, Warning, TEXT("Displaying Tile Path from grid manager"));
 	TArray<FIntVector> Path = PathFinder->FindPath(StartCoord, EndCoord);
-	if (Path.IsEmpty()) { UE_LOG(LogTemp, Error, TEXT("Path could not be found")) return; }
+	if (Path.IsEmpty()) { UE_LOG(LogTemp, Error, TEXT("Path could not be found")) return Path; }
 
 	for (int i = 0; i < Path.Num(); i++)
 	{
 		GridCells[Path[i]]->FindComponentByClass<UStaticMeshComponent>()->SetMaterial(0, PathMat);
 	}
+
+	return Path;
 }
 
 

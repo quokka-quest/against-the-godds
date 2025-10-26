@@ -91,6 +91,6 @@ public:
 	void ResetWalkableTiles();
 
 	UFUNCTION(BlueprintCallable)
-	void DisplayTilePath(FIntVector StartCoord, FIntVector EndCoord);
+	TArray<FIntVector> DisplayTilePath(FIntVector StartCoord, FIntVector EndCoord);
 
 };
