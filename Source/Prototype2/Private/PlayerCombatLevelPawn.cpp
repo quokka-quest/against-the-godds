@@ -65,10 +65,16 @@ void APlayerCombatLevelPawn::Tick(float DeltaTime)
 }
 
 // Called to bind functionality to input
+// Even though it does nothing, removing this breaks things
 void APlayerCombatLevelPawn::SetupPlayerInputComponent(UInputComponent* PlayerInputComponent)
 {
 	Super::SetupPlayerInputComponent(PlayerInputComponent);
 
+}
+
+void APlayerCombatLevelPawn::SetTileSelectionType(ETileSelectionType Type)
+{
+	TileSelectionType = Type;
 }
 
 void APlayerCombatLevelPawn::OnTileClick()
@@ -80,7 +86,7 @@ void APlayerCombatLevelPawn::OnTileClick()
 	if (SelectedCell != HighlightedCell)
 	{
 		SelectedCell = HighlightedCell;
-
+		
 		if (TileSelectionType == ETileSelectionType::Movement) DisplayPathToTile();
 		
 		return;
@@ -137,9 +143,12 @@ void APlayerCombatLevelPawn::DisplayPathToTile()
 	if (!HighlightedCell) return;
 	if (!HighlightedCell->isWalkable) return;
 
+	UE_LOG(LogTemp, Warning, TEXT("DisplayPathToTile before movement"));
 	CombatManager->DisplayCurrentCombatantsMovement();
+	UE_LOG(LogTemp, Warning, TEXT("Displayed movement from player pawn"));
 	CombatManager->DisplayPathForCurrentCombatant(HighlightedCell->GridCellCoord);
 }
+
 
 void APlayerCombatLevelPawn::OnPlayerTurnEnd()
 {

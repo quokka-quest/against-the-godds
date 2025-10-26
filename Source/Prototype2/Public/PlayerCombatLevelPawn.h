@@ -45,6 +45,9 @@ public:
 	UFUNCTION(BlueprintImplementableEvent, BlueprintCallable)
 	void ToggleTurnInputMapping(bool EnableInputs);
 
+	UFUNCTION(BlueprintCallable)
+	void SetTileSelectionType(ETileSelectionType Type);
+
 private:
 	UPROPERTY()
 	APlayerController* PlayerCon;

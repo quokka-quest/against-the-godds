@@ -67,6 +67,9 @@ public:
 	UFUNCTION(BlueprintCallable)
 	void DisplayCurrentCombatantsMovement();
 
+	UFUNCTION(BlueprintCallable)
+	void BroadcastOnMoveClickedEvent();
+
 protected:
 	UPROPERTY(BlueprintReadWrite)
 	AGridManager* GridManager;

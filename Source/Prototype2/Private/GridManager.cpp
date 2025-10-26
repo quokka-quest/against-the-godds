@@ -9,7 +9,6 @@ AGridManager::AGridManager()
 {
  	// Set this actor to call Tick() every frame.  You can turn this off to improve performance if you don't need it.
 	PrimaryActorTick.bCanEverTick = true;
-	InitialMovement = 0;
 	PathFinder = nullptr;
 }
 
@@ -93,28 +92,14 @@ void AGridManager::ChangeTilesMaterial(AGridCell* Tile, ETileMaterial Material)
 void AGridManager::DisplayWalkableTiles(FIntVector CurrentCellCoord, int AvailableMovement)
 {
 	if (AvailableMovement <= 0) return;
-	if (InitialMovement == 0) InitialMovement = AvailableMovement;
-	
-	AvailableMovement--;
-	AGridCell* CurrentCell = GridCells[CurrentCellCoord];
-	
-	for (int i = 0; i < NeighbourOffsets.Num(); i++)
+
+	TArray<FIntVector> WalkableCoords = PathFinder->FindMoveableTiles(CurrentCellCoord, AvailableMovement);
+	if (WalkableCoords.Num() == 0) return;
+
+	for (FIntVector WalkableCoord : WalkableCoords)
 	{
-		FIntVector neightbourCell = CurrentCell->GridCellCoord + NeighbourOffsets[i];
-		if (!GridCells.Contains(neightbourCell)) continue;
-
-		AGridCell* NewCell = GridCells[neightbourCell];
-		NewCell->QueryIfTileIsWalkable(CurrentCell, InitialMovement - AvailableMovement);
-
-		if (NewCell->isWalkable)
-		{
-			NewCell->FindComponentByClass<UStaticMeshComponent>()->SetMaterial(0, HighlightedMat);
-		}
-
-		if (AvailableMovement > 0)
-		{
-			DisplayWalkableTiles(neightbourCell, AvailableMovement);
-		}
+		GridCells[WalkableCoord]->FindComponentByClass<UStaticMeshComponent>()->SetMaterial(0, HighlightedMat);
+		GridCells[WalkableCoord]->isWalkable = true;
 	}
 }
 
@@ -123,15 +108,13 @@ void AGridManager::ResetWalkableTiles()
 	for (auto& Cell : GridCells)
 	{
 		Cell.Value->isWalkable = false;
-		Cell.Value->MovementCost = 0;
 		Cell.Value->FindComponentByClass<UStaticMeshComponent>()->SetMaterial(0, DefaultMat);
 	}
-
-	InitialMovement = 0;
 }
 
 void AGridManager::DisplayTilePath(FIntVector StartCoord, FIntVector EndCoord)
 {
+	UE_LOG(LogTemp, Warning, TEXT("Displaying Tile Path from grid manager"));
 	TArray<FIntVector> Path = PathFinder->FindPath(StartCoord, EndCoord);
 	if (Path.IsEmpty()) { UE_LOG(LogTemp, Error, TEXT("Path could not be found")) return; }
 

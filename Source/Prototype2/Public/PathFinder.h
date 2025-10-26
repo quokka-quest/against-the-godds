@@ -37,6 +37,9 @@ public:
 	UFUNCTION()
 	TArray<FIntVector> FindPath(FIntVector Start, FIntVector End);
 
+	UFUNCTION()
+	TArray<FIntVector> FindMoveableTiles(FIntVector Start, int AvailableMovement);
+
 private:
 	FIntVector StartCoord;
 	FIntVector EndCoord;
@@ -44,6 +47,8 @@ private:
 	TMap<FIntVector, FTileInfo> TileMap;
 	TArray<FTileInfo> DiscoveredTiles;
 	TArray<FTileInfo> AnalysedTiles;
+
+	int TotalMovement;
 
 	int CalulateMinCostBetweenTiles(FIntVector Start, FIntVector End);
 
@@ -56,6 +61,10 @@ private:
 	bool AnalyseNextTile();
 
 	void MoveTileFromDiscoveredToAnalysed(FTileInfo Tile);
+
+	FTileInfo GetNextTileFromDiscoverableArray();
+
+	void AnalyseTileForMovementAvailability();
 
 	TArray<FIntVector> NeighbourOffsets =
 	{

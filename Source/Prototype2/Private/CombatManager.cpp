@@ -171,6 +171,7 @@ void ACombatManager::MoveCurrentCombatant(FIntVector TargetPos)
 // displays the path to be taken by a combatant if they were to move to the target position
 void ACombatManager::DisplayPathForCurrentCombatant(FIntVector TargetPos)
 {
+	UE_LOG(LogTemp, Warning, TEXT("Displaying Path from combat manager"));
 	FIntVector StartPos = CurrentTurnCombatant->PositionCoord;
 	GridManager->DisplayTilePath(StartPos, TargetPos);
 }
@@ -178,10 +179,15 @@ void ACombatManager::DisplayPathForCurrentCombatant(FIntVector TargetPos)
 // displays the movement options for the current combatant
 void ACombatManager::DisplayCurrentCombatantsMovement()
 {
-	OnMoveButtonClicked.Broadcast();
 	GridManager->ResetWalkableTiles();
 	GridManager->DisplayWalkableTiles(CurrentTurnCombatant->PositionCoord, CurrentTurnCombatant->AvailableMovement);
 }
+
+void ACombatManager::BroadcastOnMoveClickedEvent()
+{
+	OnMoveButtonClicked.Broadcast();
+}
+
 
 
 

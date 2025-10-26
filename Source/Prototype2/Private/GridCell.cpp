@@ -11,7 +11,6 @@ AGridCell::AGridCell()
 	IsOccupied = false;
 	OccupyingEntity = nullptr;
 	isWalkable = false;
-	MovementCost = 0;
 
 }
 

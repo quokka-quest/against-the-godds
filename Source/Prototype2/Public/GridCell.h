@@ -29,6 +29,8 @@ public:
 	bool IsEnemySpawnTile;
 	UPROPERTY(EditAnywhere, BlueprintReadWrite, Category = "Grid")
 	TSubclassOf<AEnemyEntity> EnemyToSpawn;
+	UPROPERTY(EditAnywhere, BlueprintReadWrite, Category = "Grid")
+	int MovementCost;
 
 	UPROPERTY(BlueprintReadWrite, Category = "Grid")
 	bool IsOccupied;
@@ -36,8 +38,6 @@ public:
 	AEntityBase* OccupyingEntity;
 	UPROPERTY(BlueprintReadWrite, Category = "Grid")
 	bool isWalkable;
-	UPROPERTY(BlueprintReadWrite, Category = "Grid")
-	int MovementCost;
 
 private:
 	float cellSize = 100.0f;

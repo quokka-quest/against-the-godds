@@ -53,9 +53,6 @@ private:
 	UPROPERTY()
 	APathFinder* PathFinder;
 	
-	UPROPERTY()
-	int InitialMovement;
-	
 	void InitialiseGridManagement();
 
 	TArray<FIntVector> NeighbourOffsets = {
