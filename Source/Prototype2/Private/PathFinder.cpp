@@ -70,6 +70,7 @@ void APathFinder::DiscoverTile(FIntVector TileCoord, FIntVector PreviousTile)
 	TileInfo.CostFromStart = CostFromStart;
 
 	if (CostFromStart > TotalMovement) return;
+	if (TileCoord != StartCoord && GridManager->GridCells[TileCoord]->IsOccupied) return;
 
 	TileMap.Add(TileCoord, TileInfo);
 	DiscoveredTiles.Add(TileInfo);

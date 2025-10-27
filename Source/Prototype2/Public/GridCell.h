@@ -40,7 +40,7 @@ public:
 	bool isWalkable;
 
 private:
-	float cellSize = 100.0f;
+	float cellSize = 200.0f;
 	float cellHeight = 50.0f;
 
 protected:
