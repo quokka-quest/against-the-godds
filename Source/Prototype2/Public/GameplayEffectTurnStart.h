@@ -15,8 +15,4 @@ class PROTOTYPE2_API UGameplayEffectTurnStart : public UGameplayEffect
 	GENERATED_BODY()
 public:
 	UGameplayEffectTurnStart();
-protected:
-
-	virtual void ApplyTickingEffect();
-	
 };
