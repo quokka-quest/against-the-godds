@@ -77,3 +77,20 @@ void UGameManager::ModifyArrayStruct(bool bVisitedStatus, int ArrayIndex)
 		MapNodes[ArrayIndex].bVisited = bVisitedStatus;
 	}
 }
+
+bool UGameManager::isEncounterComplete(FName EncounterName) const
+{
+	if (CompletedEncounters.Contains(EncounterName))
+	{
+		return true;
+	}
+	return false;
+}
+
+void UGameManager::MarkEncounterComplete(FName EncounterName)
+{
+	if (!CompletedEncounters.Contains(EncounterName))
+	{
+		CompletedEncounters.Add(EncounterName);
+	}
+}

@@ -47,6 +47,12 @@ public:
 	UFUNCTION(BlueprintCallable, Category="GameManager")
 	void ModifyArrayStruct(bool bVisitedStatus, int ArrayIndex);
 
+	UFUNCTION(BlueprintCallable, Category = "GameManager")
+	bool isEncounterComplete(FName EncounterName) const;
+
+	UFUNCTION(BlueprintCallable, Category = "GameManager")
+	void MarkEncounterComplete(FName EncounterName);
+
 private:
 	TArray<EMapRoomCPP> AllRooms;
 	
@@ -61,6 +67,9 @@ protected:
 	FMapNodeData MapDataStruct;
 	UPROPERTY(BlueprintReadWrite, Category="Map")
 	TArray<FMapNodeData> MapNodes;
+
+	UPROPERTY(BlueprintReadWrite, Category = "Map")
+	TArray<FName> CompletedEncounters;
 
 	
 };
