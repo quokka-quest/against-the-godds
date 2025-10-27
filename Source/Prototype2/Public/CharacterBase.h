@@ -20,6 +20,7 @@ class PROTOTYPE2_API ACharacterBase : public APawn, public IAbilitySystemInterfa
 
 private:
 	FGameplayTagContainer StartFilterTags;
+	FGameplayTagContainer StatusFilterTags;
 
 public:
 	// Sets default values for this pawn's properties
@@ -48,6 +49,9 @@ protected:
 	UPROPERTY(EditDefaultsOnly, BlueprintReadOnly, Category = "GAS", meta = (AllowPrivateAccess = "true"))
 	TArray<TSubclassOf<UGameplayEffect>> DefaultEffects;
 
+	UFUNCTION(BlueprintCallable, Category = "Character|Status Effects")
+    TMap<FGameplayTag, int32> GetActiveStatusEffects() const;
+	
 public:	
 	// Called every frame
 	virtual void Tick(float DeltaTime) override;

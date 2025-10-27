@@ -17,6 +17,7 @@ ACharacterBase::ACharacterBase()
 	HealthSet = CreateDefaultSubobject<UAttributeHealthSet>(TEXT("HealthSet"));
 	DamageModifiersSet = CreateDefaultSubobject<UAttributeDamageModifiersSet>(TEXT("DamageModifiersSet"));
 	StartFilterTags.AddTag(FGameplayTag::RequestGameplayTag(FName("Effect.StartOfTurn")));
+	StatusFilterTags.AddTag(FGameplayTag::RequestGameplayTag(FName("Status")));
 }
 
 // Called when the game starts or when spawned
@@ -29,6 +30,46 @@ void ACharacterBase::BeginPlay()
 	// Also subscribe the OnCurrentHealthAttributeChanged to the health changing delegate from HealthSet
 	AbilitySystemComponent->GetGameplayAttributeValueChangeDelegate(HealthSet->GetCurrentHealthAttribute()).AddUObject(this, &ACharacterBase::OnCurrentHealthAttributeChanged);
 }
+
+TMap<FGameplayTag, int32> ACharacterBase::GetActiveStatusEffects() const
+{
+	TMap<FGameplayTag, int32> StatusEffects;
+    
+	if (!AbilitySystemComponent)
+	{
+		return StatusEffects;
+	}
+    
+	// Get all active effects
+	TArray<FActiveGameplayEffectHandle> ActiveEffects = AbilitySystemComponent->GetActiveEffectsWithAllTags(StatusFilterTags);
+    
+	for (const FActiveGameplayEffectHandle& EffectHandle : ActiveEffects)
+	{
+		const FActiveGameplayEffect* ActiveEffect = AbilitySystemComponent->GetActiveGameplayEffect(EffectHandle);
+		if (ActiveEffect && ActiveEffect->Spec.Def)
+		{
+			// Get the asset tags from the effect
+			FGameplayTagContainer AssetTags;
+			ActiveEffect->Spec.GetAllAssetTags(AssetTags);
+            
+			// Get stack count
+			int32 StackCount = ActiveEffect->Spec.GetStackCount();
+            
+			// Store each tag with its stack count
+			for (const FGameplayTag& Tag : AssetTags)
+			{
+				// Only add tags that match the "Status" category
+				if (Tag.MatchesTag(FGameplayTag::RequestGameplayTag(FName("Status"))))
+				{
+					StatusEffects.Add(Tag, StackCount);
+				}
+			}
+		}
+	}
+    
+	return StatusEffects;
+}
+
 
 // Called every frame
 void ACharacterBase::Tick(float DeltaTime)
