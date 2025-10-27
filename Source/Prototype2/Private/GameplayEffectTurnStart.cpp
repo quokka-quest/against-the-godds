@@ -3,3 +3,14 @@
 
 #include "GameplayEffectTurnStart.h"
 
+UGameplayEffectTurnStart::UGameplayEffectTurnStart()
+{
+	// Make stacking global per target
+	StackingType = EGameplayEffectStackingType::AggregateByTarget;
+	
+}
+
+void UGameplayEffectTurnStart::ApplyTickingEffect()
+{
+	
+}

@@ -24,7 +24,7 @@ float UGameplayAbilityBase::CalculateDamageWithMods(const float BaseDamage)
 	const float NewDamage = (BaseDamage + FlatDamageMod) * MultiDamageMod;
 
 	return NewDamage;
-}
+} 
 
 int UGameplayAbilityBase::RollDice()
 {

@@ -6,6 +6,7 @@
 #include "GameFramework/Pawn.h"
 #include "AbilitySystemInterface.h"
 #include "GameplayEffectTypes.h"
+#include "TurnBasedAbilitySystemComponent.h"
 #include "CharacterBase.generated.h"
 
 //Forward declarations for included classes inside the cpp file
@@ -17,6 +18,9 @@ class PROTOTYPE2_API ACharacterBase : public APawn, public IAbilitySystemInterfa
 {
 	GENERATED_BODY()
 
+private:
+	FGameplayTagContainer StartFilterTags;
+
 public:
 	// Sets default values for this pawn's properties
 	ACharacterBase();
@@ -27,7 +31,7 @@ protected:
 
 	// GAS Setup
 	UPROPERTY(VisibleAnywhere, BlueprintReadOnly, Category = "GAS", meta = (AllowPrivateAccess = "true"))
-	TObjectPtr<UAbilitySystemComponent> AbilitySystemComponent;
+	TObjectPtr<UTurnBasedAbilitySystemComponent> AbilitySystemComponent;
 
 	UPROPERTY(VisibleAnywhere, BlueprintReadOnly, Category = "GAS", meta = (AllowPrivateAccess = "true"))
 	TObjectPtr<class UAttributeHealthSet> HealthSet;
@@ -90,5 +94,7 @@ protected:
 	UFUNCTION(BlueprintCallable, Category = "GAS")
 	float GetMaxHealth() const;
 
+	UFUNCTION(BlueprintCallable, Category = "GAS")
+	void ActivateStartOfTurnEffects();
 	
 };

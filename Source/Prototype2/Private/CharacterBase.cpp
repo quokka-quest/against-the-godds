@@ -13,9 +13,10 @@ ACharacterBase::ACharacterBase()
 	PrimaryActorTick.bCanEverTick = true;
 
 	// Create the GAS components
-	AbilitySystemComponent = CreateDefaultSubobject<UAbilitySystemComponent>(TEXT("AbilitySystemComponent"));
+	AbilitySystemComponent = CreateDefaultSubobject<UTurnBasedAbilitySystemComponent>(TEXT("AbilitySystemComponent"));
 	HealthSet = CreateDefaultSubobject<UAttributeHealthSet>(TEXT("HealthSet"));
 	DamageModifiersSet = CreateDefaultSubobject<UAttributeDamageModifiersSet>(TEXT("DamageModifiersSet"));
+	StartFilterTags.AddTag(FGameplayTag::RequestGameplayTag(FName("Effect.StartOfTurn")));
 }
 
 // Called when the game starts or when spawned
@@ -126,6 +127,15 @@ float ACharacterBase::GetCurrentHealth() const
 float ACharacterBase::GetMaxHealth() const
 {
 	return(HealthSet->GetMaxHealth());
+}
+
+void ACharacterBase::ActivateStartOfTurnEffects()
+{
+	for (FActiveGameplayEffectHandle Effect : AbilitySystemComponent->GetActiveEffectsWithAllTags(StartFilterTags))
+	{
+		// Remove a stack
+		AbilitySystemComponent->RemoveActiveGameplayEffect(Effect, 1);
+	}
 }
 
 float ACharacterBase::GetFlatDamageModifier() const
