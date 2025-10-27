@@ -19,8 +19,8 @@ public:
 	UPROPERTY(EditAnywhere, BlueprintReadWrite, Category = "Map")
 	EMapRoomCPP RoomType;
 
-	UPROPERTY(EditANywhere, BlueprintReadWrite, Category = "Map")
-	bool bVisited = false;
+	UPROPERTY(EditAnywhere, BlueprintReadWrite, Category = "Map")
+	bool bVisited;
 
 	FMapNodeData()
 		: RoomType(EMapRoomCPP::Empty), bVisited(false)
@@ -37,15 +37,19 @@ public:
 	UFUNCTION(BlueprintCallable, Category = "GameManager")
 	TArray<FMapNodeData> GenerateMap();
 	void ShuffleArray(TArray<EMapRoomCPP>& ArrayToShuffle);
+
 	UFUNCTION(BlueprintCallable, Category = "GameManager")
 	TArray<FMapNodeData> GetMapNodes() const { return MapNodes; }
+
 	UFUNCTION(BlueprintCallable, Category = "GameManager")
 	int GetCurrentNodeIndex() const { return CurrentNodeIndex; }
 
+	UFUNCTION(BlueprintCallable, Category="GameManager")
+	void ModifyArrayStruct(bool bVisitedStatus, int ArrayIndex);
+
 private:
 	TArray<EMapRoomCPP> AllRooms;
-	TArray<FMapNodeData> MapNodes;
-	FMapNodeData MapDataStruct;
+	
 	int TotalRooms = 10;
 	int RestCount = TotalRooms / 5;
 	int CombatCount = (TotalRooms - RestCount) / 2;
@@ -54,6 +58,9 @@ private:
 protected:
 	UPROPERTY(BlueprintReadWrite, Category="Map")
 	int CurrentNodeIndex = 0;
+	FMapNodeData MapDataStruct;
+	UPROPERTY(BlueprintReadWrite, Category="Map")
+	TArray<FMapNodeData> MapNodes;
 
 	
 };

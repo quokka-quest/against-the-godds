@@ -69,3 +69,11 @@ void UGameManager::ShuffleArray(TArray<EMapRoomCPP>& ArrayToShuffle)
 		}
 	}
 }
+
+void UGameManager::ModifyArrayStruct(bool bVisitedStatus, int ArrayIndex)
+{
+	if(MapNodes.IsValidIndex(ArrayIndex))
+	{
+		MapNodes[ArrayIndex].bVisited = bVisitedStatus;
+	}
+}
