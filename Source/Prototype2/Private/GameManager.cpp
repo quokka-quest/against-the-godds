@@ -55,6 +55,25 @@ TArray<FMapNodeData> UGameManager::GenerateMap()
 	{
 		return MapNodes;
 	}
+
+	//int floors = 15;
+	//int maxNodesPerFloor = 7;
+	//TArray<TArray<FMapNodeData>> Grid;
+
+	//for (int floor = 0; floor < floors; ++floor)
+	//{
+	//	TArray<FMapNodeData> FloorNodes;
+	//	for (int nodeIndex = 0; nodeIndex < maxNodesPerFloor; ++nodeIndex)
+	//	{
+	//		FMapNodeData Node;
+	//		Node.RoomType = EMapRoomCPP::Empty;
+	//		Node.bVisited = false;
+	//		FloorNodes.Add(Node);
+	//	}
+	//	Grid.Add(FloorNodes);
+	//}
+
+
 }
 
 void UGameManager::ShuffleArray(TArray<EMapRoomCPP>& ArrayToShuffle)
