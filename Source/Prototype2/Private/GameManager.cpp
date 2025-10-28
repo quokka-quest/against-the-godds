@@ -55,25 +55,6 @@ TArray<FMapNodeData> UGameManager::GenerateMap()
 	{
 		return MapNodes;
 	}
-
-	//int floors = 15;
-	//int maxNodesPerFloor = 7;
-	//TArray<TArray<FMapNodeData>> Grid;
-
-	//for (int floor = 0; floor < floors; ++floor)
-	//{
-	//	TArray<FMapNodeData> FloorNodes;
-	//	for (int nodeIndex = 0; nodeIndex < maxNodesPerFloor; ++nodeIndex)
-	//	{
-	//		FMapNodeData Node;
-	//		Node.RoomType = EMapRoomCPP::Empty;
-	//		Node.bVisited = false;
-	//		FloorNodes.Add(Node);
-	//	}
-	//	Grid.Add(FloorNodes);
-	//}
-
-
 }
 
 void UGameManager::ShuffleArray(TArray<EMapRoomCPP>& ArrayToShuffle)
@@ -112,4 +93,72 @@ void UGameManager::MarkEncounterComplete(FName EncounterName)
 	{
 		CompletedEncounters.Add(EncounterName);
 	}
+}
+
+void UGameManager::GenerateGrid()
+{
+	Grid.Empty();
+	Grid.SetNum(floors * maxNodesPerFloor);
+
+	for (int32 Floor = 0; Floor < floors; ++Floor)
+	{
+		for (int32 NodeIndex = 0; NodeIndex < maxNodesPerFloor; ++NodeIndex)
+		{
+			int32 FlatIndex = Floor * maxNodesPerFloor + NodeIndex;
+
+			FMapNodeData Node;
+			Node.RoomType = EMapRoomCPP::Empty;
+			Node.bVisited = false;
+
+			Grid[FlatIndex] = Node;
+		}
+	}
+}
+
+void UGameManager::CreateMap()
+{
+	// get two different starting nodes on the first floor
+	int startNodeIndex = FMath::RandRange(0, maxNodesPerFloor - 1);
+	int startNodeIndex2 = startNodeIndex;
+	while (startNodeIndex2 == startNodeIndex)
+	{
+		startNodeIndex2 = FMath::RandRange(0, maxNodesPerFloor - 1);
+	}
+
+	for (int32 NodeIndex = 0; NodeIndex < maxNodesPerFloor; ++NodeIndex)
+	{
+		int32 FlatIndex = 0 * maxNodesPerFloor + NodeIndex;
+		if (NodeIndex == startNodeIndex || NodeIndex == startNodeIndex2)
+		{
+			Grid[FlatIndex].RoomType = EMapRoomCPP::Combat; // or any starting room type
+		}
+		else
+		{
+			Grid[FlatIndex].RoomType = EMapRoomCPP::Empty;
+		}
+	}
+}
+
+FMapNodeData UGameManager::GetNode(int32 Floor, int32 NodeIndex)
+{
+	int32 Index = GetNodeIndex(Floor, NodeIndex);
+	if (Grid.IsValidIndex(Index))
+	{
+		return Grid[Index];
+	}
+	return FMapNodeData(); // return default if out of range
+}
+
+void UGameManager::SetNode(int32 Floor, int32 NodeIndex, FMapNodeData& NewData)
+{
+	int32 Index = GetNodeIndex(Floor, NodeIndex);
+	if (Grid.IsValidIndex(Index))
+	{
+		Grid[Index] = NewData;
+	}
+}
+
+int32 UGameManager::GetNodeIndex(int32 Floor, int32 NodeIndex)
+{
+	return Floor * maxNodesPerFloor + NodeIndex;
 }

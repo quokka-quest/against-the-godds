@@ -22,6 +22,18 @@ public:
 	UPROPERTY(EditAnywhere, BlueprintReadWrite, Category = "Map")
 	bool bVisited;
 
+	UPROPERTY(EditAnywhere, BlueprintReadWrite, Category = "Map")
+	TArray<int32> ConnectedNodes;
+
+	UPROPERTY(EditAnywhere, BlueprintReadWrite, Category = "Map")
+	TArray<int32> IncomingNodes;
+
+	UPROPERTY(EditAnywhere, BlueprintReadWrite, Category = "Map")
+	int32 column = -1;
+
+	UPROPERTY(EditAnywhere, BlueprintReadWrite, Category = "Map")
+	int32 row = -1;
+
 	FMapNodeData()
 		: RoomType(EMapRoomCPP::Empty), bVisited(false)
 	{}
@@ -53,6 +65,22 @@ public:
 	UFUNCTION(BlueprintCallable, Category = "GameManager")
 	void MarkEncounterComplete(FName EncounterName);
 
+	UFUNCTION(BlueprintCallable, Category = "GameManager")
+	void GenerateGrid();
+
+	UFUNCTION(BlueprintCallable, Category = "Map")
+	void CreateMap();
+
+	// Optional helper functions
+	UFUNCTION(BlueprintCallable, Category = "Map")
+	FMapNodeData GetNode(int32 Floor, int32 NodeIndex);
+
+	UFUNCTION(BlueprintCallable, Category = "Map")
+	void SetNode(int32 Floor, int32 NodeIndex, FMapNodeData& NewData);
+
+	UFUNCTION(BlueprintCallable, Category = "Map")
+	int32 GetNodeIndex(int32 Floor, int32 NodeIndex);
+
 private:
 	TArray<EMapRoomCPP> AllRooms;
 	
@@ -70,6 +98,13 @@ protected:
 
 	UPROPERTY(BlueprintReadWrite, Category = "Map")
 	TArray<FName> CompletedEncounters;
+
+	UPROPERTY(EditAnywhere, BlueprintReadWrite, Category = "Map")
+	int floors = 15;
+	UPROPERTY(EditAnywhere, BlueprintReadWrite, Category = "Map")
+	int maxNodesPerFloor = 7;
+	UPROPERTY(BlueprintReadWrite, Category = "Map")
+	TArray<FMapNodeData> Grid;
 
 	
 };
