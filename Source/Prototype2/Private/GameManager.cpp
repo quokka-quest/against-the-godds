@@ -118,17 +118,36 @@ void UGameManager::GenerateGrid()
 void UGameManager::CreateMap()
 {
 	// get two different starting nodes on the first floor
+	TArray<int> StartingNodes;
+
 	int startNodeIndex = FMath::RandRange(0, maxNodesPerFloor - 1);
+	StartingNodes.Add(startNodeIndex);
+
 	int startNodeIndex2 = startNodeIndex;
 	while (startNodeIndex2 == startNodeIndex)
 	{
 		startNodeIndex2 = FMath::RandRange(0, maxNodesPerFloor - 1);
 	}
 
+	StartingNodes.Add(startNodeIndex2);
+
+	// set four more starting nodes on first floor (can be dupes)
+	int extraNodes = 4;
+	for (int i = 0; i < extraNodes; ++i)
+	{
+		int ExtraNodeIndex = FMath::RandRange(0, maxNodesPerFloor - 1);
+
+		if (!StartingNodes.Contains(ExtraNodeIndex))
+		{
+			StartingNodes.Add(ExtraNodeIndex);
+		}
+	}
+
+	// Mark first floor nodes correctly (StartingNodes contains columns, not flat indices)
 	for (int32 NodeIndex = 0; NodeIndex < maxNodesPerFloor; ++NodeIndex)
 	{
-		int32 FlatIndex = 0 * maxNodesPerFloor + NodeIndex;
-		if (NodeIndex == startNodeIndex || NodeIndex == startNodeIndex2)
+		int32 FlatIndex = GetNodeIndex(0, NodeIndex);
+		if (StartingNodes.Contains(NodeIndex))
 		{
 			Grid[FlatIndex].RoomType = EMapRoomCPP::Combat; // or any starting room type
 		}
@@ -136,6 +155,92 @@ void UGameManager::CreateMap()
 		{
 			Grid[FlatIndex].RoomType = EMapRoomCPP::Empty;
 		}
+	}
+
+	// For each starting node (column), create paths down the floors
+	for (int32 StartColumn : StartingNodes)
+	{
+		int32 CurrentColumn = StartColumn;
+		int32 CurrentFlat = GetNodeIndex(0, CurrentColumn);
+
+		// Ensure the first node is marked (redundant but explicit)
+		if (Grid.IsValidIndex(CurrentFlat))
+		{
+			Grid[CurrentFlat].RoomType = EMapRoomCPP::Combat;
+		}
+
+		for (int32 Floor = 0; Floor < floors - 1; ++Floor)
+		{
+			// Choose next node using column (0..maxNodesPerFloor-1)
+			int32 NextFlat = ChooseNextNode(Floor, CurrentColumn);
+			if (NextFlat == -1)
+			{
+				break; // No valid next node
+			}
+
+			// Assign a room type to the chosen flat node
+			if (Grid.IsValidIndex(NextFlat))
+			{
+				Grid[NextFlat].RoomType = EMapRoomCPP::Combat; // or any logic to assign room types
+			}
+
+			// Advance: compute column from flat index for the next iteration
+			CurrentColumn = NextFlat % maxNodesPerFloor;
+			CurrentFlat = NextFlat;
+		}
+	}
+}
+
+int32 UGameManager::ChooseNextNode(int32 Floor, int32 NodeIndex)
+{
+	{
+		// No next floor available or invalid input
+		if (Floor < 0 || Floor >= floors - 1) return -1;
+		if (NodeIndex < 0 || NodeIndex >= maxNodesPerFloor) return -1;
+		
+			const int32 NextFloor = Floor + 1;
+		const int32 LastCol = maxNodesPerFloor - 1;
+		
+		// Build candidate columns on the next floor
+			TArray<int32> Candidates;
+		if (NodeIndex == 0)
+			 {
+					// first column: only allow same or +1
+				if (0 <= LastCol) Candidates.Add(0);
+			if (1 <= LastCol) Candidates.Add(1);
+			}
+		 else if (NodeIndex == LastCol)
+			 {
+					// last column: only allow -1 or same
+				if (LastCol - 1 >= 0) Candidates.Add(LastCol - 1);
+			Candidates.Add(LastCol);
+			}
+		 else
+			 {
+					// middle: allow -1, same, +1
+				Candidates.Add(FMath::Clamp(NodeIndex - 1, 0, LastCol));
+			Candidates.Add(NodeIndex);
+			Candidates.Add(FMath::Clamp(NodeIndex + 1, 0, LastCol));
+			}
+		
+				// Defensive: ensure we have candidates
+			if (Candidates.Num() == 0) return -1;
+		
+				// Pick randomly among the candidates
+			int32 PickIndex = FMath::RandRange(0, Candidates.Num() - 1);
+		int32 ChosenCol = Candidates[PickIndex];
+		int32 ChosenFlat = GetNodeIndex(NextFloor, ChosenCol);
+		int32 CurrentFlat = GetNodeIndex(Floor, NodeIndex);
+		
+				// Record the connection if indices valid
+			if (Grid.IsValidIndex(CurrentFlat) && Grid.IsValidIndex(ChosenFlat))
+			 {
+			Grid[CurrentFlat].ConnectedNodes.AddUnique(ChosenFlat);
+			Grid[ChosenFlat].IncomingNodes.AddUnique(CurrentFlat);
+			}
+		
+			return ChosenFlat;
+		
 	}
 }
 

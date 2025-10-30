@@ -71,6 +71,9 @@ public:
 	UFUNCTION(BlueprintCallable, Category = "Map")
 	void CreateMap();
 
+	UFUNCTION(BlueprintCallable, Category = "Map")
+	int32 ChooseNextNode(int32 Floor, int32 NodeIndex);
+
 	// Optional helper functions
 	UFUNCTION(BlueprintCallable, Category = "Map")
 	FMapNodeData GetNode(int32 Floor, int32 NodeIndex);
