@@ -103,11 +103,12 @@ void AGridManager::DisplayWalkableTiles(FIntVector CurrentCellCoord, int Availab
 	}
 }
 
-void AGridManager::ResetWalkableTiles()
+void AGridManager::ResetTilesWalkAndAttackBooleans()
 {
 	for (auto& Cell : GridCells)
 	{
 		Cell.Value->isWalkable = false;
+		Cell.Value->isAttackable = false;
 		Cell.Value->FindComponentByClass<UStaticMeshComponent>()->SetMaterial(0, DefaultMat);
 	}
 }

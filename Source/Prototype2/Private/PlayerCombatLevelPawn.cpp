@@ -77,6 +77,7 @@ void APlayerCombatLevelPawn::SetTileSelectionType(ETileSelectionType Type)
 	TileSelectionType = Type;
 }
 
+// need to add the 'attack' tile selection type functionality to this
 void APlayerCombatLevelPawn::OnTileClick()
 {
 	if (!HighlightedCell) {SelectedCell = nullptr; return;}

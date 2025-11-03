@@ -180,7 +180,7 @@ void ACombatManager::DisplayPathForCurrentCombatant(FIntVector TargetPos)
 // displays the movement options for the current combatant
 void ACombatManager::DisplayCurrentCombatantsMovement()
 {
-	GridManager->ResetWalkableTiles();
+	GridManager->ResetTilesWalkAndAttackBooleans();
 	GridManager->DisplayWalkableTiles(CurrentTurnCombatant->PositionCoord, CurrentTurnCombatant->AvailableMovement);
 }
 
@@ -201,7 +201,7 @@ AEntityBase* ACombatManager::GetCurrentCombatant()
 
 void ACombatManager::DisplayAttackRange(int Range) 
 {
-	GridManager->ResetWalkableTiles();
+	GridManager->ResetTilesWalkAndAttackBooleans();
 	GridManager->DisplayTilesInAttackRange(CurrentTurnCombatant->PositionCoord, Range);
 }
 

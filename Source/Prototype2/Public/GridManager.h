@@ -88,7 +88,7 @@ public:
 	void DisplayWalkableTiles(FIntVector CurrentCellCoord, int AvailableMovement);
 
 	UFUNCTION(BlueprintCallable)
-	void ResetWalkableTiles();
+	void ResetTilesWalkAndAttackBooleans();
 
 	UFUNCTION(BlueprintCallable)
 	TArray<FIntVector> DisplayTilePath(FIntVector StartCoord, FIntVector EndCoord);
