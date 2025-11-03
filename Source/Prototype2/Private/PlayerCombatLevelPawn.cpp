@@ -160,6 +160,12 @@ void APlayerCombatLevelPawn::OnMoveButtonClicked()
 	TileSelectionType = ETileSelectionType::Movement;
 }
 
+void APlayerCombatLevelPawn::OnAttackButtonClicked()
+{
+	SelectedCell = nullptr;
+	TileSelectionType = ETileSelectionType::Attack;
+}
+
 
 
 

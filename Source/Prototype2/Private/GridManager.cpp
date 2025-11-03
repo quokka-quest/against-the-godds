@@ -125,6 +125,20 @@ TArray<FIntVector> AGridManager::DisplayTilePath(FIntVector StartCoord, FIntVect
 	return Path;
 }
 
+void AGridManager::DisplayTilesInAttackRange(FIntVector CurrentCellCoord, int Range)
+{
+	if (Range < 0) return;
+
+	TArray<FIntVector> WalkableCoords = PathFinder->FindMoveableTiles(CurrentCellCoord, Range);
+	if (WalkableCoords.Num() == 0) return;
+
+	for (FIntVector WalkableCoord : WalkableCoords)
+	{
+		GridCells[WalkableCoord]->FindComponentByClass<UStaticMeshComponent>()->SetMaterial(0, HighlightedMat);
+		GridCells[WalkableCoord]->isAttackable = true;
+	}
+}
+
 
 
 

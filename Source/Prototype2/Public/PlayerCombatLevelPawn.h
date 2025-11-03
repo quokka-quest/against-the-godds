@@ -16,6 +16,7 @@ enum ETileSelectionType
 {
 	SpawnSelection,
 	Movement,
+	Attack,
 	None
 };
 
@@ -87,5 +88,8 @@ private:
 
 	UFUNCTION()
 	void OnMoveButtonClicked();
+
+	UFUNCTION()
+	void OnAttackButtonClicked();
 
 };

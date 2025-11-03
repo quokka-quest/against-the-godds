@@ -93,4 +93,7 @@ public:
 	UFUNCTION(BlueprintCallable)
 	TArray<FIntVector> DisplayTilePath(FIntVector StartCoord, FIntVector EndCoord);
 
+	UFUNCTION(BlueprintCallable)
+	void DisplayTilesInAttackRange(FIntVector CurrentCellCoord, int Range);
+
 };

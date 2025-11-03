@@ -189,12 +189,21 @@ void ACombatManager::BroadcastOnMoveClickedEvent()
 	OnMoveButtonClicked.Broadcast();
 }
 
+void ACombatManager::BroadcastOnAttackClickedEvent() 
+{
+	OnAttackButtonClicked.Broadcast();
+}
+
 AEntityBase* ACombatManager::GetCurrentCombatant()
 {
 	return CurrentTurnCombatant;
 }
 
-
+void ACombatManager::DisplayAttackRange(int Range) 
+{
+	GridManager->ResetWalkableTiles();
+	GridManager->DisplayTilesInAttackRange(CurrentTurnCombatant->PositionCoord, Range);
+}
 
 
 

@@ -25,6 +25,7 @@ struct FPlayerInitiativeData
 
 DECLARE_DYNAMIC_MULTICAST_DELEGATE(FOnPlayerTurnEnd);
 DECLARE_DYNAMIC_MULTICAST_DELEGATE(FOnMoveButtonClicked);
+DECLARE_DYNAMIC_MULTICAST_DELEGATE(FOnAttackButtonClicked);
 
 UCLASS()
 class PROTOTYPE2_API ACombatManager : public AGameModeBase
@@ -39,6 +40,9 @@ public:
 
 	UPROPERTY(BlueprintAssignable, category = "Combat")
 	FOnMoveButtonClicked OnMoveButtonClicked;
+
+	UPROPERTY(BlueprintAssignable, category = "Combat")
+	FOnAttackButtonClicked OnAttackButtonClicked;
 
 	UPROPERTY(EditAnywhere, BlueprintReadWrite, category = "Combat")
 	FName TurnEventQueueName;
@@ -70,8 +74,14 @@ public:
 	UFUNCTION(BlueprintCallable)
 	void BroadcastOnMoveClickedEvent();
 
+	UFUNCTION(BlueprintCallable)
+	void BroadcastOnAttackClickedEvent();
+
 	UFUNCTION(BlueprintCallable, BlueprintPure)
 	AEntityBase* GetCurrentCombatant();
+
+	UFUNCTION(BlueprintCallable)
+	void DisplayAttackRange(int Range);
 
 protected:
 	UPROPERTY(BlueprintReadWrite)
