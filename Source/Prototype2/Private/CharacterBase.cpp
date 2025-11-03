@@ -13,9 +13,11 @@ ACharacterBase::ACharacterBase()
 	PrimaryActorTick.bCanEverTick = true;
 
 	// Create the GAS components
-	AbilitySystemComponent = CreateDefaultSubobject<UAbilitySystemComponent>(TEXT("AbilitySystemComponent"));
+	AbilitySystemComponent = CreateDefaultSubobject<UTurnBasedAbilitySystemComponent>(TEXT("AbilitySystemComponent"));
 	HealthSet = CreateDefaultSubobject<UAttributeHealthSet>(TEXT("HealthSet"));
 	DamageModifiersSet = CreateDefaultSubobject<UAttributeDamageModifiersSet>(TEXT("DamageModifiersSet"));
+	StartFilterTags.AddTag(FGameplayTag::RequestGameplayTag(FName("Effect.StartOfTurn")));
+	StatusFilterTags.AddTag(FGameplayTag::RequestGameplayTag(FName("Status")));
 }
 
 // Called when the game starts or when spawned
@@ -28,6 +30,46 @@ void ACharacterBase::BeginPlay()
 	// Also subscribe the OnCurrentHealthAttributeChanged to the health changing delegate from HealthSet
 	AbilitySystemComponent->GetGameplayAttributeValueChangeDelegate(HealthSet->GetCurrentHealthAttribute()).AddUObject(this, &ACharacterBase::OnCurrentHealthAttributeChanged);
 }
+
+TMap<FGameplayTag, int32> ACharacterBase::GetActiveStatusEffects() const
+{
+	TMap<FGameplayTag, int32> StatusEffects;
+    
+	if (!AbilitySystemComponent)
+	{
+		return StatusEffects;
+	}
+    
+	// Get all active effects
+	TArray<FActiveGameplayEffectHandle> ActiveEffects = AbilitySystemComponent->GetActiveEffectsWithAllTags(StatusFilterTags);
+    
+	for (const FActiveGameplayEffectHandle& EffectHandle : ActiveEffects)
+	{
+		const FActiveGameplayEffect* ActiveEffect = AbilitySystemComponent->GetActiveGameplayEffect(EffectHandle);
+		if (ActiveEffect && ActiveEffect->Spec.Def)
+		{
+			// Get the asset tags from the effect
+			FGameplayTagContainer AssetTags;
+			ActiveEffect->Spec.GetAllAssetTags(AssetTags);
+            
+			// Get stack count
+			int32 StackCount = ActiveEffect->Spec.GetStackCount();
+            
+			// Store each tag with its stack count
+			for (const FGameplayTag& Tag : AssetTags)
+			{
+				// Only add tags that match the "Status" category
+				if (Tag.MatchesTag(FGameplayTag::RequestGameplayTag(FName("Status"))))
+				{
+					StatusEffects.Add(Tag, StackCount);
+				}
+			}
+		}
+	}
+    
+	return StatusEffects;
+}
+
 
 // Called every frame
 void ACharacterBase::Tick(float DeltaTime)
@@ -66,12 +108,13 @@ void ACharacterBase::ActivateAbility(const TSubclassOf<UGameplayAbility> Ability
 	AbilitySystemComponent->TryActivateAbilityByClass(AbilityClass, false);
 }
 
-void ACharacterBase::ActivateAbilityWithTarget(TSubclassOf<UGameplayAbility> AbilityClass, AActor* InTargetActor)
+void ACharacterBase::ActivateAbilityWithTargets(TSubclassOf<UGameplayAbility> AbilityClass,
+	const TArray<AActor*> InTargetsActor)
 {
 	// Early exit case if the class is empty
 	if (!AbilityClass) return;
 	
-	TargetActor = InTargetActor;
+	Targets = InTargetsActor;
 	AbilitySystemComponent->TryActivateAbilityByClass(AbilityClass, false);
 }
 
@@ -127,6 +170,15 @@ float ACharacterBase::GetMaxHealth() const
 	return(HealthSet->GetMaxHealth());
 }
 
+void ACharacterBase::ActivateStartOfTurnEffects()
+{
+	for (FActiveGameplayEffectHandle Effect : AbilitySystemComponent->GetActiveEffectsWithAllTags(StartFilterTags))
+	{
+		// Remove a stack
+		AbilitySystemComponent->RemoveActiveGameplayEffect(Effect, 1);
+	}
+}
+
 float ACharacterBase::GetFlatDamageModifier() const
 {
 	return(DamageModifiersSet->GetFlatModifier());
@@ -135,5 +187,10 @@ float ACharacterBase::GetFlatDamageModifier() const
 float ACharacterBase::GetMultiDamageModifier() const
 {
 	return(DamageModifiersSet->GetMultiModifier());
+}
+
+TArray<AActor*> ACharacterBase::GetTargets() const
+{
+	return Targets;
 }
 

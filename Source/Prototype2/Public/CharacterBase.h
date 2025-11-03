@@ -6,6 +6,7 @@
 #include "GameFramework/Pawn.h"
 #include "AbilitySystemInterface.h"
 #include "GameplayEffectTypes.h"
+#include "TurnBasedAbilitySystemComponent.h"
 #include "CharacterBase.generated.h"
 
 //Forward declarations for included classes inside the cpp file
@@ -17,6 +18,10 @@ class PROTOTYPE2_API ACharacterBase : public APawn, public IAbilitySystemInterfa
 {
 	GENERATED_BODY()
 
+private:
+	FGameplayTagContainer StartFilterTags;
+	FGameplayTagContainer StatusFilterTags;
+
 public:
 	// Sets default values for this pawn's properties
 	ACharacterBase();
@@ -27,7 +32,7 @@ protected:
 
 	// GAS Setup
 	UPROPERTY(VisibleAnywhere, BlueprintReadOnly, Category = "GAS", meta = (AllowPrivateAccess = "true"))
-	TObjectPtr<UAbilitySystemComponent> AbilitySystemComponent;
+	TObjectPtr<UTurnBasedAbilitySystemComponent> AbilitySystemComponent;
 
 	UPROPERTY(VisibleAnywhere, BlueprintReadOnly, Category = "GAS", meta = (AllowPrivateAccess = "true"))
 	TObjectPtr<class UAttributeHealthSet> HealthSet;
@@ -44,6 +49,9 @@ protected:
 	UPROPERTY(EditDefaultsOnly, BlueprintReadOnly, Category = "GAS", meta = (AllowPrivateAccess = "true"))
 	TArray<TSubclassOf<UGameplayEffect>> DefaultEffects;
 
+	UFUNCTION(BlueprintCallable, Category = "Character|Status Effects")
+    TMap<FGameplayTag, int32> GetActiveStatusEffects() const;
+	
 public:	
 	// Called every frame
 	virtual void Tick(float DeltaTime) override;
@@ -56,12 +64,20 @@ public:
 	UFUNCTION(BlueprintCallable, Category = "GAS")
 	virtual void ActivateAbility(TSubclassOf<UGameplayAbility> AbilityClass);
 	UFUNCTION(BlueprintCallable, Category = "GAS")
-	virtual void ActivateAbilityWithTarget(TSubclassOf<UGameplayAbility> AbilityClass, AActor* InTargetActor);
+	virtual void ActivateAbilityWithTargets(TSubclassOf<UGameplayAbility> AbilityClass, const TArray<AActor*> InTargetsActor);
+
+	UFUNCTION(BlueprintCallable, Category = "GAS")
+	float GetFlatDamageModifier() const;
+
+	UFUNCTION(BlueprintCallable, Category = "GAS")
+	float GetMultiDamageModifier() const;
+
+	TArray<AActor*> GetTargets() const;
 protected:
 	virtual UAbilitySystemComponent* GetAbilitySystemComponent() const override;
 
 	UPROPERTY(BlueprintReadOnly, Category = "GAS")
-	AActor* TargetActor;
+	TArray<AActor*> Targets;
 
 	virtual void InitialiseAbilities();
 	virtual void InitialiseEffects();
@@ -83,8 +99,6 @@ protected:
 	float GetMaxHealth() const;
 
 	UFUNCTION(BlueprintCallable, Category = "GAS")
-	float GetFlatDamageModifier() const;
-
-	UFUNCTION(BlueprintCallable, Category = "GAS")
-	float GetMultiDamageModifier() const;
+	void ActivateStartOfTurnEffects();
+	
 };
