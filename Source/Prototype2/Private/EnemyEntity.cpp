@@ -36,7 +36,6 @@ void AEnemyEntity::DeterminePlayerTarget()
 	}
 
 	PlayerTarget = ClosestPlayer;
-	UE_LOG(LogTemp, Warning, TEXT("Player target is: %s"), *ClosestPlayer->GetName())
 }
 
 void AEnemyEntity::DetermineMovement()

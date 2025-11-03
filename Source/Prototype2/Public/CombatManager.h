@@ -86,6 +86,9 @@ public:
 
 	void DisplayAttackPattern(FIntVector TargetCoord);
 
+	UFUNCTION(BlueprintCallable)
+	void SetAttackPatternToUse(EAttackPattern Pattern);
+
 protected:
 	UPROPERTY(BlueprintReadWrite)
 	AGridManager* GridManager;
@@ -116,6 +119,8 @@ protected:
 	void BlueprintEndTurnEvents();
 
 	TArray<FIntVector> PathForCombatantToFollow;
-	
+
+	int AttackRange;
+	EAttackPattern AttackPattern;
 	
 };

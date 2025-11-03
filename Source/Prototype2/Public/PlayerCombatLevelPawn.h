@@ -74,6 +74,8 @@ private:
 
 	void DisplayAttackTargetArea();
 
+	void TryAttackTargetTile();
+
 	UFUNCTION(BlueprintCallable)
 	bool AttemptToFinishPlayerStartPlacement();
 

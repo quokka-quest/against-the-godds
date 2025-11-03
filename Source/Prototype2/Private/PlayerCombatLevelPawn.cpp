@@ -42,6 +42,7 @@ void APlayerCombatLevelPawn::BeginPlay()
 
 	CombatManager->OnPlayerTurnEnd.AddDynamic(this, &APlayerCombatLevelPawn::OnPlayerTurnEnd);
 	CombatManager->OnMoveButtonClicked.AddDynamic(this, &APlayerCombatLevelPawn::OnMoveButtonClicked);
+	CombatManager->OnAttackButtonClicked.AddDynamic(this, &APlayerCombatLevelPawn::OnAttackButtonClicked);
 }
 
 // Called every frame
@@ -95,6 +96,7 @@ void APlayerCombatLevelPawn::OnTileClick()
 	}
 
 	if (TileSelectionType == ETileSelectionType::Movement) TryMoveToTile();
+	if (TileSelectionType == ETileSelectionType::Attack) TryAttackTargetTile();
 	
 }
 
@@ -156,6 +158,12 @@ void APlayerCombatLevelPawn::DisplayAttackTargetArea()
 
 	CombatManager->DisplayAttackPattern(HighlightedCell->GridCellCoord);
 }
+
+void APlayerCombatLevelPawn::TryAttackTargetTile()
+{
+	UE_LOG(LogTemp, Warning, TEXT("try to attack target tile"))
+}
+
 
 void APlayerCombatLevelPawn::OnPlayerTurnEnd()
 {

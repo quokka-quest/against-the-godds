@@ -201,14 +201,19 @@ AEntityBase* ACombatManager::GetCurrentCombatant()
 
 void ACombatManager::DisplayAttackRange(int Range) 
 {
+	AttackRange = Range;
 	GridManager->ResetTilesWalkAndAttackBooleans();
 	GridManager->DisplayTilesInAttackRange(CurrentTurnCombatant->PositionCoord, Range);
 }
 
 void ACombatManager::DisplayAttackPattern(FIntVector TargetCoord)
 {
-	
+	DisplayAttackRange(AttackRange);
+	GridManager->DisplayAttackPattern(TargetCoord, AttackPattern);
 }
 
-
+void ACombatManager::SetAttackPatternToUse(EAttackPattern Pattern)
+{
+	AttackPattern = Pattern;
+}
 

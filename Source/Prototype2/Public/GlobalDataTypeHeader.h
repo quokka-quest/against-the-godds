@@ -30,8 +30,8 @@ enum EAttackPattern
 {
 	SingleTarget,
 	Plus,
-	HorizontalLine3X1,
-	VerticalLine3X1
+	XCentredLine3X1,
+	YCentredLine3X1
 };
 
 // Used in the player combat level pawn

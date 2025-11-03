@@ -140,6 +140,17 @@ void AGridManager::DisplayTilesInAttackRange(FIntVector CurrentCellCoord, int Ra
 	}
 }
 
+void AGridManager::DisplayAttackPattern(FIntVector TargetCoord, EAttackPattern Pattern)
+{
+	TArray<FIntVector> Coords = AttackAreaManager.GetCoordsInTargetArea(TargetCoord, Pattern);
+
+	for (FIntVector Coord : Coords)
+	{
+		if (!GridCells.Contains(Coord)) continue;
+
+		GridCells[Coord]->FindComponentByClass<UStaticMeshComponent>()->SetMaterial(0, TargetMat);
+	}
+}
 
 
 

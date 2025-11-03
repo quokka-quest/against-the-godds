@@ -83,6 +83,6 @@ public:
 	UFUNCTION(BlueprintCallable)
 	void DisplayTilesInAttackRange(FIntVector CurrentCellCoord, int Range);
 
-	void DisplayAttackPatter(FIntVector TargetCoord, EAttackPattern Patter);
+	void DisplayAttackPattern(FIntVector TargetCoord, EAttackPattern Pattern);
 
 };
