@@ -25,7 +25,7 @@ TArray<FIntVector> APathFinder::FindPath(FIntVector Start, FIntVector End)
 	TArray<FIntVector> result;
 	AGridManager* GridManager = Cast<AGridManager>(UGameplayStatics::GetActorOfClass(GetWorld(), AGridManager::StaticClass()));
 
-	DiscoverTile(StartCoord, StartCoord);
+	DiscoverTileForMovement(StartCoord, StartCoord);
 
 	int loopCount = 0;
 	while (DiscoveredTiles.Num() > 0)
@@ -56,7 +56,7 @@ TArray<FIntVector> APathFinder::FindPath(FIntVector Start, FIntVector End)
 	return result;
 }
 
-void APathFinder::DiscoverTile(FIntVector TileCoord, FIntVector PreviousTile)
+void APathFinder::DiscoverTileForMovement(FIntVector TileCoord, FIntVector PreviousTile)
 {
 	AGridManager* GridManager = Cast<AGridManager>(UGameplayStatics::GetActorOfClass(GetWorld(), AGridManager::StaticClass()));
 
@@ -109,7 +109,7 @@ bool APathFinder::AnalyseNextTile()
 		if (!GridManager->GridCells.Contains(NeighbourTile)) continue;
 		if (IsTileAlreadyDiscovered(NeighbourTile)) continue;
 		
-		DiscoverTile(NeighbourTile, Tile.Coord);
+		DiscoverTileForMovement(NeighbourTile, Tile.Coord);
 
 		if (NeighbourTile == EndCoord) {return true;}
 	}
@@ -140,7 +140,7 @@ TArray<FIntVector> APathFinder::FindMoveableTiles(FIntVector Start, int Availabl
 
 	AGridManager* GridManager = Cast<AGridManager>(UGameplayStatics::GetActorOfClass(GetWorld(), AGridManager::StaticClass()));
 
-	DiscoverTile(StartCoord, StartCoord);
+	DiscoverTileForMovement(StartCoord, StartCoord);
 
 	while (DiscoveredTiles.Num() > 0)
 	{
@@ -173,11 +173,66 @@ void APathFinder::AnalyseTileForMovementAvailability()
 		if (!GridManager->GridCells.Contains(NeighbourTile)) continue;
 		if (IsTileAlreadyDiscovered(NeighbourTile)) continue;
 		
-		DiscoverTile(NeighbourTile, Tile.Coord);
+		DiscoverTileForMovement(NeighbourTile, Tile.Coord);
 	}
 }
 
+void APathFinder::DiscoverTileForAttack(FIntVector TileCoord, FIntVector PreviousTile)
+{
+	AGridManager* GridManager = Cast<AGridManager>(UGameplayStatics::GetActorOfClass(GetWorld(), AGridManager::StaticClass()));
 
+	FTileInfo TileInfo = FTileInfo();
+	TileInfo.Coord = TileCoord;
+	TileInfo.EntryCost = 1; // Can potentially change this to work for blocking paths of attack with obstacles
+	TileInfo.MinCostToTarget = CalulateMinCostBetweenTiles(TileCoord, EndCoord);
+	TileInfo.PreviousTile = PreviousTile;
 
+	int CostFromStart = (!TileMap.IsEmpty())? TileMap[PreviousTile].CostFromStart + TileInfo.EntryCost : 0;
+	TileInfo.CostFromStart = CostFromStart;
 
+	if (CostFromStart > AttackRange) return;
 
+	TileMap.Add(TileCoord, TileInfo);
+	DiscoveredTiles.Add(TileInfo);
+}
+
+void APathFinder::AnalyseTileForAttackAvailability()
+{
+	FTileInfo Tile = GetNextTileFromDiscoverableArray();
+	AGridManager* GridManager = Cast<AGridManager>(UGameplayStatics::GetActorOfClass(GetWorld(), AGridManager::StaticClass()));
+
+	for (FIntVector Offset : NeighbourOffsets)
+	{
+		FIntVector NeighbourTile = Tile.Coord + Offset;
+		if (!GridManager->GridCells.Contains(NeighbourTile)) continue;
+		if (IsTileAlreadyDiscovered(NeighbourTile)) continue;
+		
+		DiscoverTileForAttack(NeighbourTile, Tile.Coord);
+	}
+}
+
+TArray<FIntVector> APathFinder::FindAttackableTiles(FIntVector Start, int Range)
+{
+	TArray<FIntVector> WalkableTiles;
+	AttackRange = Range;
+	StartCoord = Start;
+	DiscoveredTiles.Empty();
+	AnalysedTiles.Empty();
+	TileMap.Empty();
+
+	AGridManager* GridManager = Cast<AGridManager>(UGameplayStatics::GetActorOfClass(GetWorld(), AGridManager::StaticClass()));
+
+	DiscoverTileForAttack(StartCoord, StartCoord);
+
+	while (DiscoveredTiles.Num() > 0)
+	{
+		AnalyseTileForAttackAvailability();
+	}
+
+	for (FTileInfo Tile : AnalysedTiles)
+	{
+		WalkableTiles.Add(Tile.Coord);
+	}
+	
+	return WalkableTiles;
+}

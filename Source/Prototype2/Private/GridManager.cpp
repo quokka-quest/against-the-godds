@@ -129,7 +129,7 @@ void AGridManager::DisplayTilesInAttackRange(FIntVector CurrentCellCoord, int Ra
 {
 	if (Range < 0) return;
 
-	TArray<FIntVector> WalkableCoords = PathFinder->FindMoveableTiles(CurrentCellCoord, Range);
+	TArray<FIntVector> WalkableCoords = PathFinder->FindAttackableTiles(CurrentCellCoord, Range);
 	if (WalkableCoords.Num() == 0) return;
 
 	for (FIntVector WalkableCoord : WalkableCoords)
