@@ -6,6 +6,7 @@
 #include "GameFramework/GameModeBase.h"
 #include "GridManager.h"
 #include "PlayerEntity.h"
+#include "GlobalDataTypeHeader.h"
 #include "CombatManager.generated.h"
 
 /**
@@ -82,6 +83,8 @@ public:
 
 	UFUNCTION(BlueprintCallable)
 	void DisplayAttackRange(int Range);
+
+	void DisplayAttackPattern(FIntVector TargetCoord);
 
 protected:
 	UPROPERTY(BlueprintReadWrite)

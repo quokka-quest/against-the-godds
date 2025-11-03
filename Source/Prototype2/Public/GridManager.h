@@ -6,24 +6,9 @@
 #include "GameFramework/Actor.h"
 #include "GridCell.h"
 #include "PathFinder.h"
+#include "AttackTargetAreas.h"
+#include "GlobalDataTypeHeader.h"
 #include "GridManager.generated.h"
-
-UENUM(BlueprintType)
-enum EEditorGridDisplayType
-{
-	Default,
-	PlayerSpawnTile,
-	HazardTile,
-	EnemySpawnTile
-};
-
-UENUM(BlueprintType)
-enum ETileMaterial
-{
-	Base,
-	Target,
-	Highlighted
-};
 
 UCLASS()
 class PROTOTYPE2_API AGridManager : public AActor
@@ -52,6 +37,8 @@ private:
 
 	UPROPERTY()
 	APathFinder* PathFinder;
+
+	AttackTargetAreas AttackAreaManager;
 	
 	void InitialiseGridManagement();
 
@@ -95,5 +82,7 @@ public:
 
 	UFUNCTION(BlueprintCallable)
 	void DisplayTilesInAttackRange(FIntVector CurrentCellCoord, int Range);
+
+	void DisplayAttackPatter(FIntVector TargetCoord, EAttackPattern Patter);
 
 };

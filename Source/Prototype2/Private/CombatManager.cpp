@@ -205,6 +205,10 @@ void ACombatManager::DisplayAttackRange(int Range)
 	GridManager->DisplayTilesInAttackRange(CurrentTurnCombatant->PositionCoord, Range);
 }
 
+void ACombatManager::DisplayAttackPattern(FIntVector TargetCoord)
+{
+	
+}
 
 
 

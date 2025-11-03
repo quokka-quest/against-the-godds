@@ -89,6 +89,7 @@ void APlayerCombatLevelPawn::OnTileClick()
 		SelectedCell = HighlightedCell;
 		
 		if (TileSelectionType == ETileSelectionType::Movement) DisplayPathToTile();
+		if (TileSelectionType == ETileSelectionType::Attack) DisplayAttackTargetArea();
 		
 		return;
 	}
@@ -148,6 +149,13 @@ void APlayerCombatLevelPawn::DisplayPathToTile()
 	CombatManager->DisplayPathForCurrentCombatant(HighlightedCell->GridCellCoord);
 }
 
+void APlayerCombatLevelPawn::DisplayAttackTargetArea()
+{
+	if (!HighlightedCell) return;
+	if (!HighlightedCell->isAttackable) return;
+
+	CombatManager->DisplayAttackPattern(HighlightedCell->GridCellCoord);
+}
 
 void APlayerCombatLevelPawn::OnPlayerTurnEnd()
 {
