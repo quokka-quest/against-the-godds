@@ -163,7 +163,6 @@ void UGameManager::CreateMap()
 		int32 CurrentColumn = StartColumn;
 		int32 CurrentFlat = GetNodeIndex(0, CurrentColumn);
 
-		// Ensure the first node is marked (redundant but explicit)
 		if (Grid.IsValidIndex(CurrentFlat))
 		{
 			Grid[CurrentFlat].RoomType = EMapRoomCPP::Combat;
@@ -171,78 +170,96 @@ void UGameManager::CreateMap()
 
 		for (int32 Floor = 0; Floor < floors - 1; ++Floor)
 		{
-			// Choose next node using column (0..maxNodesPerFloor-1)
-			int32 NextFlat = ChooseNextNode(Floor, CurrentColumn);
-			if (NextFlat == -1)
+			// Get possible next nodes (returns array of candidates)
+			TArray<int32> NextFlats = ChooseNextNodes(Floor, CurrentColumn);
+
+			for (int32 NextFlat : NextFlats)
 			{
-				break; // No valid next node
+				if (Grid.IsValidIndex(NextFlat))
+				{
+					Grid[NextFlat].RoomType = EMapRoomCPP::Combat;
+					// Record the connection
+					Grid[CurrentFlat].ConnectedNodes.AddUnique(NextFlat);
+					Grid[NextFlat].IncomingNodes.AddUnique(CurrentFlat);
+				}
 			}
 
-			// Assign a room type to the chosen flat node
-			if (Grid.IsValidIndex(NextFlat))
+			// For next iteration, you may want to branch further from each NextFlat
+			// This requires a queue or recursion for full branching
+			// For simplicity, you can continue with the first branch:
+			if (NextFlats.Num() > 0)
 			{
-				Grid[NextFlat].RoomType = EMapRoomCPP::Combat; // or any logic to assign room types
+				CurrentColumn = NextFlats[0] % maxNodesPerFloor;
+				CurrentFlat = NextFlats[0];
 			}
-
-			// Advance: compute column from flat index for the next iteration
-			CurrentColumn = NextFlat % maxNodesPerFloor;
-			CurrentFlat = NextFlat;
 		}
 	}
+
 }
 
-int32 UGameManager::ChooseNextNode(int32 Floor, int32 NodeIndex)
+bool UGameManager::DoesConnectionCross(int32 Floor, int32 ColA, int32 ColB)
 {
-	{
-		// No next floor available or invalid input
-		if (Floor < 0 || Floor >= floors - 1) return -1;
-		if (NodeIndex < 0 || NodeIndex >= maxNodesPerFloor) return -1;
-		
-			const int32 NextFloor = Floor + 1;
-		const int32 LastCol = maxNodesPerFloor - 1;
-		
-		// Build candidate columns on the next floor
-			TArray<int32> Candidates;
-		if (NodeIndex == 0)
-			 {
-					// first column: only allow same or +1
-				if (0 <= LastCol) Candidates.Add(0);
-			if (1 <= LastCol) Candidates.Add(1);
-			}
-		 else if (NodeIndex == LastCol)
-			 {
-					// last column: only allow -1 or same
-				if (LastCol - 1 >= 0) Candidates.Add(LastCol - 1);
-			Candidates.Add(LastCol);
-			}
-		 else
-			 {
-					// middle: allow -1, same, +1
-				Candidates.Add(FMath::Clamp(NodeIndex - 1, 0, LastCol));
-			Candidates.Add(NodeIndex);
-			Candidates.Add(FMath::Clamp(NodeIndex + 1, 0, LastCol));
-			}
-		
-				// Defensive: ensure we have candidates
-			if (Candidates.Num() == 0) return -1;
-		
-				// Pick randomly among the candidates
-			int32 PickIndex = FMath::RandRange(0, Candidates.Num() - 1);
-		int32 ChosenCol = Candidates[PickIndex];
-		int32 ChosenFlat = GetNodeIndex(NextFloor, ChosenCol);
-		int32 CurrentFlat = GetNodeIndex(Floor, NodeIndex);
-		
-				// Record the connection if indices valid
-			if (Grid.IsValidIndex(CurrentFlat) && Grid.IsValidIndex(ChosenFlat))
-			 {
-			Grid[CurrentFlat].ConnectedNodes.AddUnique(ChosenFlat);
-			Grid[ChosenFlat].IncomingNodes.AddUnique(CurrentFlat);
-			}
-		
-			return ChosenFlat;
-		
-	}
+    // For each existing connection on this floor
+    for (int32 NodeIndex = 0; NodeIndex < maxNodesPerFloor; ++NodeIndex)
+    {
+        int32 FlatIndex = GetNodeIndex(Floor, NodeIndex);
+        for (int32 ConnectedFlat : Grid[FlatIndex].ConnectedNodes)
+        {
+            int32 ExistingColA = NodeIndex;
+            int32 ExistingColB = ConnectedFlat % maxNodesPerFloor;
+
+            // Check for crossing
+            if ((ColA < ExistingColA && ColB > ExistingColB) ||
+                (ColA > ExistingColA && ColB < ExistingColB))
+            {
+                return true;
+            }
+        }
+    }
+    return false;
 }
+TArray<int32> UGameManager::ChooseNextNodes(int32 Floor, int32 NodeIndex)
+{
+	TArray<int32> Result;
+	if (Floor < 0 || Floor >= floors - 1) return Result;
+	if (NodeIndex < 0 || NodeIndex >= maxNodesPerFloor) return Result;
+
+	const int32 NextFloor = Floor + 1;
+	const int32 LastCol = maxNodesPerFloor - 1;
+	TArray<int32> Candidates;
+
+	if (NodeIndex == 0)
+	{
+		if (0 <= LastCol) Candidates.Add(0);
+		if (1 <= LastCol) Candidates.Add(1);
+	}
+	else if (NodeIndex == LastCol)
+	{
+		if (LastCol - 1 >= 0) Candidates.Add(LastCol - 1);
+		Candidates.Add(LastCol);
+	}
+	else
+	{
+		Candidates.Add(FMath::Clamp(NodeIndex - 1, 0, LastCol));
+		Candidates.Add(NodeIndex);
+		Candidates.Add(FMath::Clamp(NodeIndex + 1, 0, LastCol));
+	}
+
+	// Filter out candidates that would cross existing connections
+	for (int32 ChosenCol : Candidates)
+	{
+		if (!DoesConnectionCross(Floor, NodeIndex, ChosenCol))
+		{
+			int32 ChosenFlat = GetNodeIndex(NextFloor, ChosenCol);
+			Result.Add(ChosenFlat);
+			if (Result.Num() == 2) break; // Only two branches
+		}
+	}
+
+	return Result;
+}
+
+
 
 FMapNodeData UGameManager::GetNode(int32 Floor, int32 NodeIndex)
 {

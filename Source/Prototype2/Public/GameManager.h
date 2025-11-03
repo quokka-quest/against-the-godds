@@ -71,8 +71,10 @@ public:
 	UFUNCTION(BlueprintCallable, Category = "Map")
 	void CreateMap();
 
+	bool DoesConnectionCross(int32 Floor, int32 ColA, int32 ColB);
+
 	UFUNCTION(BlueprintCallable, Category = "Map")
-	int32 ChooseNextNode(int32 Floor, int32 NodeIndex);
+	TArray<int32> ChooseNextNodes(int32 Floor, int32 NodeIndex);
 
 	// Optional helper functions
 	UFUNCTION(BlueprintCallable, Category = "Map")
