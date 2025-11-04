@@ -81,13 +81,14 @@ void APlayerCombatLevelPawn::SetTileSelectionType(ETileSelectionType Type)
 	TileSelectionType = Type;
 }
 
-// need to add the 'attack' tile selection type functionality to this
+
 void APlayerCombatLevelPawn::OnTileClick()
 {
-	if (!HighlightedCell) {SelectedCell = nullptr; return;}
+	if (!HighlightedCell) {OnClickedOffTileGrid(); return;}
 
 	if (TileSelectionType == ETileSelectionType::SpawnSelection) TryAddTileToSpawnSelection();
-	
+
+	// click logic for when the selected cell is not the cell being clicked on
 	if (SelectedCell != HighlightedCell)
 	{
 		SelectedCell = HighlightedCell;
@@ -98,6 +99,7 @@ void APlayerCombatLevelPawn::OnTileClick()
 		return;
 	}
 
+	// click logic for when the selected cell is clicked
 	if (TileSelectionType == ETileSelectionType::Movement) TryMoveToTile();
 	if (TileSelectionType == ETileSelectionType::Attack) TryAttackTargetTile();
 	
@@ -107,7 +109,9 @@ void APlayerCombatLevelPawn::TryAddTileToSpawnSelection()
 {
 	int playerCount = 3;
 
+	
 	// if the tile clicked is not a valid spawn tile then do nothing
+	if (!HighlightedCell) return;
 	if (!HighlightedCell->IsPlayerSpawnTile) return;
 
 	// if the tile clicked is already in the spawn array then remove it
@@ -147,10 +151,13 @@ void APlayerCombatLevelPawn::TryMoveToTile()
 
 void APlayerCombatLevelPawn::DisplayPathToTile()
 {
-	if (!HighlightedCell) return;
+	// this resets the tiles (clears the movement path if it's displayed)
+	CombatManager->DisplayCurrentCombatantsMovement();
+
+	// no movement path is displayed if the highlighted cell is none-walkable
 	if (!HighlightedCell->isWalkable) return;
 
-	CombatManager->DisplayCurrentCombatantsMovement();
+	// displays the path to the cell that was clicked
 	CombatManager->DisplayPathForCurrentCombatant(HighlightedCell->GridCellCoord);
 }
 
@@ -202,6 +209,17 @@ void APlayerCombatLevelPawn::OnRotateAttack()
 	}
 }
 
+// This function holds the logic for when the player clicks off of the tile grid
+// Used for resetting the tile display for pathfinding and attack targeting
+void APlayerCombatLevelPawn::OnClickedOffTileGrid()
+{
+	SelectedCell = nullptr;
+
+	if (TileSelectionType == ETileSelectionType::None) return;
+	if (TileSelectionType == ETileSelectionType::SpawnSelection) return;
+	if (TileSelectionType == ETileSelectionType::Movement) {CombatManager->DisplayCurrentCombatantsMovement(); return;}
+	if (TileSelectionType == ETileSelectionType::Attack) return; // can implement target pattern reset when merged with Lee-Roy's GAS system
+}
 
 
 

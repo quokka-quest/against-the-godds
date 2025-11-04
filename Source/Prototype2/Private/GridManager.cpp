@@ -148,7 +148,7 @@ TArray<FIntVector> AGridManager::DisplayAttackPattern(FIntVector TargetCoord, EA
 	for (FIntVector Coord : Coords)
 	{
 		LoopCount++;
-		if (!GridCells.Contains(Coord)) continue;
+		if (!GridCells.Contains(Coord)) {Coords.Remove(Coord); continue;}
 
 		UMaterialInterface* Mat = (LoopCount == 1)? PathMat: TargetMat;
 		GridCells[Coord]->FindComponentByClass<UStaticMeshComponent>()->SetMaterial(0, Mat);
