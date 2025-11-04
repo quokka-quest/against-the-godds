@@ -140,9 +140,9 @@ void AGridManager::DisplayTilesInAttackRange(FIntVector CurrentCellCoord, int Ra
 	}
 }
 
-void AGridManager::DisplayAttackPattern(FIntVector TargetCoord, EAttackPattern Pattern)
+void AGridManager::DisplayAttackPattern(FIntVector TargetCoord, EAttackPattern Pattern, EAttackRotation Rotation)
 {
-	TArray<FIntVector> Coords = AttackAreaManager.GetCoordsInTargetArea(TargetCoord, Pattern);
+	TArray<FIntVector> Coords = AttackAreaManager.GetCoordsInTargetArea(TargetCoord, Pattern, Rotation);
 
 	for (FIntVector Coord : Coords)
 	{

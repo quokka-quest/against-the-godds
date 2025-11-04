@@ -30,8 +30,8 @@ enum EAttackPattern
 {
 	SingleTarget,
 	Plus,
-	XCentredLine3X1,
-	YCentredLine3X1
+	CentredLine3X1,
+	EndLine3X1
 };
 
 // Used in the player combat level pawn
@@ -43,4 +43,13 @@ enum ETileSelectionType
 	Movement,
 	Attack,
 	None
+};
+
+UENUM(BlueprintType)
+enum EAttackRotation
+{
+	R0,
+	R90,
+	R180,
+	R270
 };

@@ -5,10 +5,16 @@
 class AttackTargetAreas
 {
 public:
-	TArray<FIntVector> GetCoordsInTargetArea(FIntVector TargetCoord, EAttackPattern Pattern);
+	AttackTargetAreas();
+	
+	TArray<FIntVector> GetCoordsInTargetArea(FIntVector TargetCoord, EAttackPattern Pattern, EAttackRotation Rotation);
 
 private:
 	TArray<FIntVector> GetPatternToUse(EAttackPattern Pattern);
+	EAttackRotation AttackRotation;
+
+	TArray<FIntVector> GetCentredLine3X1();
+	TArray<FIntVector> GetEndLine3X1();
 	
 	TArray<FIntVector> SingleTarget =
 	{
@@ -20,20 +26,6 @@ private:
 		FIntVector(0,0,0),
 		FIntVector(1,0,0),
 		FIntVector(-1,0,0),
-		FIntVector(0,1,0),
-		FIntVector(0,-1,0)
-	};
-
-	TArray<FIntVector> XCentredLine3X1 =
-	{
-		FIntVector(0,0,0),
-		FIntVector(1,0,0),
-		FIntVector(-1,0,0)
-	};
-
-	TArray<FIntVector> YCentredLine3X1 =
-	{
-		FIntVector(0,0,0),
 		FIntVector(0,1,0),
 		FIntVector(0,-1,0)
 	};

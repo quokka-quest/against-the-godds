@@ -15,9 +15,12 @@ APlayerCombatLevelPawn::APlayerCombatLevelPawn()
 	HighlightedCell = nullptr;
 	PlayerCon = nullptr;
 	TileHighlight = nullptr;
+	SelectedCell = nullptr;
+	CombatManager = nullptr;
+	GridManager = nullptr;
 
 	TileSelectionType = ETileSelectionType::SpawnSelection;
-
+	IsDisplayingAttack = false;
 }
 
 // Called when the game starts or when spawned
@@ -156,6 +159,8 @@ void APlayerCombatLevelPawn::DisplayAttackTargetArea()
 	if (!HighlightedCell) return;
 	if (!HighlightedCell->isAttackable) return;
 
+	SelectedCell = HighlightedCell;
+	IsDisplayingAttack = true;
 	CombatManager->DisplayAttackPattern(HighlightedCell->GridCellCoord);
 }
 
@@ -174,15 +179,28 @@ void APlayerCombatLevelPawn::OnPlayerTurnEnd()
 void APlayerCombatLevelPawn::OnMoveButtonClicked()
 {
 	SelectedCell = nullptr;
+	IsDisplayingAttack = false;
 	TileSelectionType = ETileSelectionType::Movement;
 }
 
 void APlayerCombatLevelPawn::OnAttackButtonClicked()
 {
 	SelectedCell = nullptr;
+	IsDisplayingAttack = false;
 	TileSelectionType = ETileSelectionType::Attack;
 }
 
+void APlayerCombatLevelPawn::OnRotateAttack()
+{
+	EAttackRotation Rot = CombatManager->GetAttackRotation();
+	EAttackRotation NewRot = (Rot == R0)? R90: (Rot == R90)? R180: (Rot == R180)? R270 : R0;
+	CombatManager->SetAttackRotation(NewRot);
+
+	if (IsDisplayingAttack)
+	{
+		DisplayAttackTargetArea();
+	}
+}
 
 
 

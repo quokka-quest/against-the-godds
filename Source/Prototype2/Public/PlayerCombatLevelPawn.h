@@ -41,6 +41,13 @@ public:
 	UFUNCTION(BlueprintCallable)
 	void SetTileSelectionType(ETileSelectionType Type);
 
+protected:
+	UFUNCTION(BlueprintCallable)
+	void OnTileClick();
+
+	UFUNCTION(BlueprintCallable)
+	void OnRotateAttack();
+
 private:
 	UPROPERTY()
 	APlayerController* PlayerCon;
@@ -63,8 +70,7 @@ private:
 	UPROPERTY()
 	ACombatManager* CombatManager;
 
-	UFUNCTION(BlueprintCallable)
-	void OnTileClick();
+	bool IsDisplayingAttack;
 
 	void TryAddTileToSpawnSelection();
 

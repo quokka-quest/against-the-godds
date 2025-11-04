@@ -89,6 +89,12 @@ public:
 	UFUNCTION(BlueprintCallable)
 	void SetAttackPatternToUse(EAttackPattern Pattern);
 
+	UFUNCTION(BlueprintCallable)
+	void SetAttackRotation(EAttackRotation Rotation);
+
+	UFUNCTION(BlueprintCallable, BlueprintPure)
+	EAttackRotation GetAttackRotation();
+
 protected:
 	UPROPERTY(BlueprintReadWrite)
 	AGridManager* GridManager;
@@ -122,5 +128,6 @@ protected:
 
 	int AttackRange;
 	EAttackPattern AttackPattern;
+	EAttackRotation AttackRotation;
 	
 };

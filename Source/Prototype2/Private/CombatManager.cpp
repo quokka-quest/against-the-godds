@@ -17,6 +17,7 @@ void ACombatManager::BeginPlay()
 	GridManager->ChangeAllTilesDisplay(EEditorGridDisplayType::PlayerSpawnTile);
 
 	CurrentCombatantTurnIndex = 0;
+	SetAttackRotation(EAttackRotation::R0);
 }
 
 // Called when the player locks in there start location choices
@@ -209,7 +210,7 @@ void ACombatManager::DisplayAttackRange(int Range)
 void ACombatManager::DisplayAttackPattern(FIntVector TargetCoord)
 {
 	DisplayAttackRange(AttackRange);
-	GridManager->DisplayAttackPattern(TargetCoord, AttackPattern);
+	GridManager->DisplayAttackPattern(TargetCoord, AttackPattern, AttackRotation);
 }
 
 void ACombatManager::SetAttackPatternToUse(EAttackPattern Pattern)
@@ -217,3 +218,12 @@ void ACombatManager::SetAttackPatternToUse(EAttackPattern Pattern)
 	AttackPattern = Pattern;
 }
 
+void ACombatManager::SetAttackRotation(EAttackRotation Rotation)
+{
+	AttackRotation = Rotation;
+}
+
+EAttackRotation ACombatManager::GetAttackRotation()
+{
+	return AttackRotation;
+}
