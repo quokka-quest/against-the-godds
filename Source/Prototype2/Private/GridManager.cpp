@@ -158,5 +158,9 @@ TArray<FIntVector> AGridManager::DisplayAttackPattern(FIntVector TargetCoord, EA
 }
 
 
+TArray<FIntVector> AGridManager::GetPath(FIntVector StartCoord, FIntVector EndCoord)
+{
+	return PathFinder->FindPathForEnemy(StartCoord, EndCoord);
+}
 
 

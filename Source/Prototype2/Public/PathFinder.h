@@ -43,6 +43,9 @@ public:
 	UFUNCTION()
 	TArray<FIntVector> FindAttackableTiles(FIntVector Start, int Range);
 
+	UFUNCTION()
+	TArray<FIntVector> FindPathForEnemy(FIntVector Start, FIntVector End);
+
 private:
 	FIntVector StartCoord;
 	FIntVector EndCoord;
@@ -73,6 +76,10 @@ private:
 	void AnalyseTileForMovementAvailability();
 
 	void AnalyseTileForAttackAvailability();
+
+	bool AnalyseTileForEnemyMovement();
+
+	void DiscoverTileForEnemyMovement(FIntVector TileCoord, FIntVector PreviousTile);
 
 	TArray<FIntVector> NeighbourOffsets =
 	{

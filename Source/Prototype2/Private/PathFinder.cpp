@@ -236,3 +236,86 @@ TArray<FIntVector> APathFinder::FindAttackableTiles(FIntVector Start, int Range)
 	
 	return WalkableTiles;
 }
+
+TArray<FIntVector> APathFinder::FindPathForEnemy(FIntVector Start, FIntVector End)
+{
+	StartCoord = Start;
+	EndCoord = End;
+	TotalMovement = 1000;
+	DiscoveredTiles.Empty();
+	AnalysedTiles.Empty();
+	TileMap.Empty();
+	
+	TArray<FIntVector> result;
+	AGridManager* GridManager = Cast<AGridManager>(UGameplayStatics::GetActorOfClass(GetWorld(), AGridManager::StaticClass()));
+
+	DiscoverTileForMovement(StartCoord, StartCoord);
+
+	int loopCount = 0;
+	while (DiscoveredTiles.Num() > 0)
+	{
+		loopCount++;
+		bool FoundEndPoint = AnalyseTileForEnemyMovement();
+
+		if (loopCount >= 5000) {UE_LOG(LogTemp, Error, TEXT("Infinite loop in analysing tiles")) return result;}
+		
+		if (!FoundEndPoint) continue;
+
+		result.Add(TileMap[EndCoord].Coord);
+		FIntVector PrevCoord = EndCoord;
+
+		int loopCount2 = 0;
+		while (PrevCoord != StartCoord)
+		{
+			loopCount2++;
+			PrevCoord = TileMap[PrevCoord].PreviousTile;
+			result.Add(PrevCoord);
+
+			if (loopCount2 >= 5000) {UE_LOG(LogTemp, Error, TEXT("Infinite loop back tracing")) return result;}
+		}
+			
+		return result;
+	}
+	
+	return result;
+}
+
+bool APathFinder::AnalyseTileForEnemyMovement()
+{
+	FTileInfo Tile = PullCheapestTileFromDiscoveredArray();
+	MoveTileFromDiscoveredToAnalysed(Tile);
+	AGridManager* GridManager = Cast<AGridManager>(UGameplayStatics::GetActorOfClass(GetWorld(), AGridManager::StaticClass()));
+
+	for (FIntVector Offset : NeighbourOffsets)
+	{
+		FIntVector NeighbourTile = Tile.Coord + Offset;
+		if (!GridManager->GridCells.Contains(NeighbourTile)) continue;
+		if (IsTileAlreadyDiscovered(NeighbourTile)) continue;
+		
+		DiscoverTileForEnemyMovement(NeighbourTile, Tile.Coord);
+
+		if (NeighbourTile == EndCoord) {return true;}
+	}
+	
+	return false;
+}
+
+void APathFinder::DiscoverTileForEnemyMovement(FIntVector TileCoord, FIntVector PreviousTile)
+{
+	AGridManager* GridManager = Cast<AGridManager>(UGameplayStatics::GetActorOfClass(GetWorld(), AGridManager::StaticClass()));
+
+	FTileInfo TileInfo = FTileInfo();
+	TileInfo.Coord = TileCoord;
+	TileInfo.EntryCost = GridManager->GridCells[TileCoord]->MovementCost;
+	TileInfo.MinCostToTarget = CalulateMinCostBetweenTiles(TileCoord, EndCoord);
+	TileInfo.PreviousTile = PreviousTile;
+
+	int CostFromStart = (!TileMap.IsEmpty())? TileMap[PreviousTile].CostFromStart + TileInfo.EntryCost : 0;
+	TileInfo.CostFromStart = CostFromStart;
+
+	if (CostFromStart > TotalMovement) return;
+	if (TileCoord != StartCoord && TileCoord != EndCoord && GridManager->GridCells[TileCoord]->IsOccupied) return;
+
+	TileMap.Add(TileCoord, TileInfo);
+	DiscoveredTiles.Add(TileInfo);
+}
