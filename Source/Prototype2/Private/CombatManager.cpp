@@ -210,7 +210,7 @@ void ACombatManager::DisplayAttackRange(int Range)
 void ACombatManager::DisplayAttackPattern(FIntVector TargetCoord)
 {
 	DisplayAttackRange(AttackRange);
-	GridManager->DisplayAttackPattern(TargetCoord, AttackPattern, AttackRotation);
+	AreaOfAttackEffect = GridManager->DisplayAttackPattern(TargetCoord, AttackPattern, AttackRotation);
 }
 
 void ACombatManager::SetAttackPatternToUse(EAttackPattern Pattern)

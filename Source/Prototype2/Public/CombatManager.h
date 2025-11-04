@@ -126,6 +126,8 @@ protected:
 
 	TArray<FIntVector> PathForCombatantToFollow;
 
+	TArray<FIntVector> AreaOfAttackEffect;
+
 	int AttackRange;
 	EAttackPattern AttackPattern;
 	EAttackRotation AttackRotation;
