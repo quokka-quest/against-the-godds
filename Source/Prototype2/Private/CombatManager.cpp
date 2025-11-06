@@ -17,6 +17,7 @@ void ACombatManager::BeginPlay()
 	GridManager->ChangeAllTilesDisplay(EEditorGridDisplayType::PlayerSpawnTile);
 
 	CurrentCombatantTurnIndex = 0;
+	SetAttackRotation(EAttackRotation::R0);
 }
 
 // Called when the player locks in there start location choices
@@ -180,7 +181,7 @@ void ACombatManager::DisplayPathForCurrentCombatant(FIntVector TargetPos)
 // displays the movement options for the current combatant
 void ACombatManager::DisplayCurrentCombatantsMovement()
 {
-	GridManager->ResetWalkableTiles();
+	GridManager->ResetTilesWalkAndAttackBooleans();
 	GridManager->DisplayWalkableTiles(CurrentTurnCombatant->PositionCoord, CurrentTurnCombatant->AvailableMovement);
 }
 
@@ -189,13 +190,40 @@ void ACombatManager::BroadcastOnMoveClickedEvent()
 	OnMoveButtonClicked.Broadcast();
 }
 
+void ACombatManager::BroadcastOnAttackClickedEvent() 
+{
+	OnAttackButtonClicked.Broadcast();
+}
+
 AEntityBase* ACombatManager::GetCurrentCombatant()
 {
 	return CurrentTurnCombatant;
 }
 
+void ACombatManager::DisplayAttackRange(int Range) 
+{
+	AttackRange = Range;
+	GridManager->ResetTilesWalkAndAttackBooleans();
+	GridManager->DisplayTilesInAttackRange(CurrentTurnCombatant->PositionCoord, Range);
+}
 
+void ACombatManager::DisplayAttackPattern(FIntVector TargetCoord)
+{
+	DisplayAttackRange(AttackRange);
+	AreaOfAttackEffect = GridManager->DisplayAttackPattern(TargetCoord, AttackPattern, AttackRotation);
+}
 
+void ACombatManager::SetAttackPatternToUse(EAttackPattern Pattern)
+{
+	AttackPattern = Pattern;
+}
 
+void ACombatManager::SetAttackRotation(EAttackRotation Rotation)
+{
+	AttackRotation = Rotation;
+}
 
-
+EAttackRotation ACombatManager::GetAttackRotation()
+{
+	return AttackRotation;
+}

@@ -11,6 +11,7 @@ AEnemyEntity::AEnemyEntity()
 	CharacterMesh->SetStaticMesh(CharMesh);
 }
 
+
 void AEnemyEntity::DeterminePlayerTarget()
 {
 	ACombatManager* CombatManager = Cast<ACombatManager>(UGameplayStatics::GetGameMode(GetWorld()));
@@ -36,21 +37,49 @@ void AEnemyEntity::DeterminePlayerTarget()
 	}
 
 	PlayerTarget = ClosestPlayer;
-	UE_LOG(LogTemp, Warning, TEXT("Player target is: %s"), *ClosestPlayer->GetName())
 }
 
 void AEnemyEntity::DetermineMovement()
 {
+	// if the player target is invalid something has gone wrong so do nothing
 	if (!PlayerTarget) return;
 
-	int XDiff = abs(PlayerTarget->PositionCoord.X - PositionCoord.X);
-	int YDiff = abs(PlayerTarget->PositionCoord.Y - PositionCoord.Y);
-	int ZDiff = abs(PlayerTarget->PositionCoord.Z - PositionCoord.Z);
+	AGridManager* GridManager = Cast<AGridManager>(UGameplayStatics::GetActorOfClass(GetWorld(), AGridManager::StaticClass()));
 
-	int XYDiff = XDiff + YDiff;
-	if (XYDiff == 1 && ZDiff <= 1) return;
+	TArray<FIntVector> PathToTarget = GridManager->GetPath(PositionCoord, PlayerTarget->PositionCoord);
+
+	// establish the first tile in the path
+	int TargetPosIndex = PathToTarget.Num() - 2;
+	// If the player and enemy are on adjacent tiles then this array will contain 2 elements, neither of which the enemy can move to
+	if (TargetPosIndex <= 0) return;
+
+	// If the movement cost is greater than the available movement of this enemy entity, then movement can't be done
+	int MoveCost = GridManager->GridCells[PathToTarget[TargetPosIndex]]->MovementCost;
+	if (MoveCost > MaxMovement) return;
 
 	
+	for (int i = PathToTarget.Num()-3; i > 0; i--)
+	{
+		// breaks the loop if the tile has an entity on it (prevents movement onto an occupied tile)
+		if (GridManager->GridCells[PathToTarget[i]]->IsOccupied) break;
+
+		// check if the available movement will allow for this tile to be moved to
+		int AddMoveCost = GridManager->GridCells[PathToTarget[i]]->MovementCost;
+		if (MoveCost + AddMoveCost > MaxMovement) break;
+
+		// if it can then the current tile is set as the new target
+		MoveCost += AddMoveCost;
+		TargetPosIndex = i;
+	}
+
+	AvailableMovement -= MoveCost;
+	for (int i = PathToTarget.Num()-1; i > TargetPosIndex; i--)
+	{
+		FVector StartPos = GridManager->GridCells[PathToTarget[i]]->GetActorLocation();
+		FVector EndPos = GridManager->GridCells[PathToTarget[i-1]]->GetActorLocation();
+		EnqueueMovement(StartPos, EndPos);
+	}
+	PositionCoord = PathToTarget[TargetPosIndex];
 }
 
 

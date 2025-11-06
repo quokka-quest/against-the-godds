@@ -9,15 +9,8 @@
 #include "TileHighlight.h"
 #include "GridManager.h"
 #include "CombatManager.h"
+#include "GlobalDataTypeHeader.h"
 #include "PlayerCombatLevelPawn.generated.h"
-
-UENUM(BlueprintType)
-enum ETileSelectionType
-{
-	SpawnSelection,
-	Movement,
-	None
-};
 
 UCLASS()
 class PROTOTYPE2_API APlayerCombatLevelPawn : public APawn
@@ -48,6 +41,13 @@ public:
 	UFUNCTION(BlueprintCallable)
 	void SetTileSelectionType(ETileSelectionType Type);
 
+protected:
+	UFUNCTION(BlueprintCallable)
+	void OnTileClick();
+
+	UFUNCTION(BlueprintCallable)
+	void OnRotateAttack();
+
 private:
 	UPROPERTY()
 	APlayerController* PlayerCon;
@@ -70,14 +70,17 @@ private:
 	UPROPERTY()
 	ACombatManager* CombatManager;
 
-	UFUNCTION(BlueprintCallable)
-	void OnTileClick();
+	bool IsDisplayingAttack;
 
 	void TryAddTileToSpawnSelection();
 
 	void TryMoveToTile();
 
 	void DisplayPathToTile();
+
+	void DisplayAttackTargetArea();
+
+	void TryAttackTargetTile();
 
 	UFUNCTION(BlueprintCallable)
 	bool AttemptToFinishPlayerStartPlacement();
@@ -87,5 +90,10 @@ private:
 
 	UFUNCTION()
 	void OnMoveButtonClicked();
+
+	UFUNCTION()
+	void OnAttackButtonClicked();
+
+	void OnClickedOffTileGrid();
 
 };

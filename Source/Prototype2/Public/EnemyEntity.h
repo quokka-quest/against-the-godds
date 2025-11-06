@@ -21,6 +21,7 @@ public:
 	APlayerEntity* PlayerTarget;
 
 protected:
+	
 	virtual UStaticMesh* GetCharMesh() const { return LoadObject<UStaticMesh>(nullptr, TEXT("/Game/Art/Static_Meshes/Enemies/SM_Wolf.SM_Wolf")); }
 
 	UFUNCTION(BlueprintCallable)

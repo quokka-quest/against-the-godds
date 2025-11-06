@@ -40,6 +40,12 @@ public:
 	UFUNCTION()
 	TArray<FIntVector> FindMoveableTiles(FIntVector Start, int AvailableMovement);
 
+	UFUNCTION()
+	TArray<FIntVector> FindAttackableTiles(FIntVector Start, int Range);
+
+	UFUNCTION()
+	TArray<FIntVector> FindPathForEnemy(FIntVector Start, FIntVector End);
+
 private:
 	FIntVector StartCoord;
 	FIntVector EndCoord;
@@ -49,10 +55,13 @@ private:
 	TArray<FTileInfo> AnalysedTiles;
 
 	int TotalMovement;
+	int AttackRange;
 
 	int CalulateMinCostBetweenTiles(FIntVector Start, FIntVector End);
 
-	void DiscoverTile(FIntVector TileCoord, FIntVector PreviousTile);
+	void DiscoverTileForMovement(FIntVector TileCoord, FIntVector PreviousTile);
+
+	void DiscoverTileForAttack(FIntVector TileCoord, FIntVector PreviousTile);
 
 	FTileInfo PullCheapestTileFromDiscoveredArray();
 
@@ -65,6 +74,12 @@ private:
 	FTileInfo GetNextTileFromDiscoverableArray();
 
 	void AnalyseTileForMovementAvailability();
+
+	void AnalyseTileForAttackAvailability();
+
+	bool AnalyseTileForEnemyMovement();
+
+	void DiscoverTileForEnemyMovement(FIntVector TileCoord, FIntVector PreviousTile);
 
 	TArray<FIntVector> NeighbourOffsets =
 	{

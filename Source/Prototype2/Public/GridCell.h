@@ -39,6 +39,9 @@ public:
 	UPROPERTY(BlueprintReadWrite, Category = "Grid")
 	bool isWalkable;
 
+	UPROPERTY(BlueprintReadWrite, Category = "Grid")
+	bool isAttackable;
+
 private:
 	float cellSize = 200.0f;
 	float cellHeight = 50.0f;
