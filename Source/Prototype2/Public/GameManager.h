@@ -23,6 +23,12 @@ public:
 	bool bVisited;
 
 	UPROPERTY(EditAnywhere, BlueprintReadWrite, Category = "Map")
+	float positionX;
+
+	UPROPERTY(EditAnywhere, BlueprintReadWrite, Category = "Map")
+	float positionY;
+
+	UPROPERTY(EditAnywhere, BlueprintReadWrite, Category = "Map")
 	TArray<int32> ConnectedNodes;
 
 	UPROPERTY(EditAnywhere, BlueprintReadWrite, Category = "Map")
@@ -85,6 +91,9 @@ public:
 
 	UFUNCTION(BlueprintCallable, Category = "Map")
 	int32 GetNodeIndex(int32 Floor, int32 NodeIndex);
+
+	UFUNCTION(BlueprintCallable, Category = "Map")
+	void setCurrentNodePosition(int32 node, float x, float y);
 
 private:
 	TArray<EMapRoomCPP> AllRooms;
