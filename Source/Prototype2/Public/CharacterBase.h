@@ -41,10 +41,7 @@ protected:
 	TObjectPtr<class UAttributeDamageModifiersSet> DamageModifiersSet;
 
 	UPROPERTY(EditDefaultsOnly, BlueprintReadOnly, Category = "GAS", meta = (AllowPrivateAccess = "true"))
-	TSubclassOf<UGameplayAbility> AbilityOne;
-
-	UPROPERTY(EditDefaultsOnly, BlueprintReadOnly, Category = "GAS", meta = (AllowPrivateAccess = "true"))
-	TSubclassOf<UGameplayAbility> AbilityTwo;
+	TArray<TSubclassOf<UGameplayAbility>> Abilities;
 
 	UPROPERTY(EditDefaultsOnly, BlueprintReadOnly, Category = "GAS", meta = (AllowPrivateAccess = "true"))
 	TArray<TSubclassOf<UGameplayEffect>> DefaultEffects;
@@ -73,6 +70,10 @@ public:
 	float GetMultiDamageModifier() const;
 
 	TArray<AActor*> GetTargets() const;
+
+	UFUNCTION(BlueprintCallable, Category = "GAS")
+	TArray<UGameplayAbilityBase*> GetAllAbilityInstances() const;
+	
 protected:
 	virtual UAbilitySystemComponent* GetAbilitySystemComponent() const override;
 

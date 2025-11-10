@@ -4,7 +4,9 @@
 
 #include "CoreMinimal.h"
 #include "CharacterBase.h"
+#include "GlobalDataTypeHeader.h"
 #include "Components/StaticMeshComponent.h"
+#include "GameplayAbilityBase.h"
 #include "EntityBase.generated.h"
 
 /**
@@ -35,6 +37,9 @@ public:
 
 	UPROPERTY(BlueprintReadWrite, Category="PlayerInfo")
 	int AvailableMovement;
+
+	UPROPERTY(EditAnywhere, BlueprintReadWrite, Category = "PlayerInfo")
+	TMap<TSubclassOf<UGameplayAbilityBase>, FDiceFaceLevels> AbilityDiceMap;
 
 protected:
 	UPROPERTY()

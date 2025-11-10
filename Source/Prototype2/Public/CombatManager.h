@@ -7,6 +7,7 @@
 #include "GridManager.h"
 #include "PlayerEntity.h"
 #include "GlobalDataTypeHeader.h"
+#include "GameplayAbilityBase.h"
 #include "CombatManager.generated.h"
 
 /**
@@ -87,13 +88,13 @@ public:
 	void DisplayAttackPattern(FIntVector TargetCoord);
 
 	UFUNCTION(BlueprintCallable)
-	void SetAttackPatternToUse(EAttackPattern Pattern);
-
-	UFUNCTION(BlueprintCallable)
 	void SetAttackRotation(EAttackRotation Rotation);
 
 	UFUNCTION(BlueprintCallable, BlueprintPure)
 	EAttackRotation GetAttackRotation();
+
+	UFUNCTION(BlueprintCallable)
+	void DisplayAttackInformation(TSubclassOf<UGameplayAbilityBase> Ability, FDiceFaceLevels DiceLevels, int Range, EAttackPattern Pattern);
 
 protected:
 	UPROPERTY(BlueprintReadWrite)
