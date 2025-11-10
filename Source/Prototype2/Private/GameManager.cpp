@@ -143,7 +143,7 @@ void UGameManager::CreateMap()
 
 	for (int32 NodeIndex = 0; NodeIndex < maxNodesPerFloor; ++NodeIndex) // 
 	{
-		int32 FlatIndex = GetNodeIndex(0, NodeIndex);
+		int32 FlatIndex = GetNodeIndex(0, NodeIndex); // Floor (0) * maxNodesPerFloor (7) + NodeIndex ( 0 - 6 );
 		if (StartingNodes.Contains(NodeIndex))
 		{
 			Grid[FlatIndex].RoomType = EMapRoomCPP::Combat; // set starting nodes to combat rooms
@@ -154,10 +154,10 @@ void UGameManager::CreateMap()
 		}
 	}
 
-	for (int32 StartColumn : StartingNodes)
+	for (int32 StartColumn : StartingNodes) // for each starting node, make a start column variable
 	{
 		int32 CurrentColumn = StartColumn;
-		int32 CurrentFlat = GetNodeIndex(0, CurrentColumn);
+		int32 CurrentFlat = GetNodeIndex(0, CurrentColumn); // 
 
 		if (Grid.IsValidIndex(CurrentFlat))
 		{
@@ -227,8 +227,8 @@ TArray<int32> UGameManager::ChooseNextNodes(int32 Floor, int32 NodeIndex)
 	if (Floor < 0 || Floor >= floors - 1) return Result;
 	if (NodeIndex < 0 || NodeIndex >= maxNodesPerFloor) return Result;
 
-	const int32 NextFloor = Floor + 1;
-	const int32 LastCol = maxNodesPerFloor - 1;
+	const int32 NextFloor = Floor + 1; // increment floor
+	const int32 LastCol = maxNodesPerFloor - 1; 
 	TArray<int32> Candidates;
 
 	if (NodeIndex == 0)
