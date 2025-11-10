@@ -10,5 +10,6 @@ enum class EMapRoomCPP : uint8
 	Non_Combat UMETA(DisplayName = "Non-Combat"),
 	Shop UMETA(DisplayName = "Shop"),
 	Boss UMETA(DisplayName = "Boss"),
-	Empty UMETA(DisplayName = "Empty")
+	Empty UMETA(DisplayName = "Empty"),
+	Selected UMETA(DisplayName = "Selected")
 };

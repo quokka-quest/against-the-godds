@@ -64,6 +64,10 @@ public:
 	UFUNCTION(BlueprintCallable, Category = "Map")
 	void CreateMap();
 
+	void CreateMapPaths();
+
+	void ChooseStartingNodes();
+
 	bool DoesConnectionCross(int32 Floor, int32 ColA, int32 ColB);
 
 	UFUNCTION(BlueprintCallable, Category = "Map")
@@ -84,11 +88,6 @@ public:
 
 private:
 	TArray<EMapRoomCPP> AllRooms;
-	
-	int TotalRooms = 10;
-	int RestCount = TotalRooms / 5;
-	int CombatCount = (TotalRooms - RestCount) / 2;
-	int NonCombatCount = (TotalRooms - RestCount) / 2;
 
 protected:
 	UPROPERTY(BlueprintReadWrite, Category="Map")
@@ -104,8 +103,19 @@ protected:
 	int floors = 15;
 	UPROPERTY(EditAnywhere, BlueprintReadWrite, Category = "Map")
 	int maxNodesPerFloor = 7;
+
+	int TotalRooms = floors * maxNodesPerFloor;
+	int RestCount = TotalRooms / 5;
+	int CombatCount = (TotalRooms - RestCount) / 2;
+	int NonCombatCount = (TotalRooms - RestCount) / 2;
+
 	UPROPERTY(BlueprintReadWrite, Category = "Map")
 	TArray<FMapNodeData> Grid;
+
+	EMapRoomCPP DefaultRoomType = EMapRoomCPP::Empty;
+	EMapRoomCPP Selected = EMapRoomCPP::Selected;
+
+	TArray<int> StartingNodes;
 
 	
 };

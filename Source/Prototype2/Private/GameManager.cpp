@@ -25,43 +25,109 @@ void UGameManager::GenerateGrid()
 
 void UGameManager::CreateMap()
 {
-	TArray<int> StartingNodes;
-
-	int startNodeIndex = FMath::RandRange(0, maxNodesPerFloor - 1); // choose a random start node
-	StartingNodes.Add(startNodeIndex);
-
-	int startNodeIndex2 = startNodeIndex;
-	while (startNodeIndex2 == startNodeIndex)
-	{
-		startNodeIndex2 = FMath::RandRange(0, maxNodesPerFloor - 1); // choose a different random start node
-	}
-
-	StartingNodes.Add(startNodeIndex2);
-
-	int extraNodes = 3;
-	for (int i = 0; i < extraNodes; ++i)
-	{
-		int ExtraNodeIndex = FMath::RandRange(0, maxNodesPerFloor - 1);
-
-		if (!StartingNodes.Contains(ExtraNodeIndex))
-		{
-			StartingNodes.Add(ExtraNodeIndex); // add up to four extra starting nodes (if not already present)
-		}
-	}
+	ChooseStartingNodes();
 
 	for (int32 NodeIndex = 0; NodeIndex < maxNodesPerFloor; ++NodeIndex) // 
 	{
 		int32 FlatIndex = GetNodeIndex(0, NodeIndex); // Floor (0) * maxNodesPerFloor (7) + NodeIndex ( 0 - 6 );
 		if (StartingNodes.Contains(NodeIndex))
 		{
-			Grid[FlatIndex].RoomType = EMapRoomCPP::Combat; // set starting nodes to combat rooms
+			Grid[FlatIndex].RoomType = Selected; // set starting nodes to combat rooms
 		}
 		else
 		{
-			Grid[FlatIndex].RoomType = EMapRoomCPP::Empty; // set non-starting nodes on floor 0 to empty
+			Grid[FlatIndex].RoomType = DefaultRoomType; // set non-starting nodes on floor 0 to empty
 		}
 	}
 
+	CreateMapPaths();
+
+	for (int32 Floor = 0; Floor < floors; ++Floor) // for each floor
+	{
+		if (Floor == 9)
+		{
+			for (int32 NodeIndex = 0; NodeIndex < maxNodesPerFloor; ++NodeIndex) // for each node in floor
+			{
+				if (Grid[NodeIndex + Floor * maxNodesPerFloor].RoomType == Selected)
+				{
+					Grid[NodeIndex + Floor * maxNodesPerFloor].RoomType = EMapRoomCPP::Shop; // set all nodes on floor 9 to rest rooms
+					RestCount -= 1;
+				}
+				
+			}
+		}
+
+		if (Floor == floors - 1)
+		{
+			for (int32 NodeIndex = 0; NodeIndex < maxNodesPerFloor; ++NodeIndex) // for each node in floor
+			{
+				if (Grid[NodeIndex + Floor * maxNodesPerFloor].RoomType == Selected)
+				{
+					Grid[NodeIndex + Floor * maxNodesPerFloor].RoomType = EMapRoomCPP::Shop; // set all nodes on floor 9 to rest rooms
+					RestCount -= 1;
+				}
+
+			}
+		}
+
+		if (Floor != 9 && Floor != floors - 1)
+		{
+			for (int32 NodeIndex = 0; NodeIndex < maxNodesPerFloor; ++NodeIndex) // for each node in floor
+			{
+				int32 FlatIndex = GetNodeIndex(Floor, NodeIndex); 
+				if (Grid[FlatIndex].RoomType == Selected)
+				{
+					TArray<EMapRoomCPP> AvailableTypes;
+					if (RestCount > 0)
+					{
+						AvailableTypes.Add(EMapRoomCPP::Shop);
+					}
+					if (CombatCount > 0)
+					{
+						AvailableTypes.Add(EMapRoomCPP::Combat);
+					}
+					if (NonCombatCount > 0)
+					{
+						AvailableTypes.Add(EMapRoomCPP::Non_Combat);
+					}
+
+					if (AvailableTypes.Num() > 0)
+					{
+						int32 ChoiceIndex = FMath::RandRange(0, AvailableTypes.Num() - 1);
+						EMapRoomCPP ChosenType = AvailableTypes[ChoiceIndex];
+
+						Grid[FlatIndex].RoomType = ChosenType;
+
+						if (ChosenType == EMapRoomCPP::Shop)
+						{
+							RestCount -= 1;
+						}
+						else if (ChosenType == EMapRoomCPP::Combat)
+						{
+							CombatCount -= 1;
+						}
+						else if (ChosenType == EMapRoomCPP::Non_Combat)
+						{
+							NonCombatCount -= 1;
+						}
+					}
+					else
+					{
+						Grid[FlatIndex].RoomType = EMapRoomCPP::Combat;
+						if (CombatCount > 0)
+						{
+							CombatCount -= 1;
+						}
+					}
+				}
+			}
+		}
+		
+	}
+}
+
+void UGameManager::CreateMapPaths()
+{
 	TArray<int32> BranchStack;
 	TSet<int32> Processed;
 
@@ -71,7 +137,7 @@ void UGameManager::CreateMap()
 
 		if (Grid.IsValidIndex(StartFlat))
 		{
-			Grid[StartFlat].RoomType = EMapRoomCPP::Combat;
+			Grid[StartFlat].RoomType = Selected;
 			BranchStack.Add(StartFlat);
 		}
 	}
@@ -113,7 +179,7 @@ void UGameManager::CreateMap()
 
 		for (int32 NextFlat : NextFlats)
 		{
-			if(!Grid.IsValidIndex(NextFlat))
+			if (!Grid.IsValidIndex(NextFlat))
 			{
 				continue;
 			}
@@ -133,7 +199,7 @@ void UGameManager::CreateMap()
 				continue;
 			}
 
-			Grid[NextFlat].RoomType = EMapRoomCPP::Combat;
+			Grid[NextFlat].RoomType = EMapRoomCPP::Selected;
 			Grid[CurrentFlat].ConnectedNodes.AddUnique(NextFlat);
 			Grid[NextFlat].IncomingNodes.AddUnique(CurrentFlat);
 
@@ -143,6 +209,31 @@ void UGameManager::CreateMap()
 			{
 				BranchStack.Add(NextFlat);
 			}
+		}
+	}
+}
+
+void UGameManager::ChooseStartingNodes()
+{
+	int startNodeIndex = FMath::RandRange(0, maxNodesPerFloor - 1); // choose a random start node
+	StartingNodes.Add(startNodeIndex);
+
+	int startNodeIndex2 = startNodeIndex;
+	while (startNodeIndex2 == startNodeIndex)
+	{
+		startNodeIndex2 = FMath::RandRange(0, maxNodesPerFloor - 1); // choose a different random start node
+	}
+
+	StartingNodes.Add(startNodeIndex2);
+
+	int extraNodes = 3;
+	for (int i = 0; i < extraNodes; ++i)
+	{
+		int ExtraNodeIndex = FMath::RandRange(0, maxNodesPerFloor - 1);
+
+		if (!StartingNodes.Contains(ExtraNodeIndex))
+		{
+			StartingNodes.Add(ExtraNodeIndex); // add up to four extra starting nodes (if not already present)
 		}
 	}
 }
