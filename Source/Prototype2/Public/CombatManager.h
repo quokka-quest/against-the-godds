@@ -95,6 +95,9 @@ public:
 	UFUNCTION(BlueprintCallable, BlueprintPure)
 	EAttackRotation GetAttackRotation();
 
+	UFUNCTION(BlueprintCallable)
+	void DisplayAttackInformation();
+
 protected:
 	UPROPERTY(BlueprintReadWrite)
 	AGridManager* GridManager;

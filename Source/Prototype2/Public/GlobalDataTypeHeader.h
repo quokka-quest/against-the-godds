@@ -53,3 +53,47 @@ enum EAttackRotation
 	R180,
 	R270
 };
+
+UENUM()
+enum class ETargetType : uint8
+{
+	TT_Character UMETA(DisplayName = "Character"),
+	TT_Tile UMETA(DisplayName = "Tile")
+};
+
+USTRUCT(BlueprintType)
+struct FDiceFaceValues
+{
+	GENERATED_BODY()
+
+	UPROPERTY(EditAnywhere, BlueprintReadWrite)
+	int PrimaryLevel = 0;
+	UPROPERTY(EditAnywhere, BlueprintReadWrite)
+	int SecondaryLevel = 0;
+	UPROPERTY(EditAnywhere, BlueprintReadWrite)
+	int TertiaryLevel = 0;
+	UPROPERTY(EditAnywhere, BlueprintReadWrite)
+	int FourthLevel = 0;
+	UPROPERTY(EditAnywhere, BlueprintReadWrite)
+	int FifthLevel = 0;
+};
+
+USTRUCT(BlueprintType)
+struct FDiceFaceLevels 
+{
+	GENERATED_BODY()
+
+	UPROPERTY(EditAnywhere, BlueprintReadWrite)
+	TArray<FDiceFaceValues> FaceArray;
+
+	FDiceFaceLevels() {
+		FaceArray.SetNum(0);
+	}
+
+	FDiceFaceValues GetFaceValues(int FaceNum) 
+	{
+		if (abs(FaceNum) < FaceArray.Num()) return FaceArray[abs(FaceNum)];
+		
+		return FaceArray[0];
+	}
+};

@@ -4,14 +4,8 @@
 
 #include "CoreMinimal.h"
 #include "Abilities/GameplayAbility.h"
+#include "GlobalDataTypeHeader.h"
 #include "GameplayAbilityBase.generated.h"
-
-UENUM()
-enum class ETargetType : uint8
-{
-	TT_Character UMETA(DisplayName = "Character"),
-	TT_Tile UMETA(DisplayName = "Tile")
-};
 
 /**
  * 
@@ -42,5 +36,11 @@ public:
     
     UPROPERTY(EditAnywhere, BlueprintReadWrite, Category = "Ability")
     UTexture2D* AbilityIcon;
+
+	UPROPERTY(EditAnywhere, BlueprintReadWrite, Category = "Ability")
+	int Range;
+
+	UPROPERTY(EditAnywhere, BlueprintReadWrite, Category = "Ability")
+	TEnumAsByte<EAttackPattern> Pattern;
 	
 };

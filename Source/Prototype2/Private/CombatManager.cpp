@@ -227,3 +227,7 @@ EAttackRotation ACombatManager::GetAttackRotation()
 {
 	return AttackRotation;
 }
+
+void ACombatManager::DisplayAttackInformation() {
+
+}
