@@ -213,11 +213,6 @@ void ACombatManager::DisplayAttackPattern(FIntVector TargetCoord)
 	AreaOfAttackEffect = GridManager->DisplayAttackPattern(TargetCoord, AttackPattern, AttackRotation);
 }
 
-void ACombatManager::SetAttackPatternToUse(EAttackPattern Pattern)
-{
-	AttackPattern = Pattern;
-}
-
 void ACombatManager::SetAttackRotation(EAttackRotation Rotation)
 {
 	AttackRotation = Rotation;
@@ -228,6 +223,8 @@ EAttackRotation ACombatManager::GetAttackRotation()
 	return AttackRotation;
 }
 
-void ACombatManager::DisplayAttackInformation() {
-
+void ACombatManager::DisplayAttackInformation(TSubclassOf<UGameplayAbilityBase> Ability, FDiceFaceLevels DiceLevels, int Range, EAttackPattern Pattern)
+{
+	AttackPattern = Pattern;
+	DisplayAttackRange(Range);
 }
