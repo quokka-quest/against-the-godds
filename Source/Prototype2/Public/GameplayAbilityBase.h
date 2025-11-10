@@ -33,4 +33,14 @@ public:
 
 	UPROPERTY(EditAnywhere, BlueprintReadWrite, Category = "Ability")
 	ETargetType TargetType;
+
+	UPROPERTY(EditAnywhere, BlueprintReadWrite, Category = "Ability")
+    FText AbilityName;
+    
+    UPROPERTY(EditAnywhere, BlueprintReadWrite, Category = "Ability")
+    FText AbilityDescription;
+    
+    UPROPERTY(EditAnywhere, BlueprintReadWrite, Category = "Ability")
+    UTexture2D* AbilityIcon;
+	
 };

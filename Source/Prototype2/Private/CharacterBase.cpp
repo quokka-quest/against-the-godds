@@ -5,6 +5,7 @@
 #include "AbilitySystemComponent.h"
 #include "AttributeHealthSet.h"
 #include "AttributeDamageModifiersSet.h"
+#include "GameplayAbilityBase.h"
 
 // Sets default values
 ACharacterBase::ACharacterBase()
@@ -120,15 +121,13 @@ void ACharacterBase::ActivateAbilityWithTargets(TSubclassOf<UGameplayAbility> Ab
 
 void ACharacterBase::InitialiseAbilities()
 {
-	// If AbilityOne is not null, add it to the character
-	if (AbilityOne)
+	// Iterate through all abilities in the array and give them to the character
+	for (TSubclassOf<UGameplayAbility>& Ability : Abilities)
 	{
-		AbilitySystemComponent->GiveAbility(FGameplayAbilitySpec(AbilityOne));
-	}
-	// If AbilityTwo is not null, add it to the character
-	if (AbilityTwo)
-	{
-		AbilitySystemComponent->GiveAbility(FGameplayAbilitySpec(AbilityTwo));
+		if (Ability)
+		{
+			AbilitySystemComponent->GiveAbility(FGameplayAbilitySpec(Ability));
+		}
 	}
 }
 
@@ -192,5 +191,29 @@ float ACharacterBase::GetMultiDamageModifier() const
 TArray<AActor*> ACharacterBase::GetTargets() const
 {
 	return Targets;
+}
+
+TArray<UGameplayAbilityBase*> ACharacterBase::GetAllAbilityInstances() const
+{
+	TArray<UGameplayAbilityBase*> AbilityInstances;
+
+	if (!AbilitySystemComponent)
+	{
+		return AbilityInstances;
+	}
+
+	for (const FGameplayAbilitySpec& Spec : AbilitySystemComponent->GetActivatableAbilities())
+	{
+		if (Spec.Ability)
+		{
+			UGameplayAbilityBase* AbilityInstance = Cast<UGameplayAbilityBase>(Spec.Ability);
+			if (AbilityInstance)
+			{
+				AbilityInstances.Add(AbilityInstance);
+			}
+		}
+	}
+
+	return AbilityInstances;
 }
 
