@@ -3,98 +3,6 @@
 
 #include "GameManager.h"
 
-TArray<FMapNodeData> UGameManager::GenerateMap()
-{
-	if(AllRooms.Num() == 0)
-	{
-		// Populate AllRooms with the required number of each room type
-		for(int i = 0; i < CombatCount; i++)
-		{
-			AllRooms.Add(EMapRoomCPP::Combat);
-			//UE_LOG(LogTemp, Warning, TEXT("Added Combat Room %d"), i);
-		}
-		for(int i = 0; i < NonCombatCount; i++)
-		{
-			AllRooms.Add(EMapRoomCPP::Non_Combat);
-			//UE_LOG(LogTemp, Warning, TEXT("Added NonCombat Room %d"), i);
-		}
-		for(int i = 0; i < RestCount; i++)
-		{
-			AllRooms.Add(EMapRoomCPP::Shop);
-			//UE_LOG(LogTemp, Warning, TEXT("Added Shop Room %d"), i);
-		}
-
-		// Shuffle the rooms to randomize their order
-		ShuffleArray(AllRooms);
-
-		for (int i = 0; i < AllRooms.Num(); i++)
-		{
-			//UE_LOG(LogTemp, Warning, TEXT("Shuffled Room %d: %d"), i, (AllRooms[i]));
-		}
-
-		// Add the guaranteed Rest and Boss rooms at the end
-		AllRooms.Add(EMapRoomCPP::Shop);
-		AllRooms.Add(EMapRoomCPP::Boss);
-
-		for (int i = 0; i < AllRooms.Num(); i++)
-		{
-			MapDataStruct.RoomType = AllRooms[i];
-			MapNodes.Add(MapDataStruct);
-		}
-
-		for(int i = 0; i < MapNodes.Num(); i++)
-		{
-			UE_LOG(LogTemp, Warning, TEXT("Map Node %d: %d"), i, (int)MapNodes[i].RoomType);
-		}
-
-		// Set the first room as visited
-		MapNodes[0].bVisited = true;
-		return MapNodes;
-	}
-	else
-	{
-		return MapNodes;
-	}
-}
-
-void UGameManager::ShuffleArray(TArray<EMapRoomCPP>& ArrayToShuffle)
-{
-	int32 LastIndex = ArrayToShuffle.Num() - 1;
-	for (int32 i = 0; i <= LastIndex; i++)
-	{
-		int32 SwapIndex = FMath::RandRange(i, LastIndex);
-		if (i != SwapIndex)
-		{
-			ArrayToShuffle.Swap(i, SwapIndex);
-		}
-	}
-}
-
-void UGameManager::ModifyArrayStruct(bool bVisitedStatus, int ArrayIndex)
-{
-	if(MapNodes.IsValidIndex(ArrayIndex))
-	{
-		MapNodes[ArrayIndex].bVisited = bVisitedStatus;
-	}
-}
-
-bool UGameManager::isEncounterComplete(FName EncounterName) const
-{
-	if (CompletedEncounters.Contains(EncounterName))
-	{
-		return true;
-	}
-	return false;
-}
-
-void UGameManager::MarkEncounterComplete(FName EncounterName)
-{
-	if (!CompletedEncounters.Contains(EncounterName))
-	{
-		CompletedEncounters.Add(EncounterName);
-	}
-}
-
 void UGameManager::GenerateGrid()
 {
 	Grid.Empty(); // change to if grid empty, make grid. Else, do nothing
@@ -130,7 +38,7 @@ void UGameManager::CreateMap()
 
 	StartingNodes.Add(startNodeIndex2);
 
-	int extraNodes = 4;
+	int extraNodes = 3;
 	for (int i = 0; i < extraNodes; ++i)
 	{
 		int ExtraNodeIndex = FMath::RandRange(0, maxNodesPerFloor - 1);
@@ -154,52 +62,89 @@ void UGameManager::CreateMap()
 		}
 	}
 
+	TArray<int32> BranchStack;
+	TSet<int32> Processed;
+
 	for (int32 StartColumn : StartingNodes) // for each starting node, make a start column variable
 	{
-		int32 CurrentColumn = StartColumn;
-		int32 CurrentFlat = GetNodeIndex(0, CurrentColumn); // 
+		int32 StartFlat = GetNodeIndex(0, StartColumn); // 
 
-		if (Grid.IsValidIndex(CurrentFlat))
+		if (Grid.IsValidIndex(StartFlat))
 		{
-			Grid[CurrentFlat].RoomType = EMapRoomCPP::Combat;
-		}
-
-		for (int32 Floor = 0; Floor < floors - 1; ++Floor)
-		{
-			TArray<int32> NextFlats = ChooseNextNodes(Floor, CurrentColumn);
-
-			for (int32 NextFlat : NextFlats)
-			{
-				if (Grid.IsValidIndex(NextFlat))
-				{
-					Grid[NextFlat].RoomType = EMapRoomCPP::Combat;
-					Grid[CurrentFlat].ConnectedNodes.AddUnique(NextFlat);
-					Grid[NextFlat].IncomingNodes.AddUnique(CurrentFlat);
-				}
-			}
-
-			if (NextFlats.Num() > 0)
-			{
-				CurrentColumn = NextFlats[0] % maxNodesPerFloor;
-				CurrentFlat = NextFlats[0];
-			}
+			Grid[StartFlat].RoomType = EMapRoomCPP::Combat;
+			BranchStack.Add(StartFlat);
 		}
 	}
 
-	for (int32 room = 0; room < Grid.Num(); ++room)
+	float BranchProbability = 0.35f;
+
+	while (BranchStack.Num() > 0)
 	{
-		if (Grid[room].ConnectedNodes.Num() != 0)
+		int32 CurrentFlat = BranchStack.Last();
+		BranchStack.Pop();
+
+		if (Processed.Contains(CurrentFlat))
 		{
-			// make a text variable
-			FString Log = ("Room " + FString::FromInt(room) + " has connections to:");
-			for (int32 connectedRoom : Grid[room].ConnectedNodes)
+			continue;
+		}
+		Processed.Add(CurrentFlat);
+
+		int32 Floor = CurrentFlat / maxNodesPerFloor;
+		int32 CurrentColumn = CurrentFlat % maxNodesPerFloor;
+
+		if (Floor >= floors - 1)
+		{
+			continue;
+		}
+
+		TArray<int32> NextFlats = ChooseNextNodes(Floor, CurrentColumn);
+
+		for (int32 i = 0; i < NextFlats.Num(); ++i)
+		{
+			int32 SwapIndex = FMath::RandRange(i, NextFlats.Num() - 1);
+			if (i != SwapIndex)
 			{
-				Log += " " + FString::FromInt(connectedRoom);
+				NextFlats.Swap(i, SwapIndex);
 			}
-			UE_LOG(LogTemp, Warning, TEXT("%s"), *Log);
+		}
+
+		bool PickedABranch = false;
+		bool ShouldCreateBranch = false;
+
+		for (int32 NextFlat : NextFlats)
+		{
+			if(!Grid.IsValidIndex(NextFlat))
+			{
+				continue;
+			}
+
+			if (!PickedABranch)
+			{
+				ShouldCreateBranch = true;
+			}
+
+			else
+			{
+				ShouldCreateBranch = FMath::FRand() < BranchProbability;
+			}
+
+			if (!ShouldCreateBranch)
+			{
+				continue;
+			}
+
+			Grid[NextFlat].RoomType = EMapRoomCPP::Combat;
+			Grid[CurrentFlat].ConnectedNodes.AddUnique(NextFlat);
+			Grid[NextFlat].IncomingNodes.AddUnique(CurrentFlat);
+
+			PickedABranch = true;
+
+			if (!Processed.Contains(NextFlat))
+			{
+				BranchStack.Add(NextFlat);
+			}
 		}
 	}
-
 }
 
 bool UGameManager::DoesConnectionCross(int32 Floor, int32 ColA, int32 ColB)
@@ -221,6 +166,7 @@ bool UGameManager::DoesConnectionCross(int32 Floor, int32 ColA, int32 ColB)
     }
     return false;
 }
+
 TArray<int32> UGameManager::ChooseNextNodes(int32 Floor, int32 NodeIndex)
 {
 	TArray<int32> Result;
@@ -248,6 +194,15 @@ TArray<int32> UGameManager::ChooseNextNodes(int32 Floor, int32 NodeIndex)
 		Candidates.Add(FMath::Clamp(NodeIndex + 1, 0, LastCol));
 	}
 
+	for (int32 i = 0; i < Candidates.Num(); ++i)
+	{
+		int32 SwapIndex = FMath::RandRange(i, Candidates.Num() - 1);
+		if (i != SwapIndex)
+		{
+			Candidates.Swap(i, SwapIndex);
+		}
+	}
+
 	for (int32 ChosenCol : Candidates)
 	{
 		if (!DoesConnectionCross(Floor, NodeIndex, ChosenCol))
@@ -260,8 +215,6 @@ TArray<int32> UGameManager::ChooseNextNodes(int32 Floor, int32 NodeIndex)
 
 	return Result;
 }
-
-
 
 FMapNodeData UGameManager::GetNode(int32 Floor, int32 NodeIndex)
 {

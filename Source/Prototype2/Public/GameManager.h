@@ -53,23 +53,10 @@ class PROTOTYPE2_API UGameManager : public UGameInstance
 public:
 
 	UFUNCTION(BlueprintCallable, Category = "GameManager")
-	TArray<FMapNodeData> GenerateMap();
-	void ShuffleArray(TArray<EMapRoomCPP>& ArrayToShuffle);
-
-	UFUNCTION(BlueprintCallable, Category = "GameManager")
 	TArray<FMapNodeData> GetMapNodes() const { return MapNodes; }
 
 	UFUNCTION(BlueprintCallable, Category = "GameManager")
 	int GetCurrentNodeIndex() const { return CurrentNodeIndex; }
-
-	UFUNCTION(BlueprintCallable, Category="GameManager")
-	void ModifyArrayStruct(bool bVisitedStatus, int ArrayIndex);
-
-	UFUNCTION(BlueprintCallable, Category = "GameManager")
-	bool isEncounterComplete(FName EncounterName) const;
-
-	UFUNCTION(BlueprintCallable, Category = "GameManager")
-	void MarkEncounterComplete(FName EncounterName);
 
 	UFUNCTION(BlueprintCallable, Category = "GameManager")
 	void GenerateGrid();
