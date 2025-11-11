@@ -2,7 +2,8 @@
 
 
 #include "EntityBase.h"
-
+#include "Kismet/GameplayStatics.h"
+#include "CombatManager.h"
 #include "AttributeHealthSet.h"
 
 AEntityBase::AEntityBase()
@@ -18,6 +19,16 @@ AEntityBase::AEntityBase()
 
 	CharacterMesh->SetCollisionEnabled(ECollisionEnabled::NoCollision);
 	BaseplateMesh->SetCollisionEnabled(ECollisionEnabled::NoCollision);
+}
+
+bool AEntityBase::HasEntityDied()
+{
+	return (HealthSet->GetCurrentHealth() <= 0);
+}
+
+void AEntityBase::OnEntityDeath()
+{
+	Cast<ACombatManager>(UGameplayStatics::GetGameMode(GetWorld()))->OnEntityDeath(this);
 }
 
 void AEntityBase::PrintDebugData()

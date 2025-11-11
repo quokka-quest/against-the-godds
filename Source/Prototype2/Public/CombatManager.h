@@ -107,6 +107,9 @@ public:
 
 	void ExecuteAttackOnTarget();
 
+	UFUNCTION(BlueprintCallable)
+	void OnEntityDeath(AEntityBase* DeadEntity);
+
 protected:
 	UPROPERTY(BlueprintReadWrite)
 	AGridManager* GridManager;

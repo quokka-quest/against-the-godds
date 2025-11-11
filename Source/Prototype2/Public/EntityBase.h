@@ -47,6 +47,12 @@ public:
 
 	void PrintDebugData();
 
+	UFUNCTION(BlueprintCallable, BlueprintPure, Category = "PlayerInfo")
+	bool HasEntityDied();
+
+	UFUNCTION(BlueprintCallable, Category = "PlayerInfo")
+	void OnEntityDeath();
+
 protected:
 	UPROPERTY()
 	UStaticMeshComponent* BaseplateMesh;

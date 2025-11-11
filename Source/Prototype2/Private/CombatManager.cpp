@@ -229,6 +229,12 @@ void ACombatManager::ExecuteAttackOnTarget()
 	OnAttackExecuted.Broadcast();
 }
 
+void ACombatManager::OnEntityDeath(AEntityBase* DeadEntity)
+{
+	UE_LOG(LogTemp, Warning, TEXT("OnEntityDeath detected"));
+}
+
+
 /////////////////////////////////////////////////////////////////////////// Blueprint friendly Getters and setters:
 
 EAttackRotation ACombatManager::GetAttackRotation()

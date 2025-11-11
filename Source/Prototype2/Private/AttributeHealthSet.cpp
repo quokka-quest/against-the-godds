@@ -2,6 +2,7 @@
 
 
 #include "AttributeHealthSet.h"
+#include "EntityBase.h"
 #include "GameplayEffectExtension.h"
 
 UAttributeHealthSet::UAttributeHealthSet()
@@ -46,6 +47,12 @@ void UAttributeHealthSet::PostGameplayEffectExecute(const struct FGameplayEffect
 			{
 				const float NewHealth = GetCurrentHealth() - InDamageDone;
 				SetCurrentHealth(FMath::Clamp(NewHealth, 0.0f, GetMaxHealth()));
+			}
+
+			// check for death
+			if (GetCurrentHealth() <= 0)
+			{
+				Cast<AEntityBase>(GetOwningActor())->OnEntityDeath();
 			}
 		}
 	}
