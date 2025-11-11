@@ -28,6 +28,7 @@ struct FPlayerInitiativeData
 DECLARE_DYNAMIC_MULTICAST_DELEGATE(FOnPlayerTurnEnd);
 DECLARE_DYNAMIC_MULTICAST_DELEGATE(FOnMoveButtonClicked);
 DECLARE_DYNAMIC_MULTICAST_DELEGATE(FOnAttackButtonClicked);
+DECLARE_DYNAMIC_MULTICAST_DELEGATE(FOnAttackExecuted);
 
 UCLASS()
 class PROTOTYPE2_API ACombatManager : public AGameModeBase
@@ -37,6 +38,7 @@ class PROTOTYPE2_API ACombatManager : public AGameModeBase
 public:
 	virtual void BeginPlay() override;
 
+	// delegates
 	UPROPERTY(BlueprintAssignable, category = "Combat")
 	FOnPlayerTurnEnd OnPlayerTurnEnd;
 
@@ -46,6 +48,9 @@ public:
 	UPROPERTY(BlueprintAssignable, category = "Combat")
 	FOnAttackButtonClicked OnAttackButtonClicked;
 
+	FOnAttackExecuted OnAttackExecuted;
+
+	// properties
 	UPROPERTY(EditAnywhere, BlueprintReadWrite, category = "Combat")
 	FName TurnEventQueueName;
 
@@ -63,7 +68,8 @@ public:
 
 	UPROPERTY(BlueprintReadWrite, category = "Combat")
 	TSubclassOf<UGameplayAbilityBase> AbilityToUse;
-	
+
+	// functions
 	void FinishPlayerLocationPicking(TArray<AGridCell*> &playerStartCells);
 
 	UFUNCTION(BlueprintImplementableEvent)

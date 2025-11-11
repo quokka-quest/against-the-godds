@@ -46,6 +46,7 @@ void APlayerCombatLevelPawn::BeginPlay()
 	CombatManager->OnPlayerTurnEnd.AddDynamic(this, &APlayerCombatLevelPawn::OnPlayerTurnEnd);
 	CombatManager->OnMoveButtonClicked.AddDynamic(this, &APlayerCombatLevelPawn::OnMoveButtonClicked);
 	CombatManager->OnAttackButtonClicked.AddDynamic(this, &APlayerCombatLevelPawn::OnAttackButtonClicked);
+	CombatManager->OnAttackExecuted.AddDynamic(this, &APlayerCombatLevelPawn::OnAttackExecuted);
 }
 
 // Called every frame
@@ -85,7 +86,8 @@ void APlayerCombatLevelPawn::SetTileSelectionType(ETileSelectionType Type)
 void APlayerCombatLevelPawn::OnTileClick()
 {
 	if (!HighlightedCell) {OnClickedOffTileGrid(); return;}
-
+	if (TileSelectionType == None) return;
+	
 	if (TileSelectionType == ETileSelectionType::SpawnSelection) TryAddTileToSpawnSelection();
 
 	// click logic for when the selected cell is not the cell being clicked on
@@ -220,6 +222,12 @@ void APlayerCombatLevelPawn::OnClickedOffTileGrid()
 	if (TileSelectionType == ETileSelectionType::Movement) {CombatManager->DisplayCurrentCombatantsMovement(); return;}
 	if (TileSelectionType == ETileSelectionType::Attack) return; // can implement target pattern reset when merged with Lee-Roy's GAS system
 }
+
+void APlayerCombatLevelPawn::OnAttackExecuted()
+{
+	TileSelectionType = ETileSelectionType::None;
+}
+
 
 
 

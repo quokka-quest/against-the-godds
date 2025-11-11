@@ -105,6 +105,7 @@ void ACombatManager::StartCurrentTurn()
 	APlayerEntity* PlayerRef = Cast<APlayerEntity>(CurrentTurnCombatant);
 
 	CurrentTurnCombatant->AvailableMovement = CurrentTurnCombatant->MaxMovement;
+	CurrentTurnCombatant->AvailableAttacks = CurrentTurnCombatant->MaxAttacks;
 	
 	CurrentTurnCombatant->SetupTurnStart();
 
@@ -220,9 +221,12 @@ void ACombatManager::ExecuteAttackOnTarget()
 		
 		TargetActors.Add(Cast<AActor>(GridManager->GridCells[AreaOfAttackEffect[i]]->OccupyingEntity));
 	}
-	
+
+	CurrentTurnCombatant->AvailableAttacks--;
 	CurrentTurnCombatant->ActivateAbilityWithTargets(AbilityToUse, TargetActors);
-	CurrentTurnCombatant->PrintDebugData();
+	
+	GridManager->ChangeAllTilesDisplay(EEditorGridDisplayType::Default);
+	OnAttackExecuted.Broadcast();
 }
 
 /////////////////////////////////////////////////////////////////////////// Blueprint friendly Getters and setters:

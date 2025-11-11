@@ -96,4 +96,7 @@ private:
 
 	void OnClickedOffTileGrid();
 
+	UFUNCTION()
+	void OnAttackExecuted();
+
 };
