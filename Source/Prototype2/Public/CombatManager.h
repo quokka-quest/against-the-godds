@@ -125,6 +125,9 @@ protected:
 	UPROPERTY(BlueprintReadWrite, EditAnywhere, category = "Combat")
 	TSubclassOf<APlayerEntity> PlayerClass;
 
+	UPROPERTY(BlueprintReadOnly, Category = "Combat")
+	bool RoundHasEnded;
+
 	UFUNCTION(BlueprintCallable)
 	void RollDiceForInitiative();
 
@@ -140,6 +143,9 @@ protected:
 	void EndCurrentTurn();
 
 	void IncrementTurnIndex();
+
+	UFUNCTION(BlueprintCallable, BlueprintPure)
+	bool HasRoundEnded();
 
 	UFUNCTION(BlueprintImplementableEvent)
 	void BlueprintEndTurnEvents();

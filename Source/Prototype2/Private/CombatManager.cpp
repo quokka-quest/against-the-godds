@@ -97,6 +97,7 @@ void ACombatManager::SortTurnOrderArray()
 	CurrentTurnOrder = DefaultTurnOrder;
 }
 
+// called to start a new turn
 void ACombatManager::StartCurrentTurn()
 {
 	CurrentTurnCombatant = CurrentTurnOrder[CurrentCombatantTurnIndex].Entity;
@@ -106,6 +107,7 @@ void ACombatManager::StartCurrentTurn()
 	CurrentTurnCombatant->AvailableMovement = CurrentTurnCombatant->MaxMovement;
 	CurrentTurnCombatant->AvailableAttacks = CurrentTurnCombatant->MaxAttacks;
 
+	RoundHasEnded = false;
 	CurrentTurnCombatant->SetupTurnStart();
 
 	// for additional Enemy specific logic
@@ -122,6 +124,8 @@ void ACombatManager::StartCurrentTurn()
 	}
 }
 
+// called by Entities on the end of their turn
+// manages end of turn logic and starts the next turn
 void ACombatManager::EndCurrentTurn()
 {
 	AEnemyEntity* EnemyRef = Cast<AEnemyEntity>(CurrentTurnCombatant);
@@ -144,16 +148,22 @@ void ACombatManager::EndCurrentTurn()
 	}
 	
 	IncrementTurnIndex();
-	BlueprintEndTurnEvents();
+	BlueprintEndTurnEvents(); // calls a function defined in the game-mode blueprint that will transition UI and start the next turn
 }
 
 void ACombatManager::IncrementTurnIndex()
 {
 	CurrentCombatantTurnIndex += 1;
-	if (CurrentCombatantTurnIndex >= CurrentTurnOrder.Num()) CurrentCombatantTurnIndex = 0;
 	CurrentCombatantTurnIndex %= CurrentTurnOrder.Num();
+	if (CurrentCombatantTurnIndex == 0) RoundHasEnded = true;
+	UE_LOG(LogTemp, Warning, TEXT("turn order num: %i"), CurrentTurnOrder.Num())
+	UE_LOG(LogTemp, Warning, TEXT("round ended: %i"), RoundHasEnded)
+	if (CurrentTurnOrder[CurrentCombatantTurnIndex].Entity->HasEntityDied()) IncrementTurnIndex();
 }
 
+// only used for player movement. Enemy movement is handled in the EnemyEntity class
+// moves a player from there current position to the target position
+// checks for valid locations are done before this function is called so they aren't needed here
 void ACombatManager::MoveCurrentCombatant(FIntVector TargetPos)
 {
 	GridManager->GridCells[CurrentTurnCombatant->PositionCoord]->SetOccupancy(nullptr);
@@ -185,6 +195,7 @@ void ACombatManager::DisplayCurrentCombatantsMovement()
 	GridManager->DisplayWalkableTiles(CurrentTurnCombatant->PositionCoord, CurrentTurnCombatant->AvailableMovement);
 }
 
+// displays all the tiles that the player can target
 void ACombatManager::DisplayAttackRange(int Range) 
 {
 	AttackRange = Range;
@@ -229,20 +240,8 @@ void ACombatManager::ExecuteAttackOnTarget()
 
 void ACombatManager::OnEntityDeath(AEntityBase* DeadEntity)
 {
-	// remove the player from the initiative order
-	TArray<FPlayerInitiativeData> NewInitiativeData;
-	
-	for (int i = 0; i < CurrentTurnOrder.Num(); i++)
-	{
-		if (CurrentTurnOrder[i].Entity == DeadEntity) continue;
-		NewInitiativeData.Add(CurrentTurnOrder[i]);
-	}
-	CurrentTurnOrder.Empty();
-	CurrentTurnOrder = NewInitiativeData;
-
 	// mark the tile the entity was on as empty
 	GridManager->GridCells[DeadEntity->PositionCoord]->SetOccupancy(nullptr);
-	
 }
 
 
@@ -266,6 +265,11 @@ AEntityBase* ACombatManager::GetCurrentCombatant()
 FName ACombatManager::GetTurnQueueName()
 {
 	return TurnEventQueueName;
+}
+
+bool ACombatManager::HasRoundEnded()
+{
+	return RoundHasEnded;
 }
 
 

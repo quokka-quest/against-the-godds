@@ -23,6 +23,7 @@ void AEnemyEntity::DeterminePlayerTarget()
 	{
 		APlayerEntity* Player = Cast<APlayerEntity>(Entity);
 		if (!Player) continue;
+		if (Player->HasEntityDied()) continue;
 
 		FIntVector PlayerPos = Player->PositionCoord;
 		int XDist = abs(PlayerPos.X - PositionCoord.X);
