@@ -106,7 +106,7 @@ void ACombatManager::StartCurrentTurn()
 
 	CurrentTurnCombatant->AvailableMovement = CurrentTurnCombatant->MaxMovement;
 	CurrentTurnCombatant->AvailableAttacks = CurrentTurnCombatant->MaxAttacks;
-	
+
 	CurrentTurnCombatant->SetupTurnStart();
 
 	// for additional Enemy specific logic
