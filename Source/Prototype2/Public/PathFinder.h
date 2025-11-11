@@ -3,14 +3,11 @@
 #pragma once
 
 #include "CoreMinimal.h"
+#include "GridCell.h"
 #include "GameFramework/Actor.h"
-#include "PathFinder.generated.h"
 
-USTRUCT()
 struct FTileInfo
 {
-	GENERATED_BODY()
-
 	FIntVector Coord;
 	int EntryCost;
 	int CostFromStart;
@@ -25,37 +22,33 @@ struct FTileInfo
 
 // NOTE: Currently this pathfinding ignores the idea of Z levels
 // functionality for different heights will need to be added later
-UCLASS()
-class PROTOTYPE2_API APathFinder : public AActor
+class PathFinder
 {
-	GENERATED_BODY()
-	
-public:	
-	// Sets default values for this actor's properties
-	APathFinder();
+public:
+	PathFinder(TMap<FIntVector, AGridCell*>& InGridCells):GridCells(InGridCells){};
 
-	UFUNCTION()
+	void Initialise(TMap<FIntVector, AGridCell*>& InGridCells);
+	
 	TArray<FIntVector> FindPath(FIntVector Start, FIntVector End);
 
-	UFUNCTION()
 	TArray<FIntVector> FindMoveableTiles(FIntVector Start, int AvailableMovement);
 
-	UFUNCTION()
 	TArray<FIntVector> FindAttackableTiles(FIntVector Start, int Range);
 
-	UFUNCTION()
 	TArray<FIntVector> FindPathForEnemy(FIntVector Start, FIntVector End);
 
 private:
-	FIntVector StartCoord;
-	FIntVector EndCoord;
+	TMap<FIntVector, AGridCell*>& GridCells;
+	
+	FIntVector StartCoord = FIntVector(0);
+	FIntVector EndCoord = FIntVector(0);
 
 	TMap<FIntVector, FTileInfo> TileMap;
 	TArray<FTileInfo> DiscoveredTiles;
 	TArray<FTileInfo> AnalysedTiles;
 
-	int TotalMovement;
-	int AttackRange;
+	int TotalMovement = 0;
+	int AttackRange = 0;
 
 	int CalulateMinCostBetweenTiles(FIntVector Start, FIntVector End);
 

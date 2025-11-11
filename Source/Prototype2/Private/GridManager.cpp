@@ -9,7 +9,6 @@ AGridManager::AGridManager()
 {
  	// Set this actor to call Tick() every frame.  You can turn this off to improve performance if you don't need it.
 	PrimaryActorTick.bCanEverTick = true;
-	PathFinder = nullptr;
 }
 
 // Called when the game starts or when spawned
@@ -44,8 +43,6 @@ void AGridManager::InitialiseGridManagement()
 			GridCells.Add(Cell->GridCellCoord, Cell);
 		}
 	}
-
-	PathFinder = GetWorld()->SpawnActor<APathFinder>();
 
 	if (!DefaultMat) UE_LOG(LogTemp, Warning, TEXT("Default Material could not be found"))
 	if (!TargetMat) UE_LOG(LogTemp, Warning, TEXT("Target Material could not be found"))
@@ -93,7 +90,7 @@ void AGridManager::DisplayWalkableTiles(FIntVector CurrentCellCoord, int Availab
 {
 	if (AvailableMovement <= 0) return;
 
-	TArray<FIntVector> WalkableCoords = PathFinder->FindMoveableTiles(CurrentCellCoord, AvailableMovement);
+	TArray<FIntVector> WalkableCoords = PathFinder(GridCells).FindMoveableTiles(CurrentCellCoord, AvailableMovement);
 	if (WalkableCoords.Num() == 0) return;
 
 	for (FIntVector WalkableCoord : WalkableCoords)
@@ -115,8 +112,8 @@ void AGridManager::ResetTilesWalkAndAttackBooleans()
 
 TArray<FIntVector> AGridManager::DisplayTilePath(FIntVector StartCoord, FIntVector EndCoord)
 {
-	TArray<FIntVector> Path = PathFinder->FindPath(StartCoord, EndCoord);
-	if (Path.IsEmpty()) { UE_LOG(LogTemp, Error, TEXT("Path could not be found")) return Path; }
+	TArray<FIntVector> Path = PathFinder(GridCells).FindPath(StartCoord, EndCoord);
+	if (Path.IsEmpty()) { UE_LOG(LogTemp, Error, TEXT("GridManager->DisplayTilePath: Path could not be found")) return Path; }
 
 	for (int i = 0; i < Path.Num(); i++)
 	{
@@ -130,7 +127,7 @@ void AGridManager::DisplayTilesInAttackRange(FIntVector CurrentCellCoord, int Ra
 {
 	if (Range < 0) return;
 
-	TArray<FIntVector> WalkableCoords = PathFinder->FindAttackableTiles(CurrentCellCoord, Range);
+	TArray<FIntVector> WalkableCoords = PathFinder(GridCells).FindAttackableTiles(CurrentCellCoord, Range);
 	if (WalkableCoords.Num() == 0) return;
 
 	for (FIntVector WalkableCoord : WalkableCoords)
@@ -160,7 +157,7 @@ TArray<FIntVector> AGridManager::DisplayAttackPattern(FIntVector TargetCoord, EA
 
 TArray<FIntVector> AGridManager::GetPath(FIntVector StartCoord, FIntVector EndCoord)
 {
-	return PathFinder->FindPathForEnemy(StartCoord, EndCoord);
+	return PathFinder(GridCells).FindPathForEnemy(StartCoord, EndCoord);
 }
 
 

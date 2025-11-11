@@ -35,9 +35,6 @@ private:
 	UPROPERTY()
 	UMaterialInterface* PathMat = LoadObject<UMaterialInterface>(nullptr, TEXT("/Game/Materials/M_TileGold.M_TileGold"));
 
-	UPROPERTY()
-	APathFinder* PathFinder;
-
 	AttackTargetAreas AttackAreaManager;
 	
 	void InitialiseGridManagement();

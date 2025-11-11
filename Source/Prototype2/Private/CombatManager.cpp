@@ -156,8 +156,6 @@ void ACombatManager::IncrementTurnIndex()
 	CurrentCombatantTurnIndex += 1;
 	CurrentCombatantTurnIndex %= CurrentTurnOrder.Num();
 	if (CurrentCombatantTurnIndex == 0) RoundHasEnded = true;
-	UE_LOG(LogTemp, Warning, TEXT("turn order num: %i"), CurrentTurnOrder.Num())
-	UE_LOG(LogTemp, Warning, TEXT("round ended: %i"), RoundHasEnded)
 	if (CurrentTurnOrder[CurrentCombatantTurnIndex].Entity->HasEntityDied()) IncrementTurnIndex();
 }
 
