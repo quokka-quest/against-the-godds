@@ -173,7 +173,7 @@ void APlayerCombatLevelPawn::DisplayAttackTargetArea()
 
 void APlayerCombatLevelPawn::TryAttackTargetTile()
 {
-	UE_LOG(LogTemp, Warning, TEXT("try to attack target tile"))
+	CombatManager->ExecuteAttackOnTarget();
 }
 
 

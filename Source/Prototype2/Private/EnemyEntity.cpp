@@ -79,7 +79,15 @@ void AEnemyEntity::DetermineMovement()
 		FVector EndPos = GridManager->GridCells[PathToTarget[i-1]]->GetActorLocation();
 		EnqueueMovement(StartPos, EndPos);
 	}
+
+	// removes this entity from the cell it started in
+	GridManager->GridCells[PositionCoord]->IsOccupied = false;
+	GridManager->GridCells[PositionCoord]->OccupyingEntity = nullptr;
+
+	// tells the cell it moved to that it is occupied
 	PositionCoord = PathToTarget[TargetPosIndex];
+	GridManager->GridCells[PositionCoord]->IsOccupied = true;
+	GridManager->GridCells[PositionCoord]->OccupyingEntity = Cast<AEntityBase>(this);
 }
 
 

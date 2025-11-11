@@ -185,6 +185,60 @@ void ACombatManager::DisplayCurrentCombatantsMovement()
 	GridManager->DisplayWalkableTiles(CurrentTurnCombatant->PositionCoord, CurrentTurnCombatant->AvailableMovement);
 }
 
+void ACombatManager::DisplayAttackRange(int Range) 
+{
+	AttackRange = Range;
+	GridManager->ResetTilesWalkAndAttackBooleans();
+	GridManager->DisplayTilesInAttackRange(CurrentTurnCombatant->PositionCoord, Range);
+}
+
+// displays the attack area and stores the targeted tiles with element 0 being the targeted tile and the rest are the additional area
+void ACombatManager::DisplayAttackPattern(FIntVector TargetCoord)
+{
+	DisplayAttackRange(AttackRange);
+	AreaOfAttackEffect = GridManager->DisplayAttackPattern(TargetCoord, AttackPattern, AttackRotation);
+}
+
+void ACombatManager::DisplayAttackInformation(TSubclassOf<UGameplayAbilityBase> Ability, FDiceFaceLevels DiceLevels, int Range, EAttackPattern Pattern)
+{
+	AbilityToUse = Ability;
+	AttackPattern = Pattern;
+	DisplayAttackRange(Range);
+}
+
+void ACombatManager::ExecuteAttackOnTarget()
+{
+	TArray<AActor*> TargetActors;
+
+	for (int i = 0; i < AreaOfAttackEffect.Num(); i++)
+	{
+		if (!GridManager->GridCells.Contains(AreaOfAttackEffect[i])) continue;
+		if (!GridManager->GridCells[AreaOfAttackEffect[i]]->IsOccupied) continue;
+		TargetActors.Add(GridManager->GridCells[AreaOfAttackEffect[i]]->OccupyingEntity);
+	}
+
+	CurrentTurnCombatant->ActivateAbilityWithTargets(AbilityToUse, TargetActors);
+}
+
+/////////////////////////////////////////////////////////////////////////// Getters and setters:
+
+EAttackRotation ACombatManager::GetAttackRotation()
+{
+	return AttackRotation;
+}
+
+void ACombatManager::SetAttackRotation(EAttackRotation Rotation)
+{
+	AttackRotation = Rotation;
+}
+
+AEntityBase* ACombatManager::GetCurrentCombatant()
+{
+	return CurrentTurnCombatant;
+}
+
+/////////////////////////////////////////////////////////////////////////// Blueprint friendly delegate broadcasts:
+
 void ACombatManager::BroadcastOnMoveClickedEvent()
 {
 	OnMoveButtonClicked.Broadcast();
@@ -193,38 +247,4 @@ void ACombatManager::BroadcastOnMoveClickedEvent()
 void ACombatManager::BroadcastOnAttackClickedEvent() 
 {
 	OnAttackButtonClicked.Broadcast();
-}
-
-AEntityBase* ACombatManager::GetCurrentCombatant()
-{
-	return CurrentTurnCombatant;
-}
-
-void ACombatManager::DisplayAttackRange(int Range) 
-{
-	AttackRange = Range;
-	GridManager->ResetTilesWalkAndAttackBooleans();
-	GridManager->DisplayTilesInAttackRange(CurrentTurnCombatant->PositionCoord, Range);
-}
-
-void ACombatManager::DisplayAttackPattern(FIntVector TargetCoord)
-{
-	DisplayAttackRange(AttackRange);
-	AreaOfAttackEffect = GridManager->DisplayAttackPattern(TargetCoord, AttackPattern, AttackRotation);
-}
-
-void ACombatManager::SetAttackRotation(EAttackRotation Rotation)
-{
-	AttackRotation = Rotation;
-}
-
-EAttackRotation ACombatManager::GetAttackRotation()
-{
-	return AttackRotation;
-}
-
-void ACombatManager::DisplayAttackInformation(TSubclassOf<UGameplayAbilityBase> Ability, FDiceFaceLevels DiceLevels, int Range, EAttackPattern Pattern)
-{
-	AttackPattern = Pattern;
-	DisplayAttackRange(Range);
 }

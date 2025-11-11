@@ -60,6 +60,9 @@ public:
 
 	UPROPERTY(BlueprintReadWrite, category = "Combat")
 	AEntityBase* CurrentTurnCombatant;
+
+	UPROPERTY(BlueprintReadWrite, category = "Combat")
+	TSubclassOf<UGameplayAbilityBase> AbilityToUse;
 	
 	void FinishPlayerLocationPicking(TArray<AGridCell*> &playerStartCells);
 
@@ -95,6 +98,8 @@ public:
 
 	UFUNCTION(BlueprintCallable)
 	void DisplayAttackInformation(TSubclassOf<UGameplayAbilityBase> Ability, FDiceFaceLevels DiceLevels, int Range, EAttackPattern Pattern);
+
+	void ExecuteAttackOnTarget();
 
 protected:
 	UPROPERTY(BlueprintReadWrite)
