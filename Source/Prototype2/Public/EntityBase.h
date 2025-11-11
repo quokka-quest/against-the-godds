@@ -34,12 +34,18 @@ public:
 
 	UPROPERTY(EditAnywhere, BlueprintReadWrite, Category="PlayerInfo")
 	int MaxMovement;
-
 	UPROPERTY(BlueprintReadWrite, Category="PlayerInfo")
 	int AvailableMovement;
 
 	UPROPERTY(EditAnywhere, BlueprintReadWrite, Category = "PlayerInfo")
 	TMap<TSubclassOf<UGameplayAbilityBase>, FDiceFaceLevels> AbilityDiceMap;
+
+	UPROPERTY(EditAnywhere, BlueprintReadWrite, Category = "PlayerInfo")
+	int MaxAttacks;
+	UPROPERTY(EditAnywhere, BlueprintReadWrite, Category = "PlayerInfo")
+	int AvailableAttacks;
+
+	void PrintDebugData();
 
 protected:
 	UPROPERTY()

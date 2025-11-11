@@ -33,6 +33,7 @@ void ACombatManager::FinishPlayerLocationPicking(TArray<AGridCell*> &playerStart
 		Combatants.Add(player);
 		player->PositionCoord = Cell->GridCellCoord;
 		Cell->IsOccupied = true;
+		Cell->OccupyingEntity = player;
 	}
 
 	OnPlayerSpawnLocsPicked();
@@ -212,15 +213,19 @@ void ACombatManager::ExecuteAttackOnTarget()
 
 	for (int i = 0; i < AreaOfAttackEffect.Num(); i++)
 	{
-		if (!GridManager->GridCells.Contains(AreaOfAttackEffect[i])) continue;
-		if (!GridManager->GridCells[AreaOfAttackEffect[i]]->IsOccupied) continue;
-		TargetActors.Add(GridManager->GridCells[AreaOfAttackEffect[i]]->OccupyingEntity);
+		if (!GridManager->GridCells.Contains(AreaOfAttackEffect[i])) continue; // continue if cell coordinate is invalid
+		if (!GridManager->GridCells[AreaOfAttackEffect[i]]->IsOccupied) continue; // continue if cell is not occupied
+		if (!GridManager->GridCells[AreaOfAttackEffect[i]]->OccupyingEntity)
+			{ UE_LOG(LogTemp, Warning, TEXT("CombatManager->ExecuteAttackOnTarget() found an occupied cell with a null occupant")) continue;} // continue if cell is occupied but the entity is null
+		
+		TargetActors.Add(Cast<AActor>(GridManager->GridCells[AreaOfAttackEffect[i]]->OccupyingEntity));
 	}
-
+	
 	CurrentTurnCombatant->ActivateAbilityWithTargets(AbilityToUse, TargetActors);
+	CurrentTurnCombatant->PrintDebugData();
 }
 
-/////////////////////////////////////////////////////////////////////////// Getters and setters:
+/////////////////////////////////////////////////////////////////////////// Blueprint friendly Getters and setters:
 
 EAttackRotation ACombatManager::GetAttackRotation()
 {

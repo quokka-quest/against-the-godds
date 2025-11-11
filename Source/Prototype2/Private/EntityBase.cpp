@@ -3,6 +3,8 @@
 
 #include "EntityBase.h"
 
+#include "AttributeHealthSet.h"
+
 AEntityBase::AEntityBase()
 {
 	BaseplateMesh = CreateDefaultSubobject<UStaticMeshComponent>("BaseplateMesh");
@@ -18,3 +20,7 @@ AEntityBase::AEntityBase()
 	BaseplateMesh->SetCollisionEnabled(ECollisionEnabled::NoCollision);
 }
 
+void AEntityBase::PrintDebugData()
+{
+	UE_LOG(LogTemp, Warning, TEXT("Current Health: %f"), HealthSet->GetCurrentHealth());
+}
