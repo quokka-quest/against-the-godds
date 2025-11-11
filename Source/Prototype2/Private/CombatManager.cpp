@@ -32,8 +32,7 @@ void ACombatManager::FinishPlayerLocationPicking(TArray<AGridCell*> &playerStart
 		AEntityBase* player = GetWorld()->SpawnActor<AEntityBase>(PlayerClass, Transform);
 		Combatants.Add(player);
 		player->PositionCoord = Cell->GridCellCoord;
-		Cell->IsOccupied = true;
-		Cell->OccupyingEntity = player;
+		Cell->SetOccupancy(player);
 	}
 
 	OnPlayerSpawnLocsPicked();
@@ -51,7 +50,7 @@ void ACombatManager::SpawnEnemies()
 			AEnemyEntity* enemy = GetWorld()->SpawnActor<AEnemyEntity>(Value->EnemyToSpawn, form);
 			Combatants.Add(enemy);
 			enemy->PositionCoord = Value->GridCellCoord;
-			Value->IsOccupied = true;
+			Value->SetOccupancy(enemy);
 		}
 	}
 
@@ -151,15 +150,14 @@ void ACombatManager::EndCurrentTurn()
 void ACombatManager::IncrementTurnIndex()
 {
 	CurrentCombatantTurnIndex += 1;
+	if (CurrentCombatantTurnIndex >= CurrentTurnOrder.Num()) CurrentCombatantTurnIndex = 0;
 	CurrentCombatantTurnIndex %= CurrentTurnOrder.Num();
 }
 
 void ACombatManager::MoveCurrentCombatant(FIntVector TargetPos)
 {
-	GridManager->GridCells[CurrentTurnCombatant->PositionCoord]->IsOccupied = false;
-	GridManager->GridCells[CurrentTurnCombatant->PositionCoord]->OccupyingEntity = nullptr;
-	GridManager->GridCells[TargetPos]->IsOccupied = true;
-	GridManager->GridCells[TargetPos]->OccupyingEntity = CurrentTurnCombatant;
+	GridManager->GridCells[CurrentTurnCombatant->PositionCoord]->SetOccupancy(nullptr);
+	GridManager->GridCells[TargetPos]->SetOccupancy(CurrentTurnCombatant);
 
 	for (int i = PathForCombatantToFollow.Num()-1; i > 0; i--)
 	{
@@ -231,7 +229,20 @@ void ACombatManager::ExecuteAttackOnTarget()
 
 void ACombatManager::OnEntityDeath(AEntityBase* DeadEntity)
 {
-	UE_LOG(LogTemp, Warning, TEXT("OnEntityDeath detected"));
+	// remove the player from the initiative order
+	TArray<FPlayerInitiativeData> NewInitiativeData;
+	
+	for (int i = 0; i < CurrentTurnOrder.Num(); i++)
+	{
+		if (CurrentTurnOrder[i].Entity == DeadEntity) continue;
+		NewInitiativeData.Add(CurrentTurnOrder[i]);
+	}
+	CurrentTurnOrder.Empty();
+	CurrentTurnOrder = NewInitiativeData;
+
+	// mark the tile the entity was on as empty
+	GridManager->GridCells[DeadEntity->PositionCoord]->SetOccupancy(nullptr);
+	
 }
 
 
@@ -251,6 +262,12 @@ AEntityBase* ACombatManager::GetCurrentCombatant()
 {
 	return CurrentTurnCombatant;
 }
+
+FName ACombatManager::GetTurnQueueName()
+{
+	return TurnEventQueueName;
+}
+
 
 /////////////////////////////////////////////////////////////////////////// Blueprint friendly delegate broadcasts:
 

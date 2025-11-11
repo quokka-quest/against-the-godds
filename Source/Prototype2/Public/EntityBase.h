@@ -50,13 +50,13 @@ public:
 	UFUNCTION(BlueprintCallable, BlueprintPure, Category = "PlayerInfo")
 	bool HasEntityDied();
 
-	UFUNCTION(BlueprintCallable, Category = "PlayerInfo")
+	UFUNCTION(BlueprintNativeEvent, BlueprintCallable, Category = "PlayerInfo")
 	void OnEntityDeath();
 
 protected:
-	UPROPERTY()
+	UPROPERTY(BlueprintReadWrite)
 	UStaticMeshComponent* BaseplateMesh;
-	UPROPERTY()
+	UPROPERTY(BlueprintReadWrite)
 	UStaticMeshComponent* CharacterMesh;
 
 	UPROPERTY()

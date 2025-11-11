@@ -40,4 +40,9 @@ void AGridCell::QueryIfTileIsWalkable(AGridCell* FromCell, int CostToReach)
 	}
 }
 
+void AGridCell::SetOccupancy(AEntityBase* Entity)
+{
+	OccupyingEntity = (!Entity)? nullptr: Entity;
+	IsOccupied = (!Entity)? false: true;
+}
 

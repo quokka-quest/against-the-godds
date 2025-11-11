@@ -26,7 +26,7 @@ bool AEntityBase::HasEntityDied()
 	return (HealthSet->GetCurrentHealth() <= 0);
 }
 
-void AEntityBase::OnEntityDeath()
+void AEntityBase::OnEntityDeath_Implementation()
 {
 	Cast<ACombatManager>(UGameplayStatics::GetGameMode(GetWorld()))->OnEntityDeath(this);
 }

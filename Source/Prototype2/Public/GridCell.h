@@ -19,6 +19,8 @@ public:
 	UFUNCTION(BlueprintCallable)
 	void QueryIfTileIsWalkable(AGridCell* FromCell, int CostToReach);
 
+	void SetOccupancy(AEntityBase* Entity);
+
 	UPROPERTY(EditAnywhere, BlueprintReadWrite, Category = "Grid")
 	FIntVector GridCellCoord;
 	UPROPERTY(EditAnywhere, BlueprintReadWrite, Category = "Grid")

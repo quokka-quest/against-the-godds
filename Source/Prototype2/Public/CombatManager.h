@@ -51,9 +51,6 @@ public:
 	FOnAttackExecuted OnAttackExecuted;
 
 	// properties
-	UPROPERTY(EditAnywhere, BlueprintReadWrite, category = "Combat")
-	FName TurnEventQueueName;
-
 	UPROPERTY(BlueprintReadWrite, category = "Combat")
 	TArray<AEntityBase*> Combatants;
 
@@ -83,24 +80,9 @@ public:
 	void DisplayCurrentCombatantsMovement();
 
 	UFUNCTION(BlueprintCallable)
-	void BroadcastOnMoveClickedEvent();
-
-	UFUNCTION(BlueprintCallable)
-	void BroadcastOnAttackClickedEvent();
-
-	UFUNCTION(BlueprintCallable, BlueprintPure)
-	AEntityBase* GetCurrentCombatant();
-
-	UFUNCTION(BlueprintCallable)
 	void DisplayAttackRange(int Range);
 
 	void DisplayAttackPattern(FIntVector TargetCoord);
-
-	UFUNCTION(BlueprintCallable)
-	void SetAttackRotation(EAttackRotation Rotation);
-
-	UFUNCTION(BlueprintCallable, BlueprintPure)
-	EAttackRotation GetAttackRotation();
 
 	UFUNCTION(BlueprintCallable)
 	void DisplayAttackInformation(TSubclassOf<UGameplayAbilityBase> Ability, FDiceFaceLevels DiceLevels, int Range, EAttackPattern Pattern);
@@ -110,7 +92,30 @@ public:
 	UFUNCTION(BlueprintCallable)
 	void OnEntityDeath(AEntityBase* DeadEntity);
 
+	////////////////////////////////////////////////// blueprint getters and setters:
+	UFUNCTION(BlueprintCallable)
+	void SetAttackRotation(EAttackRotation Rotation);
+
+	UFUNCTION(BlueprintCallable, BlueprintPure)
+	EAttackRotation GetAttackRotation();
+
+	UFUNCTION(BlueprintCallable, BlueprintPure)
+	AEntityBase* GetCurrentCombatant();
+
+	UFUNCTION(blueprintCallable, BlueprintPure)
+	FName GetTurnQueueName();
+
+	////////////////////////////////////////////////// blueprint delegate broadcasts
+	UFUNCTION(BlueprintCallable)
+	void BroadcastOnMoveClickedEvent();
+
+	UFUNCTION(BlueprintCallable)
+	void BroadcastOnAttackClickedEvent();
+
 protected:
+	UPROPERTY(EditAnywhere, BlueprintReadWrite, category = "Combat")
+	FName TurnEventQueueName;
+	
 	UPROPERTY(BlueprintReadWrite)
 	AGridManager* GridManager;
 
