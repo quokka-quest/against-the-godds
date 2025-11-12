@@ -6,13 +6,6 @@
 #include "PathFinder.h"
 #include "Kismet/GameplayStatics.h"
 
-AEnemyEntity::AEnemyEntity()
-{
-	CharMesh = GetCharMesh();
-	CharacterMesh->SetStaticMesh(CharMesh);
-}
-
-
 void AEnemyEntity::DeterminePlayerTarget()
 {
 	ACombatManager* CombatManager = Cast<ACombatManager>(UGameplayStatics::GetGameMode(GetWorld()));
@@ -104,7 +97,7 @@ void AEnemyEntity::DetermineMovement()
 	GridManager->GridCells[PositionCoord]->OccupyingEntity = Cast<AEntityBase>(this);
 }
 
-void AEnemyEntity::DetermineAttack()
+bool AEnemyEntity::DetermineAttack()
 {
 	ACombatManager* CombatManager = Cast<ACombatManager>(UGameplayStatics::GetActorOfClass(GetWorld(), ACombatManager::StaticClass()));
 	
@@ -120,9 +113,11 @@ void AEnemyEntity::DetermineAttack()
 		break;
 	}
 
-	if (!AbilityToUse) return;
+	if (!AbilityToUse) return false;
 	CombatManager->EnemySetAttackInfo(AbilityToUse, AbilityDiceMap[AbilityToUse], Pattern, PlayerTarget->PositionCoord, EAttackRotation::R0);
 	CombatManager->ExecuteAttackOnTarget();
+
+	return true;
 }
 
 bool AEnemyEntity::IsTargetInAttackRange(int Range)

@@ -15,15 +15,10 @@ class PROTOTYPE2_API AEnemyEntity : public AEntityBase
 {
 	GENERATED_BODY()
 public:
-	AEnemyEntity();
-
 	UPROPERTY(BlueprintReadWrite, Category = "EnemyLogic")
 	APlayerEntity* PlayerTarget;
 
 protected:
-	
-	virtual UStaticMesh* GetCharMesh() const { return LoadObject<UStaticMesh>(nullptr, TEXT("/Game/Art/Static_Meshes/Enemies/SM_Wolf.SM_Wolf")); }
-
 	UFUNCTION(BlueprintCallable)
 	void DeterminePlayerTarget();
 
@@ -31,7 +26,7 @@ protected:
 	void DetermineMovement();
 
 	UFUNCTION(BlueprintCallable)
-	void DetermineAttack();
+	bool DetermineAttack();
 
 	bool IsTargetInAttackRange(int Range);
 };

@@ -2,9 +2,3 @@
 
 
 #include "PlayerEntity.h"
-
-APlayerEntity::APlayerEntity()
-{
-	CharMesh = GetCharMesh();
-	CharacterMesh->SetStaticMesh(CharMesh);
-}

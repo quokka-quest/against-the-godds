@@ -18,8 +18,6 @@ class PROTOTYPE2_API AEntityBase : public ACharacterBase
 	GENERATED_BODY()
 
 public:
-	AEntityBase();
-
 	UFUNCTION(BlueprintImplementableEvent, BlueprintCallable)
 	void SetupTurnStart();
 
@@ -52,15 +50,4 @@ public:
 
 	UFUNCTION(BlueprintNativeEvent, BlueprintCallable, Category = "PlayerInfo")
 	void OnEntityDeath();
-
-protected:
-	UPROPERTY(BlueprintReadWrite)
-	UStaticMeshComponent* BaseplateMesh;
-	UPROPERTY(BlueprintReadWrite)
-	UStaticMeshComponent* CharacterMesh;
-
-	UPROPERTY()
-	UStaticMesh* BaseMesh = LoadObject<UStaticMesh>(nullptr, TEXT("/Game/Art/Static_Meshes/Bases/SM_Standard_Base.SM_Standard_Base"));
-	UPROPERTY()
-	UStaticMesh* CharMesh = LoadObject<UStaticMesh>(nullptr, TEXT("/Game/Levels/_GENERATED/kibbl/SM_PlayerRef.SM_PlayerRef"));
 };
