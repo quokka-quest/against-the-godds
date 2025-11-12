@@ -82,4 +82,6 @@ public:
 
 	TArray<FIntVector> DisplayAttackPattern(FIntVector TargetCoord, EAttackPattern Pattern, EAttackRotation Rotation);
 
+	TArray<FIntVector> GetCoordsInPattern(FIntVector TargetCoord, EAttackPattern Pattern, EAttackRotation Rotation);
+
 };

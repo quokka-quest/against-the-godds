@@ -106,7 +106,23 @@ void AEnemyEntity::DetermineMovement()
 
 void AEnemyEntity::DetermineAttack()
 {
+	ACombatManager* CombatManager = Cast<ACombatManager>(UGameplayStatics::GetActorOfClass(GetWorld(), ACombatManager::StaticClass()));
 	
+	TSubclassOf<UGameplayAbilityBase> AbilityToUse;
+	EAttackPattern Pattern = EAttackPattern::SingleTarget;
+	int DistToTarget = abs(PositionCoord.X - PlayerTarget->PositionCoord.X) + abs(PositionCoord.Y - PlayerTarget->PositionCoord.Y);
+
+	for (UGameplayAbilityBase* Ability: GetAllAbilityInstances())
+	{
+		if (DistToTarget > Ability->Range) continue;
+		AbilityToUse = Ability->GetClass();
+		Pattern = Ability->Pattern;
+		break;
+	}
+
+	if (!AbilityToUse) return;
+	CombatManager->EnemySetAttackInfo(AbilityToUse, AbilityDiceMap[AbilityToUse], Pattern, PlayerTarget->PositionCoord, EAttackRotation::R0);
+	CombatManager->ExecuteAttackOnTarget();
 }
 
 bool AEnemyEntity::IsTargetInAttackRange(int Range)

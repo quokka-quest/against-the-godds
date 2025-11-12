@@ -153,3 +153,15 @@ TArray<FIntVector> AGridManager::DisplayAttackPattern(FIntVector TargetCoord, EA
 
 	return Coords;
 }
+
+TArray<FIntVector> AGridManager::GetCoordsInPattern(FIntVector TargetCoord, EAttackPattern Pattern, EAttackRotation Rotation)
+{
+	TArray<FIntVector> Coords = AttackAreaManager.GetCoordsInTargetArea(TargetCoord, Pattern, Rotation);
+	
+	for (FIntVector Coord : Coords)
+	{
+		if (!GridCells.Contains(Coord)) Coords.Remove(Coord);
+	}
+
+	return Coords;
+}

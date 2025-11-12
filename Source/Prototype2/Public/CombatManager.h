@@ -92,6 +92,8 @@ public:
 	UFUNCTION(BlueprintCallable)
 	void OnEntityDeath(AEntityBase* DeadEntity);
 
+	void EnemySetAttackInfo(TSubclassOf<UGameplayAbilityBase> Ability, FDiceFaceLevels DiceLevels, EAttackPattern Pattern, FIntVector TargetPos, EAttackRotation Rotation);
+
 	////////////////////////////////////////////////// blueprint getters and setters:
 	UFUNCTION(BlueprintCallable)
 	void SetAttackRotation(EAttackRotation Rotation);

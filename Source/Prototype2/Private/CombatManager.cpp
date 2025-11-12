@@ -242,6 +242,15 @@ void ACombatManager::OnEntityDeath(AEntityBase* DeadEntity)
 	GridManager->GridCells[DeadEntity->PositionCoord]->SetOccupancy(nullptr);
 }
 
+void ACombatManager::EnemySetAttackInfo(TSubclassOf<UGameplayAbilityBase> Ability, FDiceFaceLevels DiceLevels, EAttackPattern Pattern, FIntVector TargetPos, EAttackRotation Rotation)
+{
+	AbilityToUse = Ability;
+	AttackPattern = Pattern;
+	AreaOfAttackEffect = GridManager->GetCoordsInPattern(TargetPos, Pattern, Rotation);
+	
+}
+
+
 
 /////////////////////////////////////////////////////////////////////////// Blueprint friendly Getters and setters:
 
