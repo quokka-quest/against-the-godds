@@ -3,6 +3,7 @@
 
 #include "EnemyEntity.h"
 #include "CombatManager.h"
+#include "PathFinder.h"
 #include "Kismet/GameplayStatics.h"
 
 AEnemyEntity::AEnemyEntity()
@@ -42,31 +43,36 @@ void AEnemyEntity::DeterminePlayerTarget()
 
 void AEnemyEntity::DetermineMovement()
 {
-	// if the player target is invalid something has gone wrong so do nothing
+	// if the player target is invalid something has gone wrong so do not move
 	if (!PlayerTarget) return;
 
-	// determine the maximum range this entity has
+	// find the longest attack range of this enemy
 	int MaxRange = 0;
 	for (UGameplayAbilityBase* Ability: GetAllAbilityInstances())
 	{
 		if (Ability->Range > MaxRange) MaxRange = Ability->Range;
 	}
+	// if the target is in the attack range there's no need to move
+	if (IsTargetInAttackRange(MaxRange)) return;
 
 	AGridManager* GridManager = Cast<AGridManager>(UGameplayStatics::GetActorOfClass(GetWorld(), AGridManager::StaticClass()));
 
-	TArray<FIntVector> PathToTarget = GridManager->GetPath(PositionCoord, PlayerTarget->PositionCoord);
+	TArray<FIntVector> PathToTarget = PathFinder(GridManager->GridCells).FindPathToPointInRangeOFTarget(PositionCoord, PlayerTarget->PositionCoord, MaxRange);
 
 	// establish the first tile in the path
+	// pathing gives the path in reverse to the last index is the start tile
+	// the -2 gives the first tile to move to
 	int TargetPosIndex = PathToTarget.Num() - 2;
-	// If the player and enemy are on adjacent tiles then this array will contain 2 elements, neither of which the enemy can move to
-	if (TargetPosIndex <= 0) return;
+	if (TargetPosIndex < 0) return;
 
+	// if the target tile is occupied then movement can't be done
+	if (GridManager->GridCells[PathToTarget[TargetPosIndex]]->IsOccupied) return;
 	// If the movement cost is greater than the available movement of this enemy entity, then movement can't be done
 	int MoveCost = GridManager->GridCells[PathToTarget[TargetPosIndex]]->MovementCost;
 	if (MoveCost > MaxMovement) return;
 
-	
-	for (int i = PathToTarget.Num()-3; i > 0; i--)
+	// -3 is done here because the .Num()-2 tile is done above to establish if movement is possible
+	for (int i = PathToTarget.Num()-3; i >= 0; i--)
 	{
 		// breaks the loop if the tile has an entity on it (prevents movement onto an occupied tile)
 		if (GridManager->GridCells[PathToTarget[i]]->IsOccupied) break;
@@ -103,3 +109,16 @@ void AEnemyEntity::DetermineAttack()
 	
 }
 
+bool AEnemyEntity::IsTargetInAttackRange(int Range)
+{
+	AGridManager* GridManager = Cast<AGridManager>(UGameplayStatics::GetActorOfClass(GetWorld(), AGridManager::StaticClass()));
+
+	TArray<FIntVector> AttackableTiles = PathFinder(GridManager->GridCells).FindAttackableTiles(PositionCoord, Range);
+	for (int i = 0; i < AttackableTiles.Num(); i++)
+	{
+		if (!GridManager->GridCells[AttackableTiles[i]]->IsOccupied) continue;
+		if (GridManager->GridCells[AttackableTiles[i]]->OccupyingEntity == PlayerTarget) return true;
+	}
+	
+	return false;
+}

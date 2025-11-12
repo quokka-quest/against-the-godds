@@ -82,6 +82,4 @@ public:
 
 	TArray<FIntVector> DisplayAttackPattern(FIntVector TargetCoord, EAttackPattern Pattern, EAttackRotation Rotation);
 
-	TArray<FIntVector> GetPath(FIntVector StartCoord, FIntVector EndCoord);
-
 };

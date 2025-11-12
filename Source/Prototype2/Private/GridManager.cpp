@@ -128,7 +128,6 @@ void AGridManager::DisplayTilesInAttackRange(FIntVector CurrentCellCoord, int Ra
 	if (Range < 0) return;
 
 	TArray<FIntVector> WalkableCoords = PathFinder(GridCells).FindAttackableTiles(CurrentCellCoord, Range);
-	WalkableCoords = PathFinder(GridCells).FindPathToPointInRangeOFTarget(FIntVector(0), CurrentCellCoord, Range);
 	if (WalkableCoords.Num() == 0) return;
 
 	for (FIntVector WalkableCoord : WalkableCoords)
@@ -154,11 +153,3 @@ TArray<FIntVector> AGridManager::DisplayAttackPattern(FIntVector TargetCoord, EA
 
 	return Coords;
 }
-
-
-TArray<FIntVector> AGridManager::GetPath(FIntVector StartCoord, FIntVector EndCoord)
-{
-	return PathFinder(GridCells).FindPathForEnemy(StartCoord, EndCoord);
-}
-
-

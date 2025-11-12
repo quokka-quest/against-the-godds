@@ -78,6 +78,8 @@ private:
 
 	TArray<FIntVector> GetTilesOnPerimeter(TArray<FIntVector>& Tiles);
 
+	bool GetTileInArrayClosestToTarget(TArray<FIntVector>& Tiles, FIntVector Target, FIntVector& OutCoord);
+
 	TArray<FIntVector> NeighbourOffsets =
 	{
 		FIntVector(1,0,0),

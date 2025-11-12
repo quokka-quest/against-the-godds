@@ -285,6 +285,8 @@ bool PathFinder::AnalyseTileForEnemyMovement()
 	return false;
 }
 
+// discovery for enemy movement is only different in that it ignores that the end target tile is occupied
+// EnemyEntity class has logic for not moving onto the final occupied tile
 void PathFinder::DiscoverTileForEnemyMovement(FIntVector TileCoord, FIntVector PreviousTile)
 {
 	FTileInfo TileInfo = FTileInfo();
@@ -303,21 +305,22 @@ void PathFinder::DiscoverTileForEnemyMovement(FIntVector TileCoord, FIntVector P
 	DiscoveredTiles.Add(TileInfo);
 }
 
+// returns the path to the point furthest from the target coord that is within the attack Range of that target coord
+// the reasoning behind this is that any tile that the target coord can attack is also one it can be attacked from
 TArray<FIntVector> PathFinder::FindPathToPointInRangeOFTarget(FIntVector Start, FIntVector End, int Range)
 {
-	StartCoord = Start;
-	EndCoord = End;
-	TotalMovement = 1000;
-	DiscoveredTiles.Empty();
-	AnalysedTiles.Empty();
-	TileMap.Empty();
-	
-	TArray<FIntVector> result;
-
+	// find potential tiles to move to
 	TArray<FIntVector> TilesInAttackRange = FindAttackableTiles(End, Range);
-	result = GetTilesOnPerimeter(TilesInAttackRange);
+	// limit the search to the furthest tiles from the target (because why move closer than is necessary)
+	TArray<FIntVector> PerimeterTiles = GetTilesOnPerimeter(TilesInAttackRange);
 
-	return result;
+	// get the tile in the perimeter that's closest to the start coord
+	// if none of the tiles are valid then just return the path that takes the start to the end
+	FIntVector ClosestTile = FIntVector(0);
+	if (!GetTileInArrayClosestToTarget(PerimeterTiles, Start, ClosestTile)) return FindPathForEnemy(Start, End);
+
+	// return the path to the chosen tile
+	return FindPathForEnemy(Start, ClosestTile);
 }
 
 TArray<FIntVector> PathFinder::GetTilesOnPerimeter(TArray<FIntVector>& Tiles)
@@ -337,3 +340,21 @@ TArray<FIntVector> PathFinder::GetTilesOnPerimeter(TArray<FIntVector>& Tiles)
 	return result;
 }
 
+// returns true if a valid tile was found (protection against all tiles being occupied)
+bool PathFinder::GetTileInArrayClosestToTarget(TArray<FIntVector>& Tiles, FIntVector Target, FIntVector& OutCoord)
+{
+	bool result = false;
+	int ShortestDist = 10000;
+
+	for (int i = 0; i < Tiles.Num(); i++)
+	{
+		int Dist = abs(Tiles[i].X - Target.X) + abs(Tiles[i].Y - Target.Y);
+		if (Dist >= ShortestDist) continue;
+		if (GridCells[Tiles[i]]->IsOccupied) continue;
+		ShortestDist = Dist;
+		OutCoord = Tiles[i];
+		result = true;
+	}
+	
+	return result;
+}

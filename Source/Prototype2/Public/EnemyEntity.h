@@ -32,4 +32,6 @@ protected:
 
 	UFUNCTION(BlueprintCallable)
 	void DetermineAttack();
+
+	bool IsTargetInAttackRange(int Range);
 };
