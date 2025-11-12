@@ -54,6 +54,8 @@ void APlayerCombatLevelPawn::Tick(float DeltaTime)
 {
 	Super::Tick(DeltaTime);
 
+	if (InFreeCamMode) return;
+	
 	FHitResult Hit;
 	PlayerCon->GetHitResultUnderCursorByChannel(ETraceTypeQuery::TraceTypeQuery1, true, Hit);
 

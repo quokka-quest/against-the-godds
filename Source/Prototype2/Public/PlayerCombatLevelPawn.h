@@ -48,6 +48,9 @@ protected:
 	UFUNCTION(BlueprintCallable)
 	void OnRotateAttack();
 
+	UPROPERTY(BlueprintReadWrite)
+	bool InFreeCamMode = false;
+
 private:
 	UPROPERTY()
 	APlayerController* PlayerCon;
