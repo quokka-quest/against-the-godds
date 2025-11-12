@@ -29,4 +29,7 @@ protected:
 
 	UFUNCTION(BlueprintCallable)
 	void DetermineMovement();
+
+	UFUNCTION(BlueprintCallable)
+	void DetermineAttack();
 };

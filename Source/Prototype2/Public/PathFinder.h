@@ -37,6 +37,8 @@ public:
 
 	TArray<FIntVector> FindPathForEnemy(FIntVector Start, FIntVector End);
 
+	TArray<FIntVector> FindPathToPointInRangeOFTarget(FIntVector Start, FIntVector End, int Range);
+
 private:
 	TMap<FIntVector, AGridCell*>& GridCells;
 	
@@ -73,6 +75,8 @@ private:
 	bool AnalyseTileForEnemyMovement();
 
 	void DiscoverTileForEnemyMovement(FIntVector TileCoord, FIntVector PreviousTile);
+
+	TArray<FIntVector> GetTilesOnPerimeter(TArray<FIntVector>& Tiles);
 
 	TArray<FIntVector> NeighbourOffsets =
 	{

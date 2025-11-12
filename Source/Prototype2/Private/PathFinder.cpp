@@ -302,3 +302,38 @@ void PathFinder::DiscoverTileForEnemyMovement(FIntVector TileCoord, FIntVector P
 	TileMap.Add(TileCoord, TileInfo);
 	DiscoveredTiles.Add(TileInfo);
 }
+
+TArray<FIntVector> PathFinder::FindPathToPointInRangeOFTarget(FIntVector Start, FIntVector End, int Range)
+{
+	StartCoord = Start;
+	EndCoord = End;
+	TotalMovement = 1000;
+	DiscoveredTiles.Empty();
+	AnalysedTiles.Empty();
+	TileMap.Empty();
+	
+	TArray<FIntVector> result;
+
+	TArray<FIntVector> TilesInAttackRange = FindAttackableTiles(End, Range);
+	result = GetTilesOnPerimeter(TilesInAttackRange);
+
+	return result;
+}
+
+TArray<FIntVector> PathFinder::GetTilesOnPerimeter(TArray<FIntVector>& Tiles)
+{
+	TArray<FIntVector> result;
+
+	for (int i = 0; i < Tiles.Num(); i++)
+	{
+		int NumOfNeighbours = 0;
+		if (Tiles.Contains(Tiles[i] + NeighbourOffsets[0])) NumOfNeighbours++;
+		if (Tiles.Contains(Tiles[i] + NeighbourOffsets[1])) NumOfNeighbours++;
+		if (Tiles.Contains(Tiles[i] + NeighbourOffsets[2])) NumOfNeighbours++;
+		if (Tiles.Contains(Tiles[i] + NeighbourOffsets[3])) NumOfNeighbours++;
+		if (NumOfNeighbours < 4) result.Add(Tiles[i]);
+	}
+	
+	return result;
+}
+

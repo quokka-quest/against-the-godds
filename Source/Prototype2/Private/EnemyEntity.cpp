@@ -45,6 +45,13 @@ void AEnemyEntity::DetermineMovement()
 	// if the player target is invalid something has gone wrong so do nothing
 	if (!PlayerTarget) return;
 
+	// determine the maximum range this entity has
+	int MaxRange = 0;
+	for (UGameplayAbilityBase* Ability: GetAllAbilityInstances())
+	{
+		if (Ability->Range > MaxRange) MaxRange = Ability->Range;
+	}
+
 	AGridManager* GridManager = Cast<AGridManager>(UGameplayStatics::GetActorOfClass(GetWorld(), AGridManager::StaticClass()));
 
 	TArray<FIntVector> PathToTarget = GridManager->GetPath(PositionCoord, PlayerTarget->PositionCoord);
@@ -91,4 +98,8 @@ void AEnemyEntity::DetermineMovement()
 	GridManager->GridCells[PositionCoord]->OccupyingEntity = Cast<AEntityBase>(this);
 }
 
+void AEnemyEntity::DetermineAttack()
+{
+	
+}
 
