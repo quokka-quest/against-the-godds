@@ -4,12 +4,12 @@
 
 #include "CoreMinimal.h"
 #include "MapRoomType.h"
+#include "Delegates/DelegateCombinations.h"
 #include "Engine/GameInstance.h"
 #include "GameManager.generated.h"
 
-/**
- * 
- */
+DECLARE_DYNAMIC_MULTICAST_DELEGATE_OneParam(FOnCurrentNodeChanged, const TArray<int32>&, ConnectedNodeIndices);
+
 USTRUCT(BlueprintType)
 struct FMapNodeData
 {
@@ -44,6 +44,7 @@ public:
 		: RoomType(EMapRoomCPP::Empty), bVisited(false)
 	{}
 };
+
 
 UCLASS()
 class PROTOTYPE2_API UGameManager : public UGameInstance
@@ -86,12 +87,26 @@ public:
 	UFUNCTION(BlueprintCallable, Category = "Map")
 	void setCurrentNodePosition(int32 node, float x, float y);
 
+	UPROPERTY(BlueprintAssignable, Category = "Map")
+	FOnCurrentNodeChanged OnCurrentNodeChanged;
+    
+	UFUNCTION(BlueprintCallable, Category = "Map")
+	bool TryMoveToNode(int32 TargetNodeIndex);
+
+	UFUNCTION(BlueprintCallable, Category = "Map")
+	void BroadcastCurrentNodeConnections();
+
+	UFUNCTION(BlueprintCallable, Category = "Map")
+	bool isEncounterCompleted(FName EncounterName);
+
 private:
 	TArray<EMapRoomCPP> AllRooms;
 
 protected:
 	UPROPERTY(BlueprintReadWrite, Category="Map")
-	int CurrentNodeIndex = 0;
+	int CurrentNodeIndex = -1;
+	UPROPERTY(BlueprintReadWrite, Category = "Map")
+	bool bMapGenerated = false;
 	FMapNodeData MapDataStruct;
 	UPROPERTY(BlueprintReadWrite, Category="Map")
 	TArray<FMapNodeData> MapNodes;
@@ -116,6 +131,5 @@ protected:
 	EMapRoomCPP Selected = EMapRoomCPP::Selected;
 
 	TArray<int> StartingNodes;
-
 	
 };

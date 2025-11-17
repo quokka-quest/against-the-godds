@@ -5,125 +5,139 @@
 
 void UGameManager::GenerateGrid()
 {
-	Grid.Empty(); // change to if grid empty, make grid. Else, do nothing
-	Grid.SetNum(floors * maxNodesPerFloor);
-
-	for (int32 Floor = 0; Floor < floors; ++Floor) // for each floor
+	if (!Grid.IsEmpty())
 	{
-		for (int32 NodeIndex = 0; NodeIndex < maxNodesPerFloor; ++NodeIndex) // for each node in floor
-		{
-			int32 FlatIndex = Floor * maxNodesPerFloor + NodeIndex; 
+		return;
+	}
+	else
+	{
+		Grid.SetNum(floors * maxNodesPerFloor);
 
-			FMapNodeData Node;
-			Node.RoomType = EMapRoomCPP::Empty; // default to empty
-			Node.bVisited = false; // default to not visited
+			for (int32 Floor = 0; Floor < floors; ++Floor) // for each floor
+			{
+				for (int32 NodeIndex = 0; NodeIndex < maxNodesPerFloor; ++NodeIndex) // for each node in floor
+				{
+					int32 FlatIndex = Floor * maxNodesPerFloor + NodeIndex; 
 
-			Grid[FlatIndex] = Node; // add to the grid
-		}
+					FMapNodeData Node;
+					Node.RoomType = EMapRoomCPP::Empty; // default to empty
+					Node.bVisited = false; // default to not visited
+
+					Grid[FlatIndex] = Node; // add to the grid
+				}
+			}
 	}
 }
 
 void UGameManager::CreateMap()
 {
-	ChooseStartingNodes();
-
-	for (int32 NodeIndex = 0; NodeIndex < maxNodesPerFloor; ++NodeIndex) // 
+	if (bMapGenerated == false)
 	{
-		int32 FlatIndex = GetNodeIndex(0, NodeIndex); // Floor (0) * maxNodesPerFloor (7) + NodeIndex ( 0 - 6 );
-		if (StartingNodes.Contains(NodeIndex))
-		{
-			Grid[FlatIndex].RoomType = Selected; // set starting nodes to combat rooms
-		}
-		else
-		{
-			Grid[FlatIndex].RoomType = DefaultRoomType; // set non-starting nodes on floor 0 to empty
-		}
-	}
+		ChooseStartingNodes();
+		OnCurrentNodeChanged.Broadcast(StartingNodes);
 
-	CreateMapPaths();
-
-	for (int32 Floor = 0; Floor < floors; ++Floor) // for each floor
-	{
-		if (Floor == 9)
+		for (int32 NodeIndex = 0; NodeIndex < maxNodesPerFloor; ++NodeIndex) // 
 		{
-			for (int32 NodeIndex = 0; NodeIndex < maxNodesPerFloor; ++NodeIndex) // for each node in floor
+			int32 FlatIndex = GetNodeIndex(0, NodeIndex); // Floor (0) * maxNodesPerFloor (7) + NodeIndex ( 0 - 6 );
+			if (StartingNodes.Contains(NodeIndex))
 			{
-				if (Grid[NodeIndex + Floor * maxNodesPerFloor].RoomType == Selected)
-				{
-					Grid[NodeIndex + Floor * maxNodesPerFloor].RoomType = EMapRoomCPP::Shop; // set all nodes on floor 9 to rest rooms
-					RestCount -= 1;
-				}
-				
+				Grid[FlatIndex].RoomType = Selected; // set starting nodes to combat rooms
+			}
+			else
+			{
+				Grid[FlatIndex].RoomType = DefaultRoomType; // set non-starting nodes on floor 0 to empty
 			}
 		}
 
-		if (Floor == floors - 1)
+		CreateMapPaths();
+
+		for (int32 Floor = 0; Floor < floors; ++Floor) // for each floor
 		{
-			for (int32 NodeIndex = 0; NodeIndex < maxNodesPerFloor; ++NodeIndex) // for each node in floor
+			if (Floor == 9)
 			{
-				if (Grid[NodeIndex + Floor * maxNodesPerFloor].RoomType == Selected)
+				for (int32 NodeIndex = 0; NodeIndex < maxNodesPerFloor; ++NodeIndex) // for each node in floor
 				{
-					Grid[NodeIndex + Floor * maxNodesPerFloor].RoomType = EMapRoomCPP::Shop; // set all nodes on floor 9 to rest rooms
-					RestCount -= 1;
+					if (Grid[NodeIndex + Floor * maxNodesPerFloor].RoomType == Selected)
+					{
+						Grid[NodeIndex + Floor * maxNodesPerFloor].RoomType = EMapRoomCPP::Shop; // set all nodes on floor 9 to rest rooms
+						RestCount -= 1;
+					}
+
 				}
-
 			}
-		}
 
-		if (Floor != 9 && Floor != floors - 1)
-		{
-			for (int32 NodeIndex = 0; NodeIndex < maxNodesPerFloor; ++NodeIndex) // for each node in floor
+			if (Floor == floors - 1)
 			{
-				int32 FlatIndex = GetNodeIndex(Floor, NodeIndex); 
-				if (Grid[FlatIndex].RoomType == Selected)
+				for (int32 NodeIndex = 0; NodeIndex < maxNodesPerFloor; ++NodeIndex) // for each node in floor
 				{
-					TArray<EMapRoomCPP> AvailableTypes;
-					if (RestCount > 0)
+					if (Grid[NodeIndex + Floor * maxNodesPerFloor].RoomType == Selected)
 					{
-						AvailableTypes.Add(EMapRoomCPP::Shop);
-					}
-					if (CombatCount > 0)
-					{
-						AvailableTypes.Add(EMapRoomCPP::Combat);
-					}
-					if (NonCombatCount > 0)
-					{
-						AvailableTypes.Add(EMapRoomCPP::Non_Combat);
+						Grid[NodeIndex + Floor * maxNodesPerFloor].RoomType = EMapRoomCPP::Shop; // set all nodes on floor 9 to rest rooms
+						RestCount -= 1;
 					}
 
-					if (AvailableTypes.Num() > 0)
-					{
-						int32 ChoiceIndex = FMath::RandRange(0, AvailableTypes.Num() - 1);
-						EMapRoomCPP ChosenType = AvailableTypes[ChoiceIndex];
+				}
+			}
 
-						Grid[FlatIndex].RoomType = ChosenType;
-
-						if (ChosenType == EMapRoomCPP::Shop)
-						{
-							RestCount -= 1;
-						}
-						else if (ChosenType == EMapRoomCPP::Combat)
-						{
-							CombatCount -= 1;
-						}
-						else if (ChosenType == EMapRoomCPP::Non_Combat)
-						{
-							NonCombatCount -= 1;
-						}
-					}
-					else
+			if (Floor != 9 && Floor != floors - 1)
+			{
+				for (int32 NodeIndex = 0; NodeIndex < maxNodesPerFloor; ++NodeIndex) // for each node in floor
+				{
+					int32 FlatIndex = GetNodeIndex(Floor, NodeIndex);
+					if (Grid[FlatIndex].RoomType == Selected)
 					{
-						Grid[FlatIndex].RoomType = EMapRoomCPP::Combat;
+						TArray<EMapRoomCPP> AvailableTypes;
+						if (RestCount > 0)
+						{
+							AvailableTypes.Add(EMapRoomCPP::Shop);
+						}
 						if (CombatCount > 0)
 						{
-							CombatCount -= 1;
+							AvailableTypes.Add(EMapRoomCPP::Combat);
+						}
+						if (NonCombatCount > 0)
+						{
+							AvailableTypes.Add(EMapRoomCPP::Non_Combat);
+						}
+
+						if (AvailableTypes.Num() > 0)
+						{
+							int32 ChoiceIndex = FMath::RandRange(0, AvailableTypes.Num() - 1);
+							EMapRoomCPP ChosenType = AvailableTypes[ChoiceIndex];
+
+							Grid[FlatIndex].RoomType = ChosenType;
+
+							if (ChosenType == EMapRoomCPP::Shop)
+							{
+								RestCount -= 1;
+							}
+							else if (ChosenType == EMapRoomCPP::Combat)
+							{
+								CombatCount -= 1;
+							}
+							else if (ChosenType == EMapRoomCPP::Non_Combat)
+							{
+								NonCombatCount -= 1;
+							}
+						}
+						else
+						{
+							Grid[FlatIndex].RoomType = EMapRoomCPP::Combat;
+							if (CombatCount > 0)
+							{
+								CombatCount -= 1;
+							}
 						}
 					}
 				}
 			}
+
 		}
-		
+		bMapGenerated = true;
 	}
+
+
+	
 }
 
 void UGameManager::CreateMapPaths()
@@ -336,3 +350,50 @@ void UGameManager::setCurrentNodePosition(int32 node, float x, float y)
 	Grid[node].positionX = x;
 	Grid[node].positionY = y;
 }
+
+bool UGameManager::TryMoveToNode(int32 TargetNodeIndex)
+{
+	// If no node selected yet, allow any starting node
+	if (CurrentNodeIndex == -1)
+	{
+		if (StartingNodes.Contains(TargetNodeIndex))
+		{
+			CurrentNodeIndex = TargetNodeIndex;
+			Grid[CurrentNodeIndex].bVisited = true;
+			OnCurrentNodeChanged.Broadcast(Grid[CurrentNodeIndex].ConnectedNodes);
+			return true;
+		}
+		return false;
+	}
+
+	// Normal movement logic
+	if (Grid[CurrentNodeIndex].ConnectedNodes.Contains(TargetNodeIndex))
+	{
+		CurrentNodeIndex = TargetNodeIndex;
+		Grid[CurrentNodeIndex].bVisited = true;
+		OnCurrentNodeChanged.Broadcast(Grid[CurrentNodeIndex].ConnectedNodes);
+		return true;
+	}
+	return false;
+}
+
+void UGameManager::BroadcastCurrentNodeConnections()
+{
+	if (CurrentNodeIndex >= 0 && Grid.IsValidIndex(CurrentNodeIndex))
+	{
+		OnCurrentNodeChanged.Broadcast(Grid[CurrentNodeIndex].ConnectedNodes);
+	}
+}
+
+bool UGameManager::isEncounterCompleted(FName EncounterName)
+{
+	if (!CompletedEncounters.Contains(EncounterName))
+	{
+		return false;
+	}
+
+	return true;
+}
+
+
+
