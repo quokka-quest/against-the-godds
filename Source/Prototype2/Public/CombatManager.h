@@ -4,7 +4,8 @@
 
 #include "CoreMinimal.h"
 #include "GameFramework/GameModeBase.h"
-#include "GridManager.h"
+#include "GridManagerTool.h"
+#include "GridCellParent.h"
 #include "PlayerEntity.h"
 #include "GlobalDataTypeHeader.h"
 #include "GameplayAbilityBase.h"
@@ -67,14 +68,14 @@ public:
 	TSubclassOf<UGameplayAbilityBase> AbilityToUse;
 
 	// functions
-	void FinishPlayerLocationPicking(TArray<AGridCell*> &playerStartCells);
+	void FinishPlayerLocationPicking(TArray<AGridCellParent*> &playerStartCells);
 
 	UFUNCTION(BlueprintImplementableEvent)
 	void OnPlayerSpawnLocsPicked();
 	
-	void MoveCurrentCombatant(FIntVector TargetPos);
+	void MoveCurrentCombatant(FIntVector2 TargetPos);
 
-	void DisplayPathForCurrentCombatant(FIntVector TargetPos);
+	void DisplayPathForCurrentCombatant(FIntVector2 TargetPos);
 
 	UFUNCTION(BlueprintCallable)
 	void DisplayCurrentCombatantsMovement();
@@ -82,24 +83,24 @@ public:
 	UFUNCTION(BlueprintCallable)
 	void DisplayAttackRange(int Range);
 
-	void DisplayAttackPattern(FIntVector TargetCoord);
+	void DisplayAttackPattern(FIntVector2 TargetCoord);
 
 	UFUNCTION(BlueprintCallable)
-	void DisplayAttackInformation(TSubclassOf<UGameplayAbilityBase> Ability, FDiceFaceLevels DiceLevels, int Range, EAttackPattern Pattern);
+	void DisplayAttackInformation(TSubclassOf<UGameplayAbilityBase> Ability, FDiceFaceLevels DiceLevels, int Range, FGridData Pattern);
 
 	void ExecuteAttackOnTarget();
 
 	UFUNCTION(BlueprintCallable)
 	void OnEntityDeath(AEntityBase* DeadEntity);
 
-	void EnemySetAttackInfo(TSubclassOf<UGameplayAbilityBase> Ability, FDiceFaceLevels DiceLevels, EAttackPattern Pattern, FIntVector TargetPos, EAttackRotation Rotation);
+	void EnemySetAttackInfo(TSubclassOf<UGameplayAbilityBase> Ability, FDiceFaceLevels DiceLevels, FGridData Pattern, FIntVector2 TargetPos, EPatternRotation Rotation);
 
 	////////////////////////////////////////////////// blueprint getters and setters:
 	UFUNCTION(BlueprintCallable)
-	void SetAttackRotation(EAttackRotation Rotation);
+	void SetAttackRotation(EPatternRotation Rotation);
 
 	UFUNCTION(BlueprintCallable, BlueprintPure)
-	EAttackRotation GetAttackRotation();
+	EPatternRotation GetAttackRotation();
 
 	UFUNCTION(BlueprintCallable, BlueprintPure)
 	AEntityBase* GetCurrentCombatant();
@@ -119,7 +120,7 @@ protected:
 	FName TurnEventQueueName;
 	
 	UPROPERTY(BlueprintReadWrite)
-	AGridManager* GridManager;
+	AGridManagerTool* GridManager;
 
 	UPROPERTY(BlueprintReadWrite)
 	int CurrentCombatantTurnIndex;
@@ -152,12 +153,12 @@ protected:
 	UFUNCTION(BlueprintImplementableEvent)
 	void BlueprintEndTurnEvents();
 
-	TArray<FIntVector> PathForCombatantToFollow;
+	TArray<FIntVector2> PathForCombatantToFollow;
 
-	TArray<FIntVector> AreaOfAttackEffect;
+	TArray<FIntVector2> AreaOfAttackEffect;
 
 	int AttackRange;
-	EAttackPattern AttackPattern;
-	EAttackRotation AttackRotation;
+	FGridData AttackPattern;
+	EPatternRotation AttackRotation;
 	
 };

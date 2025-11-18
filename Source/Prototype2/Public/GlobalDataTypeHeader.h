@@ -45,15 +45,6 @@ enum ETileSelectionType
 	None
 };
 
-UENUM(BlueprintType)
-enum EAttackRotation
-{
-	R0,
-	R90,
-	R180,
-	R270
-};
-
 UENUM()
 enum class ETargetType : uint8
 {

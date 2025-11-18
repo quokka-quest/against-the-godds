@@ -28,7 +28,7 @@ void APlayerCombatLevelPawn::BeginPlay()
 {
 	Super::BeginPlay();
 
-	GridManager = Cast<AGridManager>(UGameplayStatics::GetActorOfClass(GetWorld(), AGridManager::StaticClass()));
+	GridManager = Cast<AGridManagerTool>(UGameplayStatics::GetActorOfClass(GetWorld(), AGridManagerTool::StaticClass()));
 	if (!GridManager) UE_LOG(LogTemp, Error, TEXT("GridManager is NULL"))
 
 	CombatManager = Cast<ACombatManager>(UGameplayStatics::GetActorOfClass(GetWorld(), ACombatManager::StaticClass()));
@@ -59,14 +59,14 @@ void APlayerCombatLevelPawn::Tick(float DeltaTime)
 	FHitResult Hit;
 	PlayerCon->GetHitResultUnderCursorByChannel(ETraceTypeQuery::TraceTypeQuery1, true, Hit);
 
-	if (!Cast<AGridCell>(Hit.GetActor()))
+	if (!Cast<AGridCellParent>(Hit.GetActor()))
 	{
 		TileHighlight->ToggleHighlight(false);
 		HighlightedCell = nullptr;
 		return;
 	}
 	
-	HighlightedCell = Cast<AGridCell>(Hit.GetActor());
+	HighlightedCell = Cast<AGridCellParent>(Hit.GetActor());
 	TileHighlight->ToggleHighlight(true);
 	TileHighlight->MoveToPosition(HighlightedCell->GetActorLocation());
 }
@@ -116,13 +116,13 @@ void APlayerCombatLevelPawn::TryAddTileToSpawnSelection()
 	
 	// if the tile clicked is not a valid spawn tile then do nothing
 	if (!HighlightedCell) return;
-	if (!HighlightedCell->IsPlayerSpawnTile) return;
+	if (!HighlightedCell->IsPlayerSpawnCell) return;
 
 	// if the tile clicked is already in the spawn array then remove it
 	if (SelectedStartCells.Contains(HighlightedCell))
 	{
 		SelectedStartCells.Remove(HighlightedCell);
-		GridManager->ChangeTilesMaterial(HighlightedCell, ETileMaterial::Highlighted);
+		//GridManager->ChangeTilesMaterial(HighlightedCell, ETileMaterial::Highlighted);
 		return;
 	};
 
@@ -131,7 +131,7 @@ void APlayerCombatLevelPawn::TryAddTileToSpawnSelection()
 
 	// otherwise add the tile to the spawn tile array
 	SelectedStartCells.Add(HighlightedCell);
-	GridManager->ChangeTilesMaterial(HighlightedCell, ETileMaterial::Target);
+	//GridManager->ChangeTilesMaterial(HighlightedCell, ETileMaterial::Target);
 }
 
 bool APlayerCombatLevelPawn::AttemptToFinishPlayerStartPlacement()
@@ -146,9 +146,9 @@ bool APlayerCombatLevelPawn::AttemptToFinishPlayerStartPlacement()
 void APlayerCombatLevelPawn::TryMoveToTile()
 {
 	if (!HighlightedCell) return;
-	if (!HighlightedCell->isWalkable) return;
+	if (!HighlightedCell->IsWalkable) return;
 
-	CombatManager->MoveCurrentCombatant(HighlightedCell->GridCellCoord);
+	CombatManager->MoveCurrentCombatant(HighlightedCell->CellCoordinate);
 	TileSelectionType = ETileSelectionType::None;
 	SelectedCell = nullptr;
 }
@@ -159,20 +159,20 @@ void APlayerCombatLevelPawn::DisplayPathToTile()
 	CombatManager->DisplayCurrentCombatantsMovement();
 
 	// no movement path is displayed if the highlighted cell is none-walkable
-	if (!HighlightedCell->isWalkable) return;
+	if (!HighlightedCell->IsWalkable) return;
 
 	// displays the path to the cell that was clicked
-	CombatManager->DisplayPathForCurrentCombatant(HighlightedCell->GridCellCoord);
+	CombatManager->DisplayPathForCurrentCombatant(HighlightedCell->CellCoordinate);
 }
 
 void APlayerCombatLevelPawn::DisplayAttackTargetArea()
 {
 	if (!HighlightedCell) return;
-	if (!HighlightedCell->isAttackable) return;
+	if (!HighlightedCell->IsAttackable) return;
 
 	SelectedCell = HighlightedCell;
 	IsDisplayingAttack = true;
-	CombatManager->DisplayAttackPattern(HighlightedCell->GridCellCoord);
+	CombatManager->DisplayAttackPattern(HighlightedCell->CellCoordinate);
 }
 
 void APlayerCombatLevelPawn::TryAttackTargetTile()
@@ -203,8 +203,8 @@ void APlayerCombatLevelPawn::OnAttackButtonClicked()
 
 void APlayerCombatLevelPawn::OnRotateAttack()
 {
-	EAttackRotation Rot = CombatManager->GetAttackRotation();
-	EAttackRotation NewRot = (Rot == R0)? R90: (Rot == R90)? R180: (Rot == R180)? R270 : R0;
+	EPatternRotation Rot = CombatManager->GetAttackRotation();
+	EPatternRotation NewRot = (Rot == R0)? R90: (Rot == R90)? R180: (Rot == R180)? R270 : R0;
 	CombatManager->SetAttackRotation(NewRot);
 
 	if (IsDisplayingAttack)

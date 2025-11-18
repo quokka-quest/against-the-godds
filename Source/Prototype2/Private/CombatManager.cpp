@@ -13,26 +13,26 @@ void ACombatManager::BeginPlay()
 {
 	Super::BeginPlay();
 
-	GridManager = Cast<AGridManager>(UGameplayStatics::GetActorOfClass(GetWorld(), AGridManager::StaticClass()));
-	GridManager->ChangeAllTilesDisplay(EEditorGridDisplayType::PlayerSpawnTile);
+	GridManager = Cast<AGridManagerTool>(UGameplayStatics::GetActorOfClass(GetWorld(), AGridManagerTool::StaticClass()));
+	//GridManager->ChangeAllTilesDisplay(EEditorGridDisplayType::PlayerSpawnTile);
 
 	CurrentCombatantTurnIndex = 0;
-	SetAttackRotation(EAttackRotation::R0);
+	SetAttackRotation(EPatternRotation::R0);
 }
 
 // Called when the player locks in there start location choices
 // spawns the player characters on the chosen tiles
-void ACombatManager::FinishPlayerLocationPicking(TArray<AGridCell*> &playerStartCells)
+void ACombatManager::FinishPlayerLocationPicking(TArray<AGridCellParent*> &playerStartCells)
 {
-	for (AGridCell*& Cell : playerStartCells)
+	for (AGridCellParent*& Cell : playerStartCells)
 	{
 		FVector Loc = Cell->GetActorLocation();
 		FRotator Rot = Cell->GetActorRotation();
 		FTransform Transform = FTransform(Rot, Loc);
 		AEntityBase* player = GetWorld()->SpawnActor<AEntityBase>(PlayerClass, Transform);
 		Combatants.Add(player);
-		player->PositionCoord = Cell->GridCellCoord;
-		Cell->SetOccupancy(player);
+		player->PositionCoord = Cell->CellCoordinate;
+		Cell->SetOccupier(player);
 	}
 
 	OnPlayerSpawnLocsPicked();
@@ -43,14 +43,14 @@ void ACombatManager::SpawnEnemies()
 {
 	for (auto& Cell: GridManager->GridCells)
 	{
-		AGridCell* Value = Cell.Value;
+		AGridCellParent* Value = Cast<AGridCellParent>(Cell.Value);
 		if (Value->IsEnemySpawnTile)
 		{
 			FTransform form = Value->GetTransform();
 			AEnemyEntity* enemy = GetWorld()->SpawnActor<AEnemyEntity>(Value->EnemyToSpawn, form);
 			Combatants.Add(enemy);
-			enemy->PositionCoord = Value->GridCellCoord;
-			Value->SetOccupancy(enemy);
+			enemy->PositionCoord = Value->CellCoordinate;
+			Value->SetOccupier(enemy);
 		}
 	}
 
@@ -131,7 +131,7 @@ void ACombatManager::EndCurrentTurn()
 	AEnemyEntity* EnemyRef = Cast<AEnemyEntity>(CurrentTurnCombatant);
 	APlayerEntity* PlayerRef = Cast<APlayerEntity>(CurrentTurnCombatant);
 
-	GridManager->ChangeAllTilesDisplay(EEditorGridDisplayType::Default);
+	//GridManager->ChangeAllTilesDisplay(EEditorGridDisplayType::Default);
 	
 	// for additional Enemy specific logic
 	if (EnemyRef)
@@ -162,10 +162,10 @@ void ACombatManager::IncrementTurnIndex()
 // only used for player movement. Enemy movement is handled in the EnemyEntity class
 // moves a player from there current position to the target position
 // checks for valid locations are done before this function is called so they aren't needed here
-void ACombatManager::MoveCurrentCombatant(FIntVector TargetPos)
+void ACombatManager::MoveCurrentCombatant(FIntVector2 TargetPos)
 {
-	GridManager->GridCells[CurrentTurnCombatant->PositionCoord]->SetOccupancy(nullptr);
-	GridManager->GridCells[TargetPos]->SetOccupancy(CurrentTurnCombatant);
+	GridManager->GridCells[CurrentTurnCombatant->PositionCoord]->SetOccupier(nullptr);
+	GridManager->GridCells[TargetPos]->SetOccupier(CurrentTurnCombatant);
 
 	for (int i = PathForCombatantToFollow.Num()-1; i > 0; i--)
 	{
@@ -176,39 +176,39 @@ void ACombatManager::MoveCurrentCombatant(FIntVector TargetPos)
 	}
 
 	CurrentTurnCombatant->PositionCoord = TargetPos;
-	GridManager->ChangeAllTilesDisplay(EEditorGridDisplayType::Default);
+	//GridManager->ChangeAllTilesDisplay(EEditorGridDisplayType::Default);
 }
 
 // displays the path to be taken by a combatant if they were to move to the target position
-void ACombatManager::DisplayPathForCurrentCombatant(FIntVector TargetPos)
+void ACombatManager::DisplayPathForCurrentCombatant(FIntVector2 TargetPos)
 {
-	FIntVector StartPos = CurrentTurnCombatant->PositionCoord;
-	PathForCombatantToFollow = GridManager->DisplayTilePath(StartPos, TargetPos);
+	FIntVector2 StartPos = CurrentTurnCombatant->PositionCoord;
+	//PathForCombatantToFollow = GridManager->DisplayTilePath(StartPos, TargetPos);
 }
 
 // displays the movement options for the current combatant
 void ACombatManager::DisplayCurrentCombatantsMovement()
 {
-	GridManager->ResetTilesWalkAndAttackBooleans();
-	GridManager->DisplayWalkableTiles(CurrentTurnCombatant->PositionCoord, CurrentTurnCombatant->AvailableMovement);
+	GridManager->ResetWalkableAndAttackableOnAllCells();
+	//GridManager->DisplayWalkableTiles(CurrentTurnCombatant->PositionCoord, CurrentTurnCombatant->AvailableMovement);
 }
 
 // displays all the tiles that the player can target
 void ACombatManager::DisplayAttackRange(int Range) 
 {
 	AttackRange = Range;
-	GridManager->ResetTilesWalkAndAttackBooleans();
-	GridManager->DisplayTilesInAttackRange(CurrentTurnCombatant->PositionCoord, Range);
+	GridManager->ResetWalkableAndAttackableOnAllCells();
+	//GridManager->DisplayTilesInAttackRange(CurrentTurnCombatant->PositionCoord, Range);
 }
 
 // displays the attack area and stores the targeted tiles with element 0 being the targeted tile and the rest are the additional area
-void ACombatManager::DisplayAttackPattern(FIntVector TargetCoord)
+void ACombatManager::DisplayAttackPattern(FIntVector2 TargetCoord)
 {
 	DisplayAttackRange(AttackRange);
-	AreaOfAttackEffect = GridManager->DisplayAttackPattern(TargetCoord, AttackPattern, AttackRotation);
+	//AreaOfAttackEffect = GridManager->DisplayAttackPattern(TargetCoord, AttackPattern, AttackRotation);
 }
 
-void ACombatManager::DisplayAttackInformation(TSubclassOf<UGameplayAbilityBase> Ability, FDiceFaceLevels DiceLevels, int Range, EAttackPattern Pattern)
+void ACombatManager::DisplayAttackInformation(TSubclassOf<UGameplayAbilityBase> Ability, FDiceFaceLevels DiceLevels, int Range, FGridData Pattern)
 {
 	AbilityToUse = Ability;
 	AttackPattern = Pattern;
@@ -223,43 +223,42 @@ void ACombatManager::ExecuteAttackOnTarget()
 	{
 		if (!GridManager->GridCells.Contains(AreaOfAttackEffect[i])) continue; // continue if cell coordinate is invalid
 		if (!GridManager->GridCells[AreaOfAttackEffect[i]]->IsOccupied) continue; // continue if cell is not occupied
-		if (!GridManager->GridCells[AreaOfAttackEffect[i]]->OccupyingEntity)
+		if (!GridManager->GridCells[AreaOfAttackEffect[i]]->OccupyingActor)
 			{ UE_LOG(LogTemp, Warning, TEXT("CombatManager->ExecuteAttackOnTarget() found an occupied cell with a null occupant")) continue;} // continue if cell is occupied but the entity is null
 		
-		TargetActors.Add(Cast<AActor>(GridManager->GridCells[AreaOfAttackEffect[i]]->OccupyingEntity));
+		TargetActors.Add(Cast<AActor>(GridManager->GridCells[AreaOfAttackEffect[i]]->OccupyingActor));
 	}
 
 	CurrentTurnCombatant->AvailableAttacks--;
 	CurrentTurnCombatant->ActivateAbilityWithTargets(AbilityToUse, TargetActors);
 	
-	GridManager->ChangeAllTilesDisplay(EEditorGridDisplayType::Default);
+	//GridManager->ChangeAllTilesDisplay(EEditorGridDisplayType::Default);
 	OnAttackExecuted.Broadcast();
 }
 
 void ACombatManager::OnEntityDeath(AEntityBase* DeadEntity)
 {
 	// mark the tile the entity was on as empty
-	GridManager->GridCells[DeadEntity->PositionCoord]->SetOccupancy(nullptr);
+	GridManager->GridCells[DeadEntity->PositionCoord]->SetOccupier(nullptr);
 }
 
-void ACombatManager::EnemySetAttackInfo(TSubclassOf<UGameplayAbilityBase> Ability, FDiceFaceLevels DiceLevels, EAttackPattern Pattern, FIntVector TargetPos, EAttackRotation Rotation)
+void ACombatManager::EnemySetAttackInfo(TSubclassOf<UGameplayAbilityBase> Ability, FDiceFaceLevels DiceLevels, FGridData Pattern, FIntVector2 TargetPos, EPatternRotation Rotation)
 {
 	AbilityToUse = Ability;
 	AttackPattern = Pattern;
-	AreaOfAttackEffect = GridManager->GetCoordsInPattern(TargetPos, Pattern, Rotation);
-	
+	AreaOfAttackEffect = GridManager->GetCellsInAttackArea(TargetPos, Pattern, Rotation);
 }
 
 
 
 /////////////////////////////////////////////////////////////////////////// Blueprint friendly Getters and setters:
 
-EAttackRotation ACombatManager::GetAttackRotation()
+EPatternRotation ACombatManager::GetAttackRotation()
 {
 	return AttackRotation;
 }
 
-void ACombatManager::SetAttackRotation(EAttackRotation Rotation)
+void ACombatManager::SetAttackRotation(EPatternRotation Rotation)
 {
 	AttackRotation = Rotation;
 }

@@ -4,7 +4,7 @@
 
 #include "CoreMinimal.h"
 #include "Abilities/GameplayAbility.h"
-#include "GlobalDataTypeHeader.h"
+#include "GridData.h"
 #include "GameplayAbilityBase.generated.h"
 
 /**
@@ -41,6 +41,6 @@ public:
 	int Range;
 
 	UPROPERTY(EditAnywhere, BlueprintReadWrite, Category = "Ability")
-	TEnumAsByte<EAttackPattern> Pattern;
+	FGridData Pattern;
 	
 };

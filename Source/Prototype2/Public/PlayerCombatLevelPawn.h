@@ -5,9 +5,9 @@
 #include "CoreMinimal.h"
 #include "GameFramework/Pawn.h"
 #include "GameFramework/PlayerController.h"
-#include "GridCell.h"
+#include "GridCellParent.h"
 #include "TileHighlight.h"
-#include "GridManager.h"
+#include "GridManagerTool.h"
 #include "CombatManager.h"
 #include "GlobalDataTypeHeader.h"
 #include "PlayerCombatLevelPawn.generated.h"
@@ -59,16 +59,16 @@ private:
 	ATileHighlight* TileHighlight;
 	
 	UPROPERTY()
-	AGridCell* HighlightedCell;
+	AGridCellParent* HighlightedCell;
 
 	UPROPERTY()
-	AGridCell* SelectedCell;
+	AGridCellParent* SelectedCell;
 
 	UPROPERTY()
-	TArray<AGridCell*> SelectedStartCells;
+	TArray<AGridCellParent*> SelectedStartCells;
 
 	UPROPERTY()
-	AGridManager* GridManager;
+	AGridManagerTool* GridManager;
 
 	UPROPERTY()
 	ACombatManager* CombatManager;

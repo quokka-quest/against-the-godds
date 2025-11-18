@@ -3,7 +3,6 @@
 
 #include "EnemyEntity.h"
 #include "CombatManager.h"
-#include "PathFinder.h"
 #include "Kismet/GameplayStatics.h"
 
 void AEnemyEntity::DeterminePlayerTarget()
@@ -19,11 +18,10 @@ void AEnemyEntity::DeterminePlayerTarget()
 		if (!Player) continue;
 		if (Player->HasEntityDied()) continue;
 
-		FIntVector PlayerPos = Player->PositionCoord;
+		FIntVector2 PlayerPos = Player->PositionCoord;
 		int XDist = abs(PlayerPos.X - PositionCoord.X);
 		int YDist = abs(PlayerPos.Y - PositionCoord.Y);
-		int ZDist = abs(PlayerPos.Z - PositionCoord.Z);
-		int totalDist = XDist + YDist + ZDist;
+		int totalDist = XDist + YDist;
 
 		if (totalDist >= ShortestDist) continue;
 
@@ -48,9 +46,9 @@ void AEnemyEntity::DetermineMovement()
 	// if the target is in the attack range there's no need to move
 	if (IsTargetInAttackRange(MaxRange)) return;
 
-	AGridManager* GridManager = Cast<AGridManager>(UGameplayStatics::GetActorOfClass(GetWorld(), AGridManager::StaticClass()));
+	AGridManagerTool* GridManager = Cast<AGridManagerTool>(UGameplayStatics::GetActorOfClass(GetWorld(), AGridManagerTool::StaticClass()));
 
-	TArray<FIntVector> PathToTarget = PathFinder(GridManager->GridCells).FindPathToPointInRangeOFTarget(PositionCoord, PlayerTarget->PositionCoord, MaxRange);
+	TArray<FIntVector2> PathToTarget;// = PathFinder(GridManager->GridCells).FindPathToPointInRangeOFTarget(PositionCoord, PlayerTarget->PositionCoord, MaxRange);
 
 	// establish the first tile in the path
 	// pathing gives the path in reverse to the last index is the start tile
@@ -89,12 +87,12 @@ void AEnemyEntity::DetermineMovement()
 
 	// removes this entity from the cell it started in
 	GridManager->GridCells[PositionCoord]->IsOccupied = false;
-	GridManager->GridCells[PositionCoord]->OccupyingEntity = nullptr;
+	GridManager->GridCells[PositionCoord]->OccupyingActor = nullptr;
 
 	// tells the cell it moved to that it is occupied
 	PositionCoord = PathToTarget[TargetPosIndex];
 	GridManager->GridCells[PositionCoord]->IsOccupied = true;
-	GridManager->GridCells[PositionCoord]->OccupyingEntity = Cast<AEntityBase>(this);
+	GridManager->GridCells[PositionCoord]->OccupyingActor = Cast<AEntityBase>(this);
 }
 
 bool AEnemyEntity::DetermineAttack()
@@ -102,7 +100,7 @@ bool AEnemyEntity::DetermineAttack()
 	ACombatManager* CombatManager = Cast<ACombatManager>(UGameplayStatics::GetActorOfClass(GetWorld(), ACombatManager::StaticClass()));
 	
 	TSubclassOf<UGameplayAbilityBase> AbilityToUse;
-	EAttackPattern Pattern = EAttackPattern::SingleTarget;
+	FGridData Pattern;
 	int DistToTarget = abs(PositionCoord.X - PlayerTarget->PositionCoord.X) + abs(PositionCoord.Y - PlayerTarget->PositionCoord.Y);
 
 	for (UGameplayAbilityBase* Ability: GetAllAbilityInstances())
@@ -114,7 +112,7 @@ bool AEnemyEntity::DetermineAttack()
 	}
 
 	if (!AbilityToUse) return false;
-	CombatManager->EnemySetAttackInfo(AbilityToUse, AbilityDiceMap[AbilityToUse], Pattern, PlayerTarget->PositionCoord, EAttackRotation::R0);
+	CombatManager->EnemySetAttackInfo(AbilityToUse, AbilityDiceMap[AbilityToUse], Pattern, PlayerTarget->PositionCoord, EPatternRotation::R0);
 	CombatManager->ExecuteAttackOnTarget();
 
 	return true;
@@ -122,13 +120,13 @@ bool AEnemyEntity::DetermineAttack()
 
 bool AEnemyEntity::IsTargetInAttackRange(int Range)
 {
-	AGridManager* GridManager = Cast<AGridManager>(UGameplayStatics::GetActorOfClass(GetWorld(), AGridManager::StaticClass()));
+	AGridManagerTool* GridManager = Cast<AGridManagerTool>(UGameplayStatics::GetActorOfClass(GetWorld(), AGridManagerTool::StaticClass()));
 
-	TArray<FIntVector> AttackableTiles = PathFinder(GridManager->GridCells).FindAttackableTiles(PositionCoord, Range);
+	TArray<FIntVector2> AttackableTiles;// = PathFinder(GridManager->GridCells).FindAttackableTiles(PositionCoord, Range);
 	for (int i = 0; i < AttackableTiles.Num(); i++)
 	{
 		if (!GridManager->GridCells[AttackableTiles[i]]->IsOccupied) continue;
-		if (GridManager->GridCells[AttackableTiles[i]]->OccupyingEntity == PlayerTarget) return true;
+		if (GridManager->GridCells[AttackableTiles[i]]->OccupyingActor == PlayerTarget) return true;
 	}
 	
 	return false;

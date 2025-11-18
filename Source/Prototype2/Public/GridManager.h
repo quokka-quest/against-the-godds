@@ -5,8 +5,6 @@
 #include "CoreMinimal.h"
 #include "GameFramework/Actor.h"
 #include "GridCell.h"
-#include "PathFinder.h"
-#include "AttackTargetAreas.h"
 #include "GlobalDataTypeHeader.h"
 #include "GridManager.generated.h"
 
@@ -34,8 +32,6 @@ private:
 	UMaterialInterface* HighlightedMat = LoadObject<UMaterialInterface>(nullptr, TEXT("/Game/Materials/M_TileGreen.M_TileGreen"));
 	UPROPERTY()
 	UMaterialInterface* PathMat = LoadObject<UMaterialInterface>(nullptr, TEXT("/Game/Materials/M_TileGold.M_TileGold"));
-
-	AttackTargetAreas AttackAreaManager;
 	
 	void InitialiseGridManagement();
 
@@ -80,8 +76,8 @@ public:
 	UFUNCTION(BlueprintCallable)
 	void DisplayTilesInAttackRange(FIntVector CurrentCellCoord, int Range);
 
-	TArray<FIntVector> DisplayAttackPattern(FIntVector TargetCoord, EAttackPattern Pattern, EAttackRotation Rotation);
+	//TArray<FIntVector> DisplayAttackPattern(FIntVector TargetCoord, EAttackPattern Pattern, Erotat Rotation);
 
-	TArray<FIntVector> GetCoordsInPattern(FIntVector TargetCoord, EAttackPattern Pattern, EAttackRotation Rotation);
+	//TArray<FIntVector> GetCoordsInPattern(FIntVector TargetCoord, EAttackPattern Pattern, EAttackRotation Rotation);
 
 };

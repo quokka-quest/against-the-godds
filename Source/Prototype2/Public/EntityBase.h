@@ -28,7 +28,7 @@ public:
 	void EnqueueMovement(FVector StartPos, FVector EndPos);
 
 	UPROPERTY(BlueprintReadWrite, Category="PlayerInfo")
-	FIntVector PositionCoord;
+	FIntVector2 PositionCoord;
 
 	UPROPERTY(EditAnywhere, BlueprintReadWrite, Category="PlayerInfo")
 	int MaxMovement;

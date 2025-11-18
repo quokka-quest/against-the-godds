@@ -90,7 +90,7 @@ void AGridManager::DisplayWalkableTiles(FIntVector CurrentCellCoord, int Availab
 {
 	if (AvailableMovement <= 0) return;
 
-	TArray<FIntVector> WalkableCoords = PathFinder(GridCells).FindMoveableTiles(CurrentCellCoord, AvailableMovement);
+	TArray<FIntVector> WalkableCoords;// = PathFinder(GridCells).FindMoveableTiles(CurrentCellCoord, AvailableMovement);
 	if (WalkableCoords.Num() == 0) return;
 
 	for (FIntVector WalkableCoord : WalkableCoords)
@@ -112,7 +112,7 @@ void AGridManager::ResetTilesWalkAndAttackBooleans()
 
 TArray<FIntVector> AGridManager::DisplayTilePath(FIntVector StartCoord, FIntVector EndCoord)
 {
-	TArray<FIntVector> Path = PathFinder(GridCells).FindPath(StartCoord, EndCoord);
+	TArray<FIntVector> Path;// = PathFinder(GridCells).FindPath(StartCoord, EndCoord);
 	if (Path.IsEmpty()) { UE_LOG(LogTemp, Error, TEXT("GridManager->DisplayTilePath: Path could not be found")) return Path; }
 
 	for (int i = 0; i < Path.Num(); i++)
@@ -127,7 +127,7 @@ void AGridManager::DisplayTilesInAttackRange(FIntVector CurrentCellCoord, int Ra
 {
 	if (Range < 0) return;
 
-	TArray<FIntVector> WalkableCoords = PathFinder(GridCells).FindAttackableTiles(CurrentCellCoord, Range);
+	TArray<FIntVector> WalkableCoords;// = PathFinder(GridCells).FindAttackableTiles(CurrentCellCoord, Range);
 	if (WalkableCoords.Num() == 0) return;
 
 	for (FIntVector WalkableCoord : WalkableCoords)
@@ -135,33 +135,4 @@ void AGridManager::DisplayTilesInAttackRange(FIntVector CurrentCellCoord, int Ra
 		GridCells[WalkableCoord]->FindComponentByClass<UStaticMeshComponent>()->SetMaterial(0, HighlightedMat);
 		GridCells[WalkableCoord]->isAttackable = true;
 	}
-}
-
-TArray<FIntVector> AGridManager::DisplayAttackPattern(FIntVector TargetCoord, EAttackPattern Pattern, EAttackRotation Rotation)
-{
-	TArray<FIntVector> Coords = AttackAreaManager.GetCoordsInTargetArea(TargetCoord, Pattern, Rotation);
-
-	int LoopCount = 0;
-	for (FIntVector Coord : Coords)
-	{
-		LoopCount++;
-		if (!GridCells.Contains(Coord)) {Coords.Remove(Coord); continue;}
-
-		UMaterialInterface* Mat = (LoopCount == 1)? PathMat: TargetMat;
-		GridCells[Coord]->FindComponentByClass<UStaticMeshComponent>()->SetMaterial(0, Mat);
-	}
-
-	return Coords;
-}
-
-TArray<FIntVector> AGridManager::GetCoordsInPattern(FIntVector TargetCoord, EAttackPattern Pattern, EAttackRotation Rotation)
-{
-	TArray<FIntVector> Coords = AttackAreaManager.GetCoordsInTargetArea(TargetCoord, Pattern, Rotation);
-	
-	for (FIntVector Coord : Coords)
-	{
-		if (!GridCells.Contains(Coord)) Coords.Remove(Coord);
-	}
-
-	return Coords;
 }
