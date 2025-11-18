@@ -122,7 +122,7 @@ void APlayerCombatLevelPawn::TryAddTileToSpawnSelection()
 	if (SelectedStartCells.Contains(HighlightedCell))
 	{
 		SelectedStartCells.Remove(HighlightedCell);
-		//GridManager->ChangeTilesMaterial(HighlightedCell, ETileMaterial::Highlighted);
+		GridManager->ChangeCellsMaterial(HighlightedCell, ETileMaterial::Highlighted);
 		return;
 	};
 
@@ -131,7 +131,7 @@ void APlayerCombatLevelPawn::TryAddTileToSpawnSelection()
 
 	// otherwise add the tile to the spawn tile array
 	SelectedStartCells.Add(HighlightedCell);
-	//GridManager->ChangeTilesMaterial(HighlightedCell, ETileMaterial::Target);
+	GridManager->ChangeCellsMaterial(HighlightedCell, ETileMaterial::Target);
 }
 
 bool APlayerCombatLevelPawn::AttemptToFinishPlayerStartPlacement()

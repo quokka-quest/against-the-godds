@@ -50,17 +50,23 @@ public:
 	TArray<FIntVector2> GetWalkableCells(FIntVector2 StartCoord, int AvailableMovement);
 
 	UFUNCTION(BlueprintCallable, Category="Grid System")
-	TArray<FIntVector2> GetTilesInAttackRange(FIntVector2 StartCoord, int Range);
+	TArray<FIntVector2> GetCellsInAttackRange(FIntVector2 StartCoord, int Range);
 
 	UFUNCTION(BlueprintCallable, Category="Grid System")
 	TArray<FIntVector2> GetCellsInAttackArea(FIntVector2 Target, FGridData AttackPattern, EPatternRotation Rotation);
+
+	UFUNCTION(BlueprintCallable, Category="Grid System")
+	TArray<FIntVector2> GetPathToPointInRangeOfTarget(FIntVector2 Start, FIntVector2 End, int Range);
+
+	UFUNCTION(BlueprintCallable, Category="Grid System")
+	TArray<FIntVector2> GetPathBetweenCoords(FIntVector2 Start, FIntVector2 End);
 
 protected:
 
 	UPROPERTY(Transient)
 	bool HasRunBefore = false;
 
-	void ReplaceGridCell(UWorld* World, FIntVector2 Coord);
+	virtual void ReplaceGridCell(UWorld* World, FIntVector2 Coord);
 
 	virtual void OnConstruction(const FTransform& Transform) override;
 

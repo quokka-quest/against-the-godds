@@ -53,7 +53,6 @@ void AGridManagerClass::RegenerateGrid()
 		// if the cell map already contain this coordinate then try to replace the cell object with the same parameters
 		if (GridCells.Contains(Coord))
 		{
-			UE_LOG(LogTemp, Warning, TEXT("Coord already exists in map: %i, %i"), Coord.X, Coord.Y)
 			// If the Cell object exists then replace it
 			if (GridCells[Coord]) { ReplaceGridCell(EditorWorld, Coord); continue; }
 			// otherwise remove the coord from the map (in case user deletes a cell object manually)
@@ -90,7 +89,6 @@ void AGridManagerClass::RegenerateGrid()
 // Replaces a cell object, maintaining the parameters of the old cell object
 void AGridManagerClass::ReplaceGridCell(UWorld* World, FIntVector2 Coord)
 {
-	UE_LOG(LogTemp, Warning, TEXT("Replacing found coord"))
 	// get old cell's variables
 	float ZOffset = GridCells[Coord]->ZOffset;
 	bool CanWalkThroughPositiveX = GridCells[Coord]->BlockPositiveX;
@@ -182,7 +180,7 @@ TArray<FIntVector2> AGridManagerClass::GetWalkableCells(FIntVector2 StartCoord, 
 	return PathFinder(GridCells).FindMoveableCellsInRange(StartCoord, AvailableMovement);
 }
 
-TArray<FIntVector2> AGridManagerClass::GetTilesInAttackRange(FIntVector2 StartCoord, int Range)
+TArray<FIntVector2> AGridManagerClass::GetCellsInAttackRange(FIntVector2 StartCoord, int Range)
 {
 	return PathFinder(GridCells).FindAttackableCellsInRange(StartCoord, Range);
 }
@@ -199,4 +197,14 @@ TArray<FIntVector2> AGridManagerClass::GetCellsInAttackArea(FIntVector2 Target, 
 		Results.Add(Target + Offsets[i]);
 	}
 	return Results;
+}
+
+TArray<FIntVector2> AGridManagerClass::GetPathToPointInRangeOfTarget(FIntVector2 Start, FIntVector2 End, int Range)
+{
+	return PathFinder(GridCells).FindPathToPointInRangeOfTarget(Start, End, Range);
+}
+
+TArray<FIntVector2> AGridManagerClass::GetPathBetweenCoords(FIntVector2 Start, FIntVector2 End)
+{
+	return PathFinder(GridCells).FindPath(Start, End);
 }

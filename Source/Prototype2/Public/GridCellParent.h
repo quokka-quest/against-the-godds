@@ -19,7 +19,9 @@ public:
 	UPROPERTY(EditAnywhere, BlueprintReadWrite, Category = "CellProperties")
 	bool IsPlayerSpawnCell;
 	UPROPERTY(EditAnywhere, BlueprintReadWrite, Category = "CellProperties")
-	bool IsEnemySpawnTile;
+	bool IsEnviroHazardCell;
+	UPROPERTY(EditAnywhere, BlueprintReadWrite, Category = "CellProperties")
+	bool IsEnemySpawnCell;
 	UPROPERTY(EditAnywhere, BlueprintReadWrite, Category = "CellProperties")
 	TSubclassOf<AEnemyEntity> EnemyToSpawn;
 	

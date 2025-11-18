@@ -14,7 +14,7 @@ void ACombatManager::BeginPlay()
 	Super::BeginPlay();
 
 	GridManager = Cast<AGridManagerTool>(UGameplayStatics::GetActorOfClass(GetWorld(), AGridManagerTool::StaticClass()));
-	//GridManager->ChangeAllTilesDisplay(EEditorGridDisplayType::PlayerSpawnTile);
+	GridManager->ChangeAllTilesDisplay(EEditorGridDisplayType::PlayerSpawnTile);
 
 	CurrentCombatantTurnIndex = 0;
 	SetAttackRotation(EPatternRotation::R0);
@@ -44,7 +44,7 @@ void ACombatManager::SpawnEnemies()
 	for (auto& Cell: GridManager->GridCells)
 	{
 		AGridCellParent* Value = Cast<AGridCellParent>(Cell.Value);
-		if (Value->IsEnemySpawnTile)
+		if (Value->IsEnemySpawnCell)
 		{
 			FTransform form = Value->GetTransform();
 			AEnemyEntity* enemy = GetWorld()->SpawnActor<AEnemyEntity>(Value->EnemyToSpawn, form);
@@ -131,7 +131,7 @@ void ACombatManager::EndCurrentTurn()
 	AEnemyEntity* EnemyRef = Cast<AEnemyEntity>(CurrentTurnCombatant);
 	APlayerEntity* PlayerRef = Cast<APlayerEntity>(CurrentTurnCombatant);
 
-	//GridManager->ChangeAllTilesDisplay(EEditorGridDisplayType::Default);
+	GridManager->ChangeAllTilesDisplay(EEditorGridDisplayType::Default);
 	
 	// for additional Enemy specific logic
 	if (EnemyRef)
@@ -176,21 +176,21 @@ void ACombatManager::MoveCurrentCombatant(FIntVector2 TargetPos)
 	}
 
 	CurrentTurnCombatant->PositionCoord = TargetPos;
-	//GridManager->ChangeAllTilesDisplay(EEditorGridDisplayType::Default);
+	GridManager->ChangeAllTilesDisplay(EEditorGridDisplayType::Default);
 }
 
 // displays the path to be taken by a combatant if they were to move to the target position
 void ACombatManager::DisplayPathForCurrentCombatant(FIntVector2 TargetPos)
 {
 	FIntVector2 StartPos = CurrentTurnCombatant->PositionCoord;
-	//PathForCombatantToFollow = GridManager->DisplayTilePath(StartPos, TargetPos);
+	PathForCombatantToFollow = GridManager->DisplayCellPath(StartPos, TargetPos);
 }
 
 // displays the movement options for the current combatant
 void ACombatManager::DisplayCurrentCombatantsMovement()
 {
 	GridManager->ResetWalkableAndAttackableOnAllCells();
-	//GridManager->DisplayWalkableTiles(CurrentTurnCombatant->PositionCoord, CurrentTurnCombatant->AvailableMovement);
+	GridManager->DisplayWalkableCells(CurrentTurnCombatant->PositionCoord, CurrentTurnCombatant->AvailableMovement);
 }
 
 // displays all the tiles that the player can target
@@ -198,14 +198,14 @@ void ACombatManager::DisplayAttackRange(int Range)
 {
 	AttackRange = Range;
 	GridManager->ResetWalkableAndAttackableOnAllCells();
-	//GridManager->DisplayTilesInAttackRange(CurrentTurnCombatant->PositionCoord, Range);
+	GridManager->DisplayCellsInAttackRange(CurrentTurnCombatant->PositionCoord, Range);
 }
 
 // displays the attack area and stores the targeted tiles with element 0 being the targeted tile and the rest are the additional area
 void ACombatManager::DisplayAttackPattern(FIntVector2 TargetCoord)
 {
 	DisplayAttackRange(AttackRange);
-	//AreaOfAttackEffect = GridManager->DisplayAttackPattern(TargetCoord, AttackPattern, AttackRotation);
+	AreaOfAttackEffect = GridManager->DisplayAttackPattern(TargetCoord, AttackPattern, AttackRotation);
 }
 
 void ACombatManager::DisplayAttackInformation(TSubclassOf<UGameplayAbilityBase> Ability, FDiceFaceLevels DiceLevels, int Range, FGridData Pattern)
@@ -232,7 +232,7 @@ void ACombatManager::ExecuteAttackOnTarget()
 	CurrentTurnCombatant->AvailableAttacks--;
 	CurrentTurnCombatant->ActivateAbilityWithTargets(AbilityToUse, TargetActors);
 	
-	//GridManager->ChangeAllTilesDisplay(EEditorGridDisplayType::Default);
+	GridManager->ChangeAllTilesDisplay(EEditorGridDisplayType::Default);
 	OnAttackExecuted.Broadcast();
 }
 
