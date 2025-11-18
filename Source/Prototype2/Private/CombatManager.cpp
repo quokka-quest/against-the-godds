@@ -183,6 +183,8 @@ void ACombatManager::MoveCurrentCombatant(FIntVector2 TargetPos)
 void ACombatManager::DisplayPathForCurrentCombatant(FIntVector2 TargetPos)
 {
 	FIntVector2 StartPos = CurrentTurnCombatant->PositionCoord;
+	UE_LOG(LogTemp, Warning, TEXT("Start pos: %i, %i"), StartPos.X, StartPos.Y)
+	UE_LOG(LogTemp, Warning, TEXT("Target pos: %i, %i"), TargetPos.X, TargetPos.Y)
 	PathForCombatantToFollow = GridManager->DisplayCellPath(StartPos, TargetPos);
 }
 
@@ -190,6 +192,7 @@ void ACombatManager::DisplayPathForCurrentCombatant(FIntVector2 TargetPos)
 void ACombatManager::DisplayCurrentCombatantsMovement()
 {
 	GridManager->ResetWalkableAndAttackableOnAllCells();
+	GridManager->ChangeAllTilesDisplay(Default);
 	GridManager->DisplayWalkableCells(CurrentTurnCombatant->PositionCoord, CurrentTurnCombatant->AvailableMovement);
 }
 
@@ -198,6 +201,7 @@ void ACombatManager::DisplayAttackRange(int Range)
 {
 	AttackRange = Range;
 	GridManager->ResetWalkableAndAttackableOnAllCells();
+	GridManager->ChangeAllTilesDisplay(Default);
 	GridManager->DisplayCellsInAttackRange(CurrentTurnCombatant->PositionCoord, Range);
 }
 

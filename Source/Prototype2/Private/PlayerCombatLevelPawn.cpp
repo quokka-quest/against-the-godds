@@ -2,8 +2,6 @@
 
 
 #include "PlayerCombatLevelPawn.h"
-
-#include "GridCell.h"
 #include "GameFramework/PlayerController.h"
 #include "Kismet/GameplayStatics.h"
 

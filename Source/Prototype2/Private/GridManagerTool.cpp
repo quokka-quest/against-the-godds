@@ -59,8 +59,7 @@ void AGridManagerTool::DisplayWalkableCells(FIntVector2 Start, int AvailableMove
 TArray<FIntVector2> AGridManagerTool::DisplayCellPath(FIntVector2 StartCoord, FIntVector2 EndCoord)
 {
 	TArray<FIntVector2> Path = GetPathBetweenCoords(StartCoord, EndCoord);
-	if (Path.Num() == 0) return Path;
-	
+
 	for (FIntVector2 Cell : Path)
 	{
 		GridCells[Cell]->FindComponentByClass<UStaticMeshComponent>()->SetMaterial(0, PathMat);
@@ -116,9 +115,7 @@ void AGridManagerTool::ReplaceGridCell(UWorld* World, FIntVector2 Coord)
 	
 	if (Cell)
 	{
-		UE_LOG(LogTemp, Warning, TEXT("Cell Cast success"));
 		PlayerSpawn = Cell->IsPlayerSpawnCell;
-		UE_LOG(LogTemp, Warning, TEXT("Player Spawn: %i"), Cell->IsPlayerSpawnCell);
 		EnviroHazard = Cell->IsEnviroHazardCell;
 		EnemySpawn = Cell->IsEnemySpawnCell;
 		EnemyToSpawn = Cell->EnemyToSpawn;
@@ -156,6 +153,7 @@ void AGridManagerTool::ReplaceGridCell(UWorld* World, FIntVector2 Coord)
 	NewCell->IsWalkable = IsWalkable;
 	NewCell->MovementCost = MovementCost;
 	NewCell->IsAttackable = IsAttackable;
+	NewCell->CellCoordinate = Coord;
 
 	// Extra variables
 	AGridCellParent* NewerCell = Cast<AGridCellParent>(NewCell);
@@ -163,7 +161,6 @@ void AGridManagerTool::ReplaceGridCell(UWorld* World, FIntVector2 Coord)
 	if (NewerCell)
 	{
 		NewerCell->Modify();
-		UE_LOG(LogTemp, Warning, TEXT("Newer Cell Cast success"));
 		NewerCell->IsPlayerSpawnCell = PlayerSpawn;
 		NewerCell->IsEnviroHazardCell = EnviroHazard;
 		NewerCell->IsEnemySpawnCell = EnemySpawn;

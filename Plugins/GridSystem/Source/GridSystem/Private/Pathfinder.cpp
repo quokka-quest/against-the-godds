@@ -98,7 +98,7 @@ TArray<FIntVector2> PathFinder::FindAttackableCellsInRange(FIntVector2 Start, in
 
 TArray<FIntVector2> PathFinder::FindPathToPointInRangeOfTarget(FIntVector2 Start, FIntVector2 End, int Range, bool AvoidOccupiedCells)
 {
-	TArray<FIntVector2> CellsInAttackRange = FindAttackableCellsInRange(Start, Range);
+	TArray<FIntVector2> CellsInAttackRange = FindAttackableCellsInRange(End, Range);
 	TArray<FIntVector2> PerimeterCells = GetPerimeterCells(CellsInAttackRange);
 
 	FIntVector2 ClosestTile = FIntVector2(0);

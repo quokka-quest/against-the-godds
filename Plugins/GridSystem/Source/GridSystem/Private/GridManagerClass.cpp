@@ -61,6 +61,8 @@ void AGridManagerClass::RegenerateGrid()
 
 		AGridCellBase* Cell = EditorWorld->SpawnActor<AGridCellBase>(GridCellActor);
 		Cell->SetActorLocation(FVector(Coord.X * GridCellSizeX, Coord.Y * GridCellSizeY, 0));
+		Cell->Modify();
+		Cell->CellCoordinate = Coord;
 		GridCells.Add(Coord, Cell);
 	}
 
@@ -130,6 +132,7 @@ void AGridManagerClass::ReplaceGridCell(UWorld* World, FIntVector2 Coord)
 	NewCell->IsWalkable = IsWalkable;
 	NewCell->MovementCost = MovementCost;
 	NewCell->IsAttackable = IsAttackable;
+	NewCell->CellCoordinate = Coord;
 }
 
 void AGridManagerClass::RotateOffsets(TArray<FIntVector2>& Offsets, EPatternRotation Rotation)

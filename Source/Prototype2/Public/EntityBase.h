@@ -40,7 +40,7 @@ public:
 
 	UPROPERTY(EditAnywhere, BlueprintReadWrite, Category = "PlayerInfo")
 	int MaxAttacks;
-	UPROPERTY(EditAnywhere, BlueprintReadWrite, Category = "PlayerInfo")
+	UPROPERTY(BlueprintReadWrite, Category = "PlayerInfo")
 	int AvailableAttacks;
 
 	void PrintDebugData();
