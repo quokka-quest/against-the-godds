@@ -26,14 +26,10 @@ void AGridManagerClass::OnConstruction(const FTransform& Transform)
 
 void AGridManagerClass::PrintAllCellCoords()
 {
-	UE_LOG(LogTemp, Warning, TEXT("Columns: %i,  Rows: %i"), GridData.Columns, GridData.Rows)
-	UE_LOG(LogTemp, Warning, TEXT("Cached Columns: %i,    Cached Rows: %i"), GridData.CachedColumns, GridData.CachedRows)
-	UE_LOG(LogTemp, Warning, TEXT("origin cell coord: %i, %i"), GridData.OriginCellGridCoord.X, GridData.OriginCellGridCoord.Y)
-	UE_LOG(LogTemp, Warning, TEXT("Cached origin cell coord: %i, %i"), GridData.CachedOriginCellGridCoord.X, GridData.CachedOriginCellGridCoord.Y)
-
-	for (int i = 0; i < GridData.AllCellsArray.Num(); i++)
+	for (auto Cell : GridCells)
 	{
-		UE_LOG(LogTemp, Warning, TEXT("Index: %i, value: %i"), i, GridData.AllCellsArray[i])
+		UE_LOG(LogTemp, Warning, TEXT("Cell key: %i, %i"), Cell.Key.X, Cell.Key.Y);
+		UE_LOG(LogTemp, Warning, TEXT("Cells Coord: %i, %i"), Cell.Value->CellCoordinate.X, Cell.Value->CellCoordinate.Y)
 	}
 }
 

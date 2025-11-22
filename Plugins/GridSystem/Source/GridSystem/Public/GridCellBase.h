@@ -34,7 +34,7 @@ public:
 
 	UPROPERTY(EditAnywhere, BlueprintReadWrite, Category="CellInfo")
 	int MovementCost;
-	UPROPERTY(BlueprintReadWrite, Category="CellInfo")
+	UPROPERTY(VisibleInstanceOnly, BlueprintReadWrite, Category="CellInfo")
 	FIntVector2 CellCoordinate;
 
 	//////////////////////////////////////////////////////////////////////////// Other properties
