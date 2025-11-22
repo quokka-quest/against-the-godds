@@ -27,17 +27,17 @@ void APlayerCombatLevelPawn::BeginPlay()
 	Super::BeginPlay();
 
 	GridManager = Cast<AGridManagerTool>(UGameplayStatics::GetActorOfClass(GetWorld(), AGridManagerTool::StaticClass()));
-	if (!GridManager) UE_LOG(LogTemp, Error, TEXT("GridManager is NULL"))
+	if (!GridManager) {UE_LOG(LogTemp, Error, TEXT("GridManager is NULL")) return;}
 
 	CombatManager = Cast<ACombatManager>(UGameplayStatics::GetActorOfClass(GetWorld(), ACombatManager::StaticClass()));
-	if (!CombatManager) UE_LOG(LogTemp, Error, TEXT("CombatManager is NULL"))
+	if (!CombatManager) {UE_LOG(LogTemp, Error, TEXT("CombatManager is NULL")) return;}
 
 	TileHighlight = Cast<ATileHighlight>(UGameplayStatics::GetActorOfClass(GetWorld(), ATileHighlight::StaticClass()));
-	if (!TileHighlight) UE_LOG(LogTemp, Error, TEXT("TileHighlight is null"))
+	if (!TileHighlight) {UE_LOG(LogTemp, Error, TEXT("TileHighlight is null")) return;}
 	TileHighlight->SetActorLocation(FVector(0, 0, 0));
 	
 	PlayerCon = Cast<APlayerController>(GetController());
-	if (!PlayerCon) UE_LOG(LogTemp, Error, TEXT("PlayerController is null"))
+	if (!PlayerCon) {UE_LOG(LogTemp, Error, TEXT("PlayerController is null")) return;}
 
 	PlayerCon->bShowMouseCursor = true;
 
