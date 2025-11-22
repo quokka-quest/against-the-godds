@@ -145,9 +145,10 @@ TSharedRef<SWidget> SGridDataWidgetBuilder::BuildGrid()
 	}
 
 	// make scroll bars for the horizontal and vertical boxes
-	TSharedRef<SScrollBar> HorizontalBar =
+	TSharedRef<SScrollBar> HorizontalScroll =
 		SNew(SScrollBar).Orientation(Orient_Horizontal).Thickness(FVector2D(8.f, 8.f));
-	TSharedRef<SScrollBar> VerticalBar =
+	
+	TSharedRef<SScrollBar> VerticalScroll =
 		SNew(SScrollBar).Orientation(Orient_Vertical).Thickness(FVector2D(8.f, 8.f));
 
 	// returns the widget to be displayed
@@ -162,10 +163,10 @@ TSharedRef<SWidget> SGridDataWidgetBuilder::BuildGrid()
 			SNew(SOverlay)
 			+ SOverlay::Slot()
 			[
-				SNew(SScrollBox).Orientation(Orient_Vertical).ExternalScrollbar(VerticalBar)
+				SAssignNew(VerticalScroller, SScrollBox).Orientation(Orient_Vertical).ExternalScrollbar(VerticalScroll)
 				+ SScrollBox::Slot()
 				[
-					SNew(SScrollBox).Orientation(Orient_Horizontal).ExternalScrollbar(HorizontalBar)
+					SAssignNew(HorizontalScroller, SScrollBox).Orientation(Orient_Horizontal).ExternalScrollbar(HorizontalScroll)
 					+ SScrollBox::Slot()
 					[
 						Grid
@@ -174,13 +175,34 @@ TSharedRef<SWidget> SGridDataWidgetBuilder::BuildGrid()
 			]
 			+SOverlay::Slot().VAlign(VAlign_Bottom)
 			[
-				HorizontalBar
+				HorizontalScroll
 			]
 			+SOverlay::Slot().HAlign(HAlign_Right)
 			[
-				VerticalBar
+				VerticalScroll
 			]
 		];
+
+	// timer for setting the offsets to the saved values
+	TWeakPtr<SScrollBox> WeakV = VerticalScroller;
+	TWeakPtr<SScrollBox> WeakH = HorizontalScroller;
+	float ToRestoreV = VerticalPos;
+	float ToRestoreH = HorizontalPos;
+
+	RegisterActiveTimer(0.0f, FWidgetActiveTimerDelegate::CreateLambda(
+		[WeakV, WeakH, ToRestoreV, ToRestoreH](double, float)
+		-> EActiveTimerReturnType
+		{
+			if (TSharedPtr<SScrollBox> V = WeakV.Pin())
+			{
+				V->SetScrollOffset(ToRestoreV);
+			}
+			if (TSharedPtr<SScrollBox> H = WeakH.Pin())
+			{
+				H->SetScrollOffset(ToRestoreH);
+			}
+			return EActiveTimerReturnType::Stop; // run once
+		}));
 
 	return ScrollableGrid;
 }
@@ -194,6 +216,10 @@ void SGridDataWidgetBuilder::RebuildGrid()
 	if (!RowsHandle.IsValid()) return;
 	if (!OriginCellCoordHandle.IsValid()) return;
 	if (!AllCellsHandle.IsValid()) return;
+
+	// preserve the scroll bars positions
+	VerticalPos = VerticalScroller->GetScrollOffset();
+	HorizontalPos = HorizontalScroller->GetScrollOffset();
 
 	// get the width and height and exit if the returned values are invalid
 	int32 Columns;

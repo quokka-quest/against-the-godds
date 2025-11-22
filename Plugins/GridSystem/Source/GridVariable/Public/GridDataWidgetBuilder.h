@@ -19,7 +19,7 @@ public:
 	SLATE_ARGUMENT(TSharedPtr<IPropertyHandle>, AllCellsArrayHandle)
 SLATE_END_ARGS()
 
-void Construct(const FArguments& InArgs);
+	void Construct(const FArguments& InArgs);
 
 private:
 	TSharedPtr<IPropertyHandle> StructHandle;
@@ -28,8 +28,11 @@ private:
 	TSharedPtr<IPropertyHandle> OriginCellCoordHandle;
 	TSharedPtr<IPropertyHandle> CellSizeHandle;
 	TSharedPtr<IPropertyHandle> AllCellsHandle;
-	
-	TSharedPtr<SVerticalBox> GridContainer;
+
+	TSharedPtr<SScrollBox> VerticalScroller;
+	TSharedPtr<SScrollBox> HorizontalScroller;
+	float HorizontalPos = 0.0f;
+	float VerticalPos = 0.0f;
 
 	TSharedRef<SWidget> BuildGrid();
 	void RebuildGrid();

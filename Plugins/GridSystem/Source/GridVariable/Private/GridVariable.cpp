@@ -22,4 +22,4 @@ void FGridVariableModule::ShutdownModule()
 
 #undef LOCTEXT_NAMESPACE
 	
-IMPLEMENT_MODULE(FGridVariableModule, GridSystem)
+IMPLEMENT_MODULE(FGridVariableModule, GridVariable)
