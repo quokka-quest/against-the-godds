@@ -50,6 +50,7 @@ TArray<FIntVector2> PathFinder::FindMoveableCellsInRange(FIntVector2 Start, int 
 	TotalMovement = AvailableMovement;
 	AvoidOccupied = AvoidOccupiedCells;
 	StartCoord = Start;
+	EndCoord = Start;
 	DiscoveredCells.Empty();
 	AnalysedCells.Empty();
 	CellMap.Empty();

@@ -183,8 +183,6 @@ void ACombatManager::MoveCurrentCombatant(FIntVector2 TargetPos)
 void ACombatManager::DisplayPathForCurrentCombatant(FIntVector2 TargetPos)
 {
 	FIntVector2 StartPos = CurrentTurnCombatant->PositionCoord;
-	UE_LOG(LogTemp, Warning, TEXT("Start pos: %i, %i"), StartPos.X, StartPos.Y)
-	UE_LOG(LogTemp, Warning, TEXT("Target pos: %i, %i"), TargetPos.X, TargetPos.Y)
 	PathForCombatantToFollow = GridManager->DisplayCellPath(StartPos, TargetPos);
 }
 
