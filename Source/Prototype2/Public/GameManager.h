@@ -74,7 +74,6 @@ public:
 	UFUNCTION(BlueprintCallable, Category = "Map")
 	TArray<int32> ChooseNextNodes(int32 Floor, int32 NodeIndex);
 
-	// Optional helper functions
 	UFUNCTION(BlueprintCallable, Category = "Map")
 	FMapNodeData GetNode(int32 Floor, int32 NodeIndex);
 

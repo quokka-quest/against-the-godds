@@ -147,7 +147,7 @@ void UGameManager::CreateMapPaths()
 
 	for (int32 StartColumn : StartingNodes) // for each starting node, make a start column variable
 	{
-		int32 StartFlat = GetNodeIndex(0, StartColumn); // 
+		int32 StartFlat = GetNodeIndex(0, StartColumn);
 
 		if (Grid.IsValidIndex(StartFlat))
 		{
