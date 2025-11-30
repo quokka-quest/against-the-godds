@@ -32,6 +32,9 @@ public:
 	UFUNCTION(BlueprintCallable, Category = "Dice")
 	FDiceFaceValues GetResultingFace();
 
+	UFUNCTION(BlueprintImplementableEvent, Category = "Dice")
+	void OnDiceRollComplete(FDiceFaceValues TopFaceValue);
+
 protected:
 	virtual void BeginPlay() override;
 
