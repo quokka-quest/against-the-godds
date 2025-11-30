@@ -57,8 +57,36 @@ void ADiceActor::CheckIfStable()
 
 int ADiceActor::GetTopFaceIndex()
 {
-    FVector UpVector = DiceMesh->GetUpVector();
-    
+    // Prefer using child components' X axes as face normals (child 0 => face 0)
+    if (DiceMesh)
+    {
+        TArray<USceneComponent*> AttachedChildren = DiceMesh->GetAttachChildren();
+        if (AttachedChildren.Num() > 0)
+        {
+            int BestFaceIndex = 0;
+            float BestDot = -1.0f;
+
+            for (int i = 0; i < AttachedChildren.Num(); ++i)
+            {
+                USceneComponent* Child = AttachedChildren[i];
+                if (!Child) continue;
+
+                // Use the child's X axis in world-space as the face normal
+                FVector WorldX = Child->GetComponentTransform().GetUnitAxis(EAxis::X);
+                float DotProduct = FVector::DotProduct(WorldX, FVector::UpVector);
+
+                if (DotProduct > BestDot)
+                {
+                    BestDot = DotProduct;
+                    BestFaceIndex = i;
+                }
+            }
+
+            return BestFaceIndex;
+        }
+    }
+
+    // Fallback to previous hardcoded normals if no children are attached or DiceMesh is null
     TArray<FVector> FaceNormals = {
         FVector(0, 0, 1),   // Face 0 (top)
         FVector(0, 0, -1),  // Face 1 (bottom)
@@ -67,24 +95,25 @@ int ADiceActor::GetTopFaceIndex()
         FVector(0, 1, 0),   // Face 4 (front)
         FVector(0, -1, 0)   // Face 5 (back)
     };
-    
+
     int BestFaceIndex = 0;
     float BestDot = -1.0f;
-    
+
     for (int i = 0; i < FaceNormals.Num(); i++)
     {
         FVector WorldNormal = DiceMesh->GetComponentRotation().RotateVector(FaceNormals[i]);
         float DotProduct = FVector::DotProduct(WorldNormal, FVector::UpVector);
-        
+
         if (DotProduct > BestDot)
         {
             BestDot = DotProduct;
             BestFaceIndex = i;
         }
     }
-    
+
     return BestFaceIndex;
 }
+
 
 FDiceFaceValues ADiceActor::GetResultingFace()
 {
