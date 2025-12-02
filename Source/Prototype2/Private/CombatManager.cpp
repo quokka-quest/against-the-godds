@@ -5,6 +5,7 @@
 
 #include "PlayerCombatLevelPawn.h"
 #include "PlayerEntity.h"
+#include "GameManager.h"
 #include "Kismet/GameplayStatics.h"
 
 
@@ -22,20 +23,31 @@ void ACombatManager::BeginPlay()
 
 // Called when the player locks in there start location choices
 // spawns the player characters on the chosen tiles
-void ACombatManager::FinishPlayerLocationPicking(TArray<AGridCellParent*> &playerStartCells)
+void ACombatManager::SpawnPlayerCharacters()
 {
-	for (AGridCellParent*& Cell : playerStartCells)
-	{
-		FVector Loc = Cell->GetActorLocation();
-		FRotator Rot = Cell->GetActorRotation();
-		FTransform Transform = FTransform(Rot, Loc);
-		AEntityBase* player = GetWorld()->SpawnActor<AEntityBase>(PlayerClass, Transform);
-		Combatants.Add(player);
-		player->PositionCoord = Cell->CellCoordinate;
-		Cell->SetOccupier(player);
-	}
+	TArray<FIntVector2> SpawnableCells = GridManager->GetPlayerSpawnCells();
+	// < 3 comes from the max number of player characters being 3
+	if (SpawnableCells.Num() < 3) {UE_LOG(LogTemp, Error, TEXT("CombatManager->SpawnPlayerCharacters(): insufficient spawnable cells")) return;}
 
-	OnPlayerSpawnLocsPicked();
+	UGameManager* GameInst =  Cast<UGameManager>(GetGameInstance());
+	if (!GameInst) {UE_LOG(LogTemp, Error, TEXT("GameInst failed to cast")) return;}
+
+	for (auto& Player : GameInst->CharacterInfo)
+	{
+		const int RandIndex = FMath::RandRange(0, SpawnableCells.Num() - 1);
+		FIntVector2 Coord = SpawnableCells[RandIndex];
+		SpawnableCells.Remove(Coord);
+
+		FVector Loc = GridManager->GridCells[Coord]->GetActorLocation();
+		FRotator Rot = GridManager->GridCells[Coord]->GetActorRotation();
+		FTransform Trans = FTransform(Rot, Loc);
+		AEntityBase* APlayer = GetWorld()->SpawnActor<AEntityBase>(Player.Key, Trans);
+		Combatants.Add(APlayer);
+		APlayer->PositionCoord = Coord;
+		GridManager->GridCells[Coord]->SetOccupier(APlayer);
+
+		APlayer->SetCharacterData(Player.Value);
+	}
 }
 
 // spawns enemies on the relevant tiles and populates the turn order array
@@ -251,8 +263,6 @@ void ACombatManager::EnemySetAttackInfo(TSubclassOf<UGameplayAbilityBase> Abilit
 	AreaOfAttackEffect = GridManager->GetCellsInAttackArea(TargetPos, Pattern, Rotation);
 }
 
-
-
 /////////////////////////////////////////////////////////////////////////// Blueprint friendly Getters and setters:
 
 EPatternRotation ACombatManager::GetAttackRotation()
@@ -279,7 +289,6 @@ bool ACombatManager::HasRoundEnded()
 {
 	return RoundHasEnded;
 }
-
 
 /////////////////////////////////////////////////////////////////////////// Blueprint friendly delegate broadcasts:
 

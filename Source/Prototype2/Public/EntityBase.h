@@ -7,6 +7,7 @@
 #include "GlobalDataTypeHeader.h"
 #include "Components/StaticMeshComponent.h"
 #include "GameplayAbilityBase.h"
+#include "PersistentDataStruct.h"
 #include "EntityBase.generated.h"
 
 /**
@@ -50,4 +51,6 @@ public:
 
 	UFUNCTION(BlueprintNativeEvent, BlueprintCallable, Category = "PlayerInfo")
 	void OnEntityDeath();
+
+	void SetCharacterData(FPersistentPlayerInfo& Info);
 };

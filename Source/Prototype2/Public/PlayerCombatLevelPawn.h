@@ -62,17 +62,12 @@ private:
 	AGridCellParent* SelectedCell;
 
 	UPROPERTY()
-	TArray<AGridCellParent*> SelectedStartCells;
-
-	UPROPERTY()
 	AGridManagerTool* GridManager;
 
 	UPROPERTY()
 	ACombatManager* CombatManager;
 
 	bool IsDisplayingAttack;
-
-	void TryAddTileToSpawnSelection();
 
 	void TryMoveToTile();
 
@@ -81,9 +76,6 @@ private:
 	void DisplayAttackTargetArea();
 
 	void TryAttackTargetTile();
-
-	UFUNCTION(BlueprintCallable)
-	bool AttemptToFinishPlayerStartPlacement();
 
 	UFUNCTION()
 	void OnPlayerTurnEnd();

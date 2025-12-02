@@ -4,6 +4,7 @@
 #include "EntityBase.h"
 #include "Kismet/GameplayStatics.h"
 #include "CombatManager.h"
+#include "GameManager.h"
 #include "AttributeHealthSet.h"
 
 bool AEntityBase::HasEntityDied()
@@ -15,6 +16,20 @@ void AEntityBase::OnEntityDeath_Implementation()
 {
 	Cast<ACombatManager>(UGameplayStatics::GetGameMode(GetWorld()))->OnEntityDeath(this);
 }
+
+void AEntityBase::SetCharacterData(FPersistentPlayerInfo& Info)
+{
+	Abilities = Info.Abilities;
+	AbilityDiceMap = Info.AbilityDiceMap;
+	DefaultEffects = Info.ActiveEffects;
+
+	MaxAttacks = Info.MaxAttacks;
+	MaxMovement = Info.MaxMovement;
+
+	HealthSet->SetMaxHealth(Info.MaxHealth);
+	HealthSet->SetCurrentHealth(Info.CurrentHealth);
+}
+
 
 void AEntityBase::PrintDebugData()
 {

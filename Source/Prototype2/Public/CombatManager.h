@@ -68,15 +68,10 @@ public:
 	TSubclassOf<UGameplayAbilityBase> AbilityToUse;
 
 	// functions
-	void FinishPlayerLocationPicking(TArray<AGridCellParent*> &playerStartCells);
-
-	UFUNCTION(BlueprintImplementableEvent)
-	void OnPlayerSpawnLocsPicked();
-	
 	void MoveCurrentCombatant(FIntVector2 TargetPos);
 
 	void DisplayPathForCurrentCombatant(FIntVector2 TargetPos);
-
+	
 	UFUNCTION(BlueprintCallable)
 	void DisplayCurrentCombatantsMovement();
 
@@ -135,7 +130,10 @@ protected:
 	void RollDiceForInitiative();
 
 	void SortTurnOrderArray();
-
+	
+	UFUNCTION(BlueprintCallable)
+	void SpawnPlayerCharacters();
+	
 	UFUNCTION(BlueprintCallable)
 	void SpawnEnemies();
 

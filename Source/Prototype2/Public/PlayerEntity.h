@@ -13,4 +13,8 @@ UCLASS()
 class PROTOTYPE2_API APlayerEntity : public AEntityBase
 {
 	GENERATED_BODY()
+
+public:
+	UFUNCTION(BlueprintCallable, Category="PlayerInfo")
+	void SendStatsToGameInstance(TSubclassOf<APlayerEntity> CharClass);
 };

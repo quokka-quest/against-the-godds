@@ -6,6 +6,8 @@
 #include "MapRoomType.h"
 #include "Delegates/DelegateCombinations.h"
 #include "Engine/GameInstance.h"
+#include "PlayerEntity.h"
+#include "PersistentDataStruct.h"
 #include "GameManager.generated.h"
 
 DECLARE_DYNAMIC_MULTICAST_DELEGATE_OneParam(FOnCurrentNodeChanged, const TArray<int32>&, ConnectedNodeIndices);
@@ -97,6 +99,8 @@ public:
 
 	UFUNCTION(BlueprintCallable, Category = "Map")
 	bool isEncounterCompleted(FName EncounterName);
+
+	TMap<TSubclassOf<APlayerEntity>, FPersistentPlayerInfo> CharacterInfo; 
 
 private:
 	TArray<EMapRoomCPP> AllRooms;

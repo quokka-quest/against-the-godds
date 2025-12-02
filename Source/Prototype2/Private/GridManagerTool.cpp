@@ -94,6 +94,18 @@ TArray<FIntVector2> AGridManagerTool::DisplayAttackPattern(FIntVector2 TargetCoo
 	return Cells;
 }
 
+TArray<FIntVector2> AGridManagerTool::GetPlayerSpawnCells()
+{
+	TArray<FIntVector2> PlayerSpawnCells;
+	for (auto& Cell : GridCells)
+	{
+		FIntVector2 Coord = Cell.Key;
+		AGridCellParent* CellRef = Cast<AGridCellParent>(Cell.Value);
+		if (CellRef->IsPlayerSpawnCell) PlayerSpawnCells.Add(Coord);
+	}
+	return PlayerSpawnCells;
+}
+
 void AGridManagerTool::ReplaceGridCell(UWorld* World, FIntVector2 Coord)
 {
 	// get old cell's variables

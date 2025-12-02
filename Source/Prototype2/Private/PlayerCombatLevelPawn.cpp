@@ -17,7 +17,7 @@ APlayerCombatLevelPawn::APlayerCombatLevelPawn()
 	CombatManager = nullptr;
 	GridManager = nullptr;
 
-	TileSelectionType = ETileSelectionType::SpawnSelection;
+	TileSelectionType = ETileSelectionType::None;
 	IsDisplayingAttack = false;
 }
 
@@ -72,7 +72,6 @@ void APlayerCombatLevelPawn::Tick(float DeltaTime)
 void APlayerCombatLevelPawn::SetupPlayerInputComponent(UInputComponent* PlayerInputComponent)
 {
 	Super::SetupPlayerInputComponent(PlayerInputComponent);
-
 }
 
 void APlayerCombatLevelPawn::SetTileSelectionType(ETileSelectionType Type)
@@ -80,13 +79,10 @@ void APlayerCombatLevelPawn::SetTileSelectionType(ETileSelectionType Type)
 	TileSelectionType = Type;
 }
 
-
 void APlayerCombatLevelPawn::OnTileClick()
 {
 	if (!HighlightedCell) {OnClickedOffTileGrid(); return;}
 	if (TileSelectionType == None) return;
-	
-	if (TileSelectionType == ETileSelectionType::SpawnSelection) TryAddTileToSpawnSelection();
 
 	// click logic for when the selected cell is not the cell being clicked on
 	if (SelectedCell != HighlightedCell)
@@ -103,40 +99,6 @@ void APlayerCombatLevelPawn::OnTileClick()
 	if (TileSelectionType == ETileSelectionType::Movement) TryMoveToTile();
 	if (TileSelectionType == ETileSelectionType::Attack) TryAttackTargetTile();
 	
-}
-
-void APlayerCombatLevelPawn::TryAddTileToSpawnSelection()
-{
-	int playerCount = 3;
-
-	
-	// if the tile clicked is not a valid spawn tile then do nothing
-	if (!HighlightedCell) return;
-	if (!HighlightedCell->IsPlayerSpawnCell) return;
-
-	// if the tile clicked is already in the spawn array then remove it
-	if (SelectedStartCells.Contains(HighlightedCell))
-	{
-		SelectedStartCells.Remove(HighlightedCell);
-		GridManager->ChangeCellsMaterial(HighlightedCell, ETileMaterial::Highlighted);
-		return;
-	};
-
-	// if the spawn tile array is full then do nothing
-	if (SelectedStartCells.Num() >= playerCount) return;
-
-	// otherwise add the tile to the spawn tile array
-	SelectedStartCells.Add(HighlightedCell);
-	GridManager->ChangeCellsMaterial(HighlightedCell, ETileMaterial::Target);
-}
-
-bool APlayerCombatLevelPawn::AttemptToFinishPlayerStartPlacement()
-{
-	int playerCount = 3;
-	if (SelectedStartCells.Num() != playerCount) return false;
-
-	CombatManager->FinishPlayerLocationPicking(SelectedStartCells);
-	return true;
 }
 
 void APlayerCombatLevelPawn::TryMoveToTile()

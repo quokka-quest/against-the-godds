@@ -41,6 +41,9 @@ public:
 	UFUNCTION(BlueprintCallable)
 	TArray<FIntVector2> DisplayAttackPattern(FIntVector2 TargetCoord, FGridData Pattern, EPatternRotation Rotation);
 
+	UFUNCTION(BlueprintCallable, BlueprintPure)
+	TArray<FIntVector2> GetPlayerSpawnCells();
+
 protected:
 	UPROPERTY()
 	UMaterialInterface* DefaultMat = LoadObject<UMaterialInterface>(nullptr, TEXT("/Game/Materials/M_TileRed.M_TileRed"));
