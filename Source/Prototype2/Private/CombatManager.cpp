@@ -65,7 +65,11 @@ void ACombatManager::SpawnEnemies()
 			Value->SetOccupier(enemy);
 		}
 	}
+}
 
+// Sets random initiative values for all combatants then sorts the array
+void ACombatManager::RollDiceForInitiative()
+{
 	// populate the turn order array
 	for (AEntityBase* Entity : Combatants)
 	{
@@ -74,11 +78,8 @@ void ACombatManager::SpawnEnemies()
 		Data.Initiative = 0;
 		DefaultTurnOrder.Add(Data);
 	}
-}
 
-// Sets random initiative values for all combatants then sorts the array
-void ACombatManager::RollDiceForInitiative()
-{
+	// roll for initiative
 	for (int i = 0; i < DefaultTurnOrder.Num(); i++)
 	{
 		DefaultTurnOrder[i].Initiative = FMath::RandRange(1, 20);
@@ -143,6 +144,8 @@ void ACombatManager::EndCurrentTurn()
 	AEnemyEntity* EnemyRef = Cast<AEnemyEntity>(CurrentTurnCombatant);
 	APlayerEntity* PlayerRef = Cast<APlayerEntity>(CurrentTurnCombatant);
 
+	if (HaveEnemiesWon() || HavePlayersWon()) {UE_LOG(LogTemp, Warning, TEXT("CombatManager->EndCurrentTurn: someone has won")) return;}
+	
 	GridManager->ChangeAllTilesDisplay(EEditorGridDisplayType::Default);
 	
 	// for additional Enemy specific logic
@@ -254,6 +257,9 @@ void ACombatManager::OnEntityDeath(AEntityBase* DeadEntity)
 {
 	// mark the tile the entity was on as empty
 	GridManager->GridCells[DeadEntity->PositionCoord]->SetOccupier(nullptr);
+
+	if (HavePlayersWon()) OnPlayersWin();
+	if (HaveEnemiesWon()) OnPlayersLost();
 }
 
 void ACombatManager::EnemySetAttackInfo(TSubclassOf<UGameplayAbilityBase> Ability, FDiceFaceLevels DiceLevels, FGridData Pattern, FIntVector2 TargetPos, EPatternRotation Rotation)
@@ -261,6 +267,39 @@ void ACombatManager::EnemySetAttackInfo(TSubclassOf<UGameplayAbilityBase> Abilit
 	AbilityToUse = Ability;
 	AttackPattern = Pattern;
 	AreaOfAttackEffect = GridManager->GetCellsInAttackArea(TargetPos, Pattern, Rotation);
+}
+
+bool ACombatManager::HavePlayersWon()
+{
+	for (AEntityBase* Entity : Combatants)
+	{
+		AEnemyEntity* Enemy = Cast<AEnemyEntity>(Entity);
+		if (!Enemy) continue;
+		if (!Cast<AEnemyEntity>(Entity)->HasEntityDied()) return false;
+	}
+	return true;
+}
+
+bool ACombatManager::HaveEnemiesWon()
+{
+	for (AEntityBase* Entity : Combatants)
+	{
+		APlayerEntity* Player = Cast<APlayerEntity>(Entity);
+		if (!Player) continue;
+		if (!Player->HasEntityDied()) return false;
+	}
+	return true;
+}
+
+void ACombatManager::RemoveDeadPlayers()
+{
+	for (AEntityBase* Entity : Combatants)
+	{
+		APlayerEntity* Player = Cast<APlayerEntity>(Entity);
+		if (!Player) continue;
+		if (Player->HasEntityDied()) {UE_LOG(LogTemp, Warning, TEXT("Player dead on start")) Player->OnEntityDeath();}
+		else {UE_LOG(LogTemp, Warning, TEXT("Player alive on start"))}
+	}
 }
 
 /////////////////////////////////////////////////////////////////////////// Blueprint friendly Getters and setters:

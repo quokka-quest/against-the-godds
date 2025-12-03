@@ -90,6 +90,11 @@ public:
 
 	void EnemySetAttackInfo(TSubclassOf<UGameplayAbilityBase> Ability, FDiceFaceLevels DiceLevels, FGridData Pattern, FIntVector2 TargetPos, EPatternRotation Rotation);
 
+	UFUNCTION(BlueprintCallable, BlueprintPure)
+	bool HavePlayersWon();
+	UFUNCTION(BlueprintCallable, BlueprintPure)
+	bool HaveEnemiesWon();
+	
 	////////////////////////////////////////////////// blueprint getters and setters:
 	UFUNCTION(BlueprintCallable)
 	void SetAttackRotation(EPatternRotation Rotation);
@@ -150,6 +155,14 @@ protected:
 
 	UFUNCTION(BlueprintImplementableEvent)
 	void BlueprintEndTurnEvents();
+
+	UFUNCTION(BlueprintImplementableEvent)
+	void OnPlayersWin();
+	UFUNCTION(BlueprintImplementableEvent)
+	void OnPlayersLost();
+
+	UFUNCTION(BlueprintCallable)
+	void RemoveDeadPlayers();
 
 	TArray<FIntVector2> PathForCombatantToFollow;
 
