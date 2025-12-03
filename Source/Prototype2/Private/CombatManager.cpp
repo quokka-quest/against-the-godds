@@ -113,14 +113,19 @@ void ACombatManager::SortTurnOrderArray()
 // called to start a new turn
 void ACombatManager::StartCurrentTurn()
 {
+	// set the reference to the entity taking its turn
 	CurrentTurnCombatant = CurrentTurnOrder[CurrentCombatantTurnIndex].Entity;
-	AEnemyEntity* EnemyRef = Cast<AEnemyEntity>(CurrentTurnCombatant);
-	APlayerEntity* PlayerRef = Cast<APlayerEntity>(CurrentTurnCombatant);
+	AEnemyEntity* EnemyRef = Cast<AEnemyEntity>(CurrentTurnCombatant); // used to determine if it's an enemy entity
+	APlayerEntity* PlayerRef = Cast<APlayerEntity>(CurrentTurnCombatant); // used to determine if it's a player entity
 
+	// reset the available movement and attacks
 	CurrentTurnCombatant->AvailableMovement = CurrentTurnCombatant->MaxMovement;
 	CurrentTurnCombatant->AvailableAttacks = CurrentTurnCombatant->MaxAttacks;
 
+	// reset the RoundHasEnded boolean
 	RoundHasEnded = false;
+
+	// tell the combatant to initialise there turn (Players do initialisation, Enemies execute there full turn here)
 	CurrentTurnCombatant->SetupTurnStart();
 
 	// for additional Enemy specific logic
@@ -137,7 +142,7 @@ void ACombatManager::StartCurrentTurn()
 	}
 }
 
-// called by Entities on the end of their turn
+// called by Entities on the end of their turn (Entities will perform their own end of turn logic BEFORE calling this)
 // manages end of turn logic and starts the next turn
 void ACombatManager::EndCurrentTurn()
 {
