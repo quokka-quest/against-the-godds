@@ -51,7 +51,9 @@ void ADiceActor::CheckIfStable()
     {
         bIsRolling = false;
         GetWorldTimerManager().ClearTimer(StabilityCheckTimer);
-        OnDiceRollComplete(GetResultingFace());
+        FDiceFaceValues Result = GetResultingFace();
+        OnRollComplete.Broadcast(Result);
+        OnDiceRollComplete(Result);
     }
 }
 

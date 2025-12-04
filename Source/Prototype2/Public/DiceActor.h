@@ -6,6 +6,8 @@
 #include "GlobalDataTypeHeader.h"
 #include "DiceActor.generated.h"
 
+DECLARE_DYNAMIC_MULTICAST_DELEGATE_OneParam(FOnRollComplete, FDiceFaceValues, TopFaceValue);
+
 UCLASS()
 class PROTOTYPE2_API ADiceActor : public AActor
 {
@@ -25,6 +27,9 @@ public:
 
 	UPROPERTY(EditAnywhere, BlueprintReadWrite, Category = "Dice")
 	float RollTorque = 1000.0f;
+
+	UPROPERTY(BlueprintAssignable, Category = "Dice")
+	FOnRollComplete OnRollComplete;
 
 	UFUNCTION(BlueprintCallable, Category = "Dice")
 	void RollDice();
