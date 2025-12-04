@@ -4,6 +4,7 @@
 
 #include "CoreMinimal.h"
 #include "GameFramework/Actor.h"
+#include "Components/ArrowComponent.h"
 #include "GlobalDataTypeHeader.h"
 #include "DiceActor.h"
 #include "Kismet/BlueprintAsyncActionBase.h"
@@ -24,9 +25,6 @@ public:
 	UPROPERTY(EditAnywhere, BlueprintReadWrite, Category = "Dice")
 	TSubclassOf<ADiceActor> DiceActorClass;
 
-	UPROPERTY(EditAnywhere, BlueprintReadWrite, Category = "Dice")
-	FVector SpawnLocation = FVector(0.0f, 0.0f, 500.0f);
-
 	// Blueprint event that fires when dice roll completes
 	UPROPERTY(BlueprintAssignable, Category = "Dice")
 	FOnDiceRollCompleteBP OnDiceRollCompleteBP;
@@ -34,11 +32,6 @@ public:
 	// Start a dice roll - result will be broadcast via OnDiceRollCompleteBP
 	UFUNCTION(BlueprintCallable, Category = "Dice")
 	void StartDiceRoll(FDiceFaceLevels DiceValues);
-
-	// Legacy synchronous function (NOT RECOMMENDED - can cause freezes)
-	UFUNCTION(BlueprintCallable, Category = "Dice")
-	FDiceFaceValues BlueprintRollDice(FDiceFaceLevels DiceValues);
-	
 	virtual void RollDice(FDiceFaceLevels DiceFaceLevels, FOnDiceRollCompleteDelegate OnComplete);
 
 protected:
@@ -54,6 +47,9 @@ public:
 	virtual void Tick(float DeltaTime) override;
 
 private:
+	UPROPERTY()
+	UArrowComponent* SpawnPoint;
+	
 	UPROPERTY()
 	ADiceActor* CurrentDiceActor;
 	

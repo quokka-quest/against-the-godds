@@ -12,44 +12,6 @@ ADiceRoller::ADiceRoller()
 	bRollComplete = false;
 }
 
-FDiceFaceValues ADiceRoller::BlueprintRollDice(FDiceFaceLevels DiceValues)
-{
-	// WARNING: This is a synchronous function that blocks. Use StartDiceRoll instead!
-	bRollComplete = false;
-	CurrentResult = FDiceFaceValues();
-
-	// Create a lambda to capture the result
-	FOnDiceRollCompleteDelegate Callback;
-	Callback.BindLambda([this](FDiceFaceValues Result)
-	{
-		CurrentResult = Result;
-		bRollComplete = true;
-	});
-
-	RollDice(DiceValues, Callback);
-
-	// Wait for the roll to complete (with timeout)
-	float TimeoutDuration = 10.0f;
-	float ElapsedTime = 0.0f;
-	float CheckInterval = 0.016f; // ~60 FPS
-
-	UWorld* World = GetWorld();
-	if (World)
-	{
-		while (!bRollComplete && ElapsedTime < TimeoutDuration)
-		{
-			FPlatformProcess::Sleep(CheckInterval);
-			ElapsedTime += CheckInterval;
-		}
-	}
-
-	if (!bRollComplete)
-	{
-		UE_LOG(LogTemp, Warning, TEXT("DiceRoller: BlueprintRollDice timed out!"));
-	}
-
-	return CurrentResult;
-}
 
 void ADiceRoller::StartDiceRoll(FDiceFaceLevels DiceValues)
 {
@@ -96,8 +58,21 @@ void ADiceRoller::RollDice(FDiceFaceLevels DiceFaceLevels, FOnDiceRollCompleteDe
 	SpawnParams.Owner = this;
 	SpawnParams.SpawnCollisionHandlingOverride = ESpawnActorCollisionHandlingMethod::AlwaysSpawn;
 
-	FVector SpawnPos = GetActorLocation() + SpawnLocation;
-	FRotator SpawnRot = FRotator::ZeroRotator;
+	FVector SpawnPos;
+	FRotator SpawnRot;
+	
+	if (SpawnPoint)
+	{
+		SpawnPos = SpawnPoint->GetComponentLocation();
+		SpawnRot = SpawnPoint->GetComponentRotation();
+	}
+	else
+	{
+		// Fallback if SpawnLoc arrow component not found
+		SpawnPos = GetActorLocation() + FVector(0.0f, 0.0f, 500.0f);
+		SpawnRot = FRotator::ZeroRotator;
+		UE_LOG(LogTemp, Warning, TEXT("DiceRoller: Using fallback spawn location"));
+	}
 
 	CurrentDiceActor = World->SpawnActor<ADiceActor>(DiceActorClass, SpawnPos, SpawnRot, SpawnParams);
 
@@ -133,6 +108,24 @@ void ADiceRoller::BeginPlay()
 {
 	Super::BeginPlay();
 	
+	// Find the arrow component named "SpawnLoc"
+	TArray<UArrowComponent*> ArrowComponents;
+	GetComponents<UArrowComponent>(ArrowComponents);
+	
+	for (UArrowComponent* Arrow : ArrowComponents)
+	{
+		if (Arrow && Arrow->GetName() == TEXT("SpawnLoc"))
+		{
+			SpawnPoint = Arrow;
+			UE_LOG(LogTemp, Log, TEXT("DiceRoller: Found SpawnLoc arrow component"));
+			break;
+		}
+	}
+	
+	if (!SpawnPoint)
+	{
+		UE_LOG(LogTemp, Warning, TEXT("DiceRoller: Could not find arrow component named 'SpawnLoc'"));
+	}
 }
 
 // Called every frame
