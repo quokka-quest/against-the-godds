@@ -1,6 +1,7 @@
 // Fill out your copyright notice in the Description page of Project Settings.
 #include "DiceActor.h"
 #include "Components/StaticMeshComponent.h"
+#include "Components/ChildActorComponent.h"
 
 ADiceActor::ADiceActor()
 {
@@ -14,6 +15,77 @@ ADiceActor::ADiceActor()
     DiceMesh->SetAngularDamping(2.0f);
     DiceMesh->SetLinearDamping(1.0f);
 }
+
+void ADiceActor::UpdateDiceFaces()
+{
+    if (!DiceMesh)
+    {
+        UE_LOG(LogTemp, Error, TEXT("UpdateDiceFaces: DiceMesh is null!"));
+        return;
+    }
+
+    // Get child components
+    TArray<USceneComponent*> AttachedChildren = DiceMesh->GetAttachChildren();
+    
+    for (int i = 0; i < AttachedChildren.Num(); ++i)
+    {
+        USceneComponent* Child = AttachedChildren[i];
+        if (!Child)
+            continue;
+
+        // Cast to ChildActorComponent
+        UChildActorComponent* ChildActorComp = Cast<UChildActorComponent>(Child);
+        if (!ChildActorComp)
+        {
+            UE_LOG(LogTemp, Warning, TEXT("Child %d is not a ChildActorComponent"), i);
+            continue;
+        }
+
+        // Get the spawned child actor (BP_WorldFace)
+        AActor* ChildActor = ChildActorComp->GetChildActor();
+        if (!ChildActor)
+        {
+            UE_LOG(LogTemp, Warning, TEXT("ChildActorComponent %d has no child actor spawned"), i);
+            continue;
+        }
+
+        // Get the face values for this index
+        FDiceFaceValues FaceValues = DiceFaces.GetFaceValues(i);
+
+        // Find UpdateText function on the child actor
+        UFunction* UpdateTextFunc = ChildActor->FindFunction(FName("UpdateText"));
+        
+        if (UpdateTextFunc)
+        {
+            
+            // Allocate proper parameter buffer
+            uint8* Params = (uint8*)FMemory_Alloca(UpdateTextFunc->ParmsSize);
+            FMemory::Memzero(Params, UpdateTextFunc->ParmsSize);
+            
+            // Copy the FaceValues to the parameter
+            for (TFieldIterator<FProperty> PropIt(UpdateTextFunc); PropIt; ++PropIt)
+            {
+                FProperty* Prop = *PropIt;
+                if (Prop->HasAnyPropertyFlags(CPF_Parm) && !Prop->HasAnyPropertyFlags(CPF_ReturnParm))
+                {
+                    FStructProperty* StructProp = CastField<FStructProperty>(Prop);
+                    if (StructProp && StructProp->Struct == FDiceFaceValues::StaticStruct())
+                    {
+                        void* ValuePtr = StructProp->ContainerPtrToValuePtr<void>(Params);
+                        StructProp->CopyCompleteValue(ValuePtr, &FaceValues);
+                    }
+                }
+            }
+
+            ChildActor->ProcessEvent(UpdateTextFunc, Params);
+        }
+        else
+        {
+            UE_LOG(LogTemp, Error, TEXT("UpdateText function NOT found on actor %d"), i);
+        }
+    }
+}
+
 
 void ADiceActor::BeginPlay()
 {

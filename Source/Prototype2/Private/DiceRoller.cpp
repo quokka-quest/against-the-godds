@@ -84,6 +84,7 @@ void ADiceRoller::RollDice(FDiceFaceLevels DiceFaceLevels, FOnDiceRollCompleteDe
 	}
 
 	CurrentDiceActor->DiceFaces = DiceFaceLevels;
+	CurrentDiceActor->UpdateDiceFaces();
 	CurrentDiceActor->OnRollComplete.AddDynamic(this, &ADiceRoller::OnDiceRollCompleteHandler);
 	CurrentDiceActor->RollDice();
 
