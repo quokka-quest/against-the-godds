@@ -1,0 +1,75 @@
+// Fill out your copyright notice in the Description page of Project Settings.
+
+#pragma once
+
+#include "CoreMinimal.h"
+#include "GridData.h"
+#include "GridCellBase.h"
+#include "GridManagerClass.generated.h"
+
+UENUM(Blueprintable, BlueprintType)
+enum EPatternRotation
+{
+	R0,
+	R90,
+	R180,
+	R270
+};
+
+UCLASS()
+class GRIDSYSTEM_API AGridManagerClass : public AActor
+{
+	GENERATED_BODY()
+	
+public:
+	UPROPERTY(EditAnywhere, Category = "Grid System")
+	FGridData GridData;
+
+	UPROPERTY(EditAnywhere, Category = "Grid System")
+	TSubclassOf<AGridCellBase> GridCellActor;
+
+	UPROPERTY(EditAnywhere, Category = "Grid System")
+	float GridCellSizeX;
+	UPROPERTY(EditAnywhere, Category = "Grid System")
+	float GridCellSizeY;
+
+	UPROPERTY()
+	TMap<FIntVector2, AGridCellBase*> GridCells;
+
+	UFUNCTION(CallInEditor, Category="Grid System")
+	void RegenerateGrid();
+
+	UFUNCTION(CallInEditor, Category="Grid System")
+	void PrintAllCellCoords();
+
+	// PathFinding functions
+	UFUNCTION(BlueprintCallable, Category="Grid System")
+	void ResetWalkableAndAttackableOnAllCells();
+	
+	UFUNCTION(BlueprintCallable, Category="Grid System")
+	TArray<FIntVector2> GetWalkableCells(FIntVector2 StartCoord, int AvailableMovement);
+
+	UFUNCTION(BlueprintCallable, Category="Grid System")
+	TArray<FIntVector2> GetCellsInAttackRange(FIntVector2 StartCoord, int Range);
+
+	UFUNCTION(BlueprintCallable, Category="Grid System")
+	TArray<FIntVector2> GetCellsInAttackArea(FIntVector2 Target, FGridData AttackPattern, EPatternRotation Rotation);
+
+	UFUNCTION(BlueprintCallable, Category="Grid System")
+	TArray<FIntVector2> GetPathToPointInRangeOfTarget(FIntVector2 Start, FIntVector2 End, int Range);
+
+	UFUNCTION(BlueprintCallable, Category="Grid System")
+	TArray<FIntVector2> GetPathBetweenCoords(FIntVector2 Start, FIntVector2 End);
+
+protected:
+
+	UPROPERTY(Transient)
+	bool HasRunBefore = false;
+
+	virtual void ReplaceGridCell(UWorld* World, FIntVector2 Coord);
+
+	virtual void OnConstruction(const FTransform& Transform) override;
+
+	void RotateOffsets(TArray<FIntVector2>& Offsets, EPatternRotation Rotation);
+
+};
