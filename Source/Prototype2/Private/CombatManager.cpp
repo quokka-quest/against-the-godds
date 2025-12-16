@@ -213,7 +213,15 @@ void ACombatManager::MoveCurrentCombatant(FIntVector2 TargetPos)
 void ACombatManager::DisplayPathForCurrentCombatant(FIntVector2 TargetPos)
 {
 	FIntVector2 StartPos = CurrentTurnCombatant->PositionCoord;
-	PathForCombatantToFollow = GridManager->DisplayCellPath(StartPos, TargetPos, CurrentTurnCombatant->GetPathingData());
+
+	TArray<FPathInfo> PathInfo = GridManager->DisplayCellPath(StartPos, TargetPos, CurrentTurnCombatant->GetPathingData());
+	TArray<FIntVector2> Path;
+	for (int i = 0; i < PathInfo.Num(); i++)
+	{
+		Path.Add(PathInfo[i].NextCellCoord);
+	}
+	
+	PathForCombatantToFollow = Path;
 }
 
 // displays the movement options for the current combatant

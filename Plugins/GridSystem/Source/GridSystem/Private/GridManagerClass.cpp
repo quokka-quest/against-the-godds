@@ -198,12 +198,12 @@ TArray<FIntVector2> AGridManagerClass::GetCellsInAttackArea(FIntVector2 Target, 
 	return Results;
 }
 
-TArray<FIntVector2> AGridManagerClass::GetPathToPointInRangeOfTarget(FIntVector2 Start, FIntVector2 End, int Range, FPathingData PathingData)
+TArray<FPathInfo> AGridManagerClass::GetPathToPointInRangeOfTarget(FIntVector2 Start, FIntVector2 End, int Range, FPathingData PathingData)
 {
 	return PathFinder(GridCells, PathingData).FindPathToPointInRangeOfTarget(Start, End, Range);
 }
 
-TArray<FIntVector2> AGridManagerClass::GetPathBetweenCoords(FIntVector2 Start, FIntVector2 End, FPathingData PathingData)
+TArray<FPathInfo> AGridManagerClass::GetPathBetweenCoords(FIntVector2 Start, FIntVector2 End, FPathingData PathingData)
 {
 	return PathFinder(GridCells, PathingData).FindPath(Start, End);
 }

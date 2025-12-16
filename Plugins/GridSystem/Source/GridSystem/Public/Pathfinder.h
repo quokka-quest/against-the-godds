@@ -14,9 +14,30 @@ struct FCellInfo
 	int MinCostToTarget;
 	FIntVector2 PrevCellCoord;
 
+	bool RequiresRotation;
+	TEnumAsByte<EPatternRotation> NewRotation;
+	TEnumAsByte<EPatternRotation> PrevRotation;
+
 	bool operator==(const FCellInfo& Other) const
 	{
 		return (Coord == Other.Coord);
+	}
+};
+
+struct FNeighbourInfo
+{
+	FIntVector2 Coord;
+	TEnumAsByte<EPatternRotation> Direction;
+
+	FNeighbourInfo()
+	{
+		Coord = FIntVector2(0,0);
+		Direction = R0;
+	}
+	FNeighbourInfo(FIntVector2 coord, TEnumAsByte<EPatternRotation> direction)
+	{
+		Coord = coord;
+		Direction = direction;
 	}
 };
 
@@ -25,10 +46,10 @@ class PathFinder
 public:
 	PathFinder(TMap<FIntVector2, AGridCellBase*>& InGridCells, FPathingData& InPathingData):GridCells(InGridCells),PathingData(InPathingData){};
 
-	TArray<FIntVector2> FindPath(FIntVector2 Start, FIntVector2 End, bool AvoidOccupiedCells = true);
+	TArray<FPathInfo> FindPath(FIntVector2 Start, FIntVector2 End, bool AvoidOccupiedCells = true);
 	TArray<FIntVector2> FindMoveableCellsInRange(FIntVector2 Start, int AvailableMovement,  bool AvoidOccupiedCells = true);
 	TArray<FIntVector2> FindAttackableCellsInRange(FIntVector2 Start, int Range);
-	TArray<FIntVector2> FindPathToPointInRangeOfTarget(FIntVector2 Start, FIntVector2 End, int Range, bool AvoidOccupiedCells = true);
+	TArray<FPathInfo> FindPathToPointInRangeOfTarget(FIntVector2 Start, FIntVector2 End, int Range, bool AvoidOccupiedCells = true);
 
 protected:
 	TMap<FIntVector2, AGridCellBase*> GridCells;
@@ -46,7 +67,7 @@ protected:
 	FPathingData PathingData;
 
 	// Discover functions
-	void DiscoverCellForMovement(FIntVector2 CellCoord, FIntVector2 PreviousCell);
+	void DiscoverCellForMovement(FIntVector2 CellCoord, FIntVector2 PreviousCell, TEnumAsByte<EPatternRotation> Direction);
 	void DiscoverCellForAttack(FIntVector2 CellCoord, FIntVector2 PreviousCell);
 
 	// Analyse functions
@@ -64,11 +85,15 @@ protected:
 
 	bool IsCellAlreadyDiscovered(FIntVector2 CellCoord);
 
-	TArray<FIntVector2> GetValidNeighbours(FIntVector2 CellCoord);
+	TArray<FNeighbourInfo> GetValidNeighbours(FIntVector2 CellCoord);
 
 	FCellInfo PullNextAnalysableCell();
 
 	TArray<FIntVector2> GetPerimeterCells(TArray<FIntVector2>& CellCoords);
 
 	bool GetCellInArrayClosestToTarget(TArray<FIntVector2>& Cells, FIntVector2 Target, FIntVector2& OutCoord);
+
+	bool CheckRotationSweep(FIntVector2 Coord);
+
+	FPathInfo GetPathInfoForThisCell(FIntVector2 Coord);
 };

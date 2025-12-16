@@ -56,13 +56,13 @@ void AGridManagerTool::DisplayWalkableCells(FIntVector2 Start, int AvailableMove
 	}
 }
 
-TArray<FIntVector2> AGridManagerTool::DisplayCellPath(FIntVector2 StartCoord, FIntVector2 EndCoord, FPathingData PathData)
+TArray<FPathInfo> AGridManagerTool::DisplayCellPath(FIntVector2 StartCoord, FIntVector2 EndCoord, FPathingData PathData)
 {
-	TArray<FIntVector2> Path = GetPathBetweenCoords(StartCoord, EndCoord, PathData);
+	TArray<FPathInfo> Path = GetPathBetweenCoords(StartCoord, EndCoord, PathData);
 
-	for (FIntVector2 Cell : Path)
+	for (FPathInfo Cell : Path)
 	{
-		GridCells[Cell]->FindComponentByClass<UStaticMeshComponent>()->SetMaterial(0, PathMat);
+		GridCells[Cell.NextCellCoord]->FindComponentByClass<UStaticMeshComponent>()->SetMaterial(0, PathMat);
 	}
 	
 	return Path;

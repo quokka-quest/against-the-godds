@@ -48,7 +48,7 @@ void AEnemyEntity::DetermineMovement()
 
 	AGridManagerTool* GridManager = Cast<AGridManagerTool>(UGameplayStatics::GetActorOfClass(GetWorld(), AGridManagerTool::StaticClass()));
 
-	TArray<FIntVector2> PathToTarget = GridManager->GetPathToPointInRangeOfTarget(PositionCoord, PlayerTarget->PositionCoord, MaxRange, GetPathingData());
+	TArray<FPathInfo> PathToTarget = GridManager->GetPathToPointInRangeOfTarget(PositionCoord, PlayerTarget->PositionCoord, MaxRange, GetPathingData());
 
 	// establish the first tile in the path
 	// pathing gives the path in reverse to the last index is the start tile
@@ -56,20 +56,21 @@ void AEnemyEntity::DetermineMovement()
 	int TargetPosIndex = PathToTarget.Num() - 2;
 	if (TargetPosIndex < 0) return;
 
-	// if the target tile is occupied then movement can't be done
-	if (GridManager->GridCells[PathToTarget[TargetPosIndex]]->IsOccupied) return;
+	// pathing will give a path from the enemy to the player (ignoring occupancy) so when they are adjacent it will still return a valid path
+	// this if statement prevents the enemy from walking onto the player's cell when they are directly next to each other
+	if (GridManager->GridCells[PathToTarget[TargetPosIndex].NextCellCoord]->IsOccupied) return;
 	// If the movement cost is greater than the available movement of this enemy entity, then movement can't be done
-	int MoveCost = GridManager->GridCells[PathToTarget[TargetPosIndex]]->MovementCost;
+	int MoveCost = GridManager->GridCells[PathToTarget[TargetPosIndex].NextCellCoord]->MovementCost;
 	if (MoveCost > MaxMovement) return;
 
 	// -3 is done here because the .Num()-2 tile is done above to establish if movement is possible
 	for (int i = PathToTarget.Num()-3; i >= 0; i--)
 	{
 		// breaks the loop if the tile has an entity on it (prevents movement onto an occupied tile)
-		if (GridManager->GridCells[PathToTarget[i]]->IsOccupied) break;
+		if (GridManager->GridCells[PathToTarget[i].NextCellCoord]->IsOccupied) break;
 
 		// check if the available movement will allow for this tile to be moved to
-		int AddMoveCost = GridManager->GridCells[PathToTarget[i]]->MovementCost;
+		int AddMoveCost = GridManager->GridCells[PathToTarget[i].NextCellCoord]->MovementCost;
 		if (MoveCost + AddMoveCost > MaxMovement) break;
 
 		// if it can then the current tile is set as the new target
@@ -80,8 +81,8 @@ void AEnemyEntity::DetermineMovement()
 	AvailableMovement -= MoveCost;
 	for (int i = PathToTarget.Num()-1; i > TargetPosIndex; i--)
 	{
-		FVector StartPos = GridManager->GridCells[PathToTarget[i]]->GetActorLocation();
-		FVector EndPos = GridManager->GridCells[PathToTarget[i-1]]->GetActorLocation();
+		FVector StartPos = GridManager->GridCells[PathToTarget[i].NextCellCoord]->GetActorLocation();
+		FVector EndPos = GridManager->GridCells[PathToTarget[i-1].NextCellCoord]->GetActorLocation();
 		EnqueueMovement(StartPos, EndPos);
 	}
 
@@ -90,7 +91,7 @@ void AEnemyEntity::DetermineMovement()
 	GridManager->GridCells[PositionCoord]->OccupyingActor = nullptr;
 
 	// tells the cell it moved to that it is occupied
-	PositionCoord = PathToTarget[TargetPosIndex];
+	PositionCoord = PathToTarget[TargetPosIndex].NextCellCoord;
 	GridManager->GridCells[PositionCoord]->IsOccupied = true;
 	GridManager->GridCells[PositionCoord]->OccupyingActor = Cast<AEntityBase>(this);
 }

@@ -33,7 +33,7 @@ public:
 	void DisplayWalkableCells(FIntVector2 Start, int AvailableMovement, FPathingData PathData);
 
 	UFUNCTION(BlueprintCallable)
-	TArray<FIntVector2> DisplayCellPath(FIntVector2 StartCoord, FIntVector2 EndCoord, FPathingData PathData);
+	TArray<FPathInfo> DisplayCellPath(FIntVector2 StartCoord, FIntVector2 EndCoord, FPathingData PathData);
 
 	UFUNCTION(BlueprintCallable)
 	void DisplayCellsInAttackRange(FIntVector2 Start, int Range, FPathingData PathData);

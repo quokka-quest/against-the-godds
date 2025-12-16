@@ -116,3 +116,20 @@ struct FPathingData
 	UPROPERTY()
 	TEnumAsByte<EPatternRotation> CurrentRotation;
 };
+
+USTRUCT(BlueprintType)
+struct FPathInfo
+{
+	GENERATED_BODY()
+
+	UPROPERTY()
+	bool needsRotation;
+	UPROPERTY()
+	FIntVector2 StartingCellCoord;
+	UPROPERTY()
+	TEnumAsByte<EPatternRotation> StartingRotation;
+	UPROPERTY()
+	FIntVector2 NextCellCoord;
+	UPROPERTY()
+	TEnumAsByte<EPatternRotation> NextRotation;
+};
