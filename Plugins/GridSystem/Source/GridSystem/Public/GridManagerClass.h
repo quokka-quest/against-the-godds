@@ -7,15 +7,6 @@
 #include "GridCellBase.h"
 #include "GridManagerClass.generated.h"
 
-UENUM(Blueprintable, BlueprintType)
-enum EPatternRotation
-{
-	R0,
-	R90,
-	R180,
-	R270
-};
-
 UCLASS()
 class GRIDSYSTEM_API AGridManagerClass : public AActor
 {

@@ -5,7 +5,6 @@
 #include "CoreMinimal.h"
 #include "CharacterBase.h"
 #include "GlobalDataTypeHeader.h"
-#include "Components/StaticMeshComponent.h"
 #include "GameplayAbilityBase.h"
 #include "PersistentDataStruct.h"
 #include "EntityBase.generated.h"
@@ -43,6 +42,11 @@ public:
 	int MaxAttacks;
 	UPROPERTY(BlueprintReadWrite, Category = "PlayerInfo")
 	int AvailableAttacks;
+
+	UPROPERTY(EditAnywhere, BlueprintReadWrite, Category = "PlayerInfo")
+	FGridData EntitySize;
+	UPROPERTY(BlueprintReadWrite, Category = "PlayerInfo")
+	TEnumAsByte<EPatternRotation> Rotation;
 
 	void PrintDebugData();
 

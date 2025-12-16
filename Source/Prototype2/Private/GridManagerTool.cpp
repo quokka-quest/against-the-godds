@@ -106,6 +106,34 @@ TArray<FIntVector2> AGridManagerTool::GetPlayerSpawnCells()
 	return PlayerSpawnCells;
 }
 
+void AGridManagerTool::ToggleDirectionIndicators()
+{
+	for (AActor* Arrow : DirectionIndicators)
+	{
+		if (!Arrow) continue;
+		Arrow->Destroy();
+	}
+	DisplayArrows = !DisplayArrows;
+	if (!DisplayArrows) return;
+
+	for (auto& Cell : GridCells)
+	{
+		AGridCellParent* CellRef = Cast<AGridCellParent>(Cell.Value);
+		if ((CellRef->IsPlayerSpawnCell && GridDisplayType == PlayerSpawnTile) || (CellRef->IsEnemySpawnCell && GridDisplayType == EnemySpawnTile))
+		{
+			EPatternRotation temp = CellRef->SpawnedEntityRotation;
+			FRotator spawnRot = FRotator(90, 0, (temp == R0)? 0: (temp == R90)? 90: (temp == R180)? 180: -90);
+			FVector spawnPos = CellRef->GetActorLocation() + FVector(0, 0, 100);
+			FTransform spawnTrans = FTransform(spawnRot, spawnPos, FVector(1));
+			AActor* Arrow = GetWorld()->SpawnActor(ArrowIndicator);
+			Arrow->SetActorTransform(spawnTrans);
+			Arrow->SetFolderPath(FName("CellManager/Arrows"));
+			DirectionIndicators.Add(Arrow);
+		}
+	}
+}
+
+
 void AGridManagerTool::ReplaceGridCell(UWorld* World, FIntVector2 Coord)
 {
 	// get old cell's variables
@@ -124,6 +152,7 @@ void AGridManagerTool::ReplaceGridCell(UWorld* World, FIntVector2 Coord)
 	bool EnviroHazard = false;
 	bool EnemySpawn = false;
 	TSubclassOf<AEnemyEntity> EnemyToSpawn = nullptr;
+	TEnumAsByte<EPatternRotation> EntityDirection = R0;
 	
 	if (Cell)
 	{
@@ -131,7 +160,7 @@ void AGridManagerTool::ReplaceGridCell(UWorld* World, FIntVector2 Coord)
 		EnviroHazard = Cell->IsEnviroHazardCell;
 		EnemySpawn = Cell->IsEnemySpawnCell;
 		EnemyToSpawn = Cell->EnemyToSpawn;
-		
+		EntityDirection = Cell->SpawnedEntityRotation;
 	}
 
 	// destroy old cell
@@ -177,6 +206,6 @@ void AGridManagerTool::ReplaceGridCell(UWorld* World, FIntVector2 Coord)
 		NewerCell->IsEnviroHazardCell = EnviroHazard;
 		NewerCell->IsEnemySpawnCell = EnemySpawn;
 		NewerCell->EnemyToSpawn = EnemyToSpawn;
-		
+		NewerCell->SpawnedEntityRotation = EntityDirection;
 	}
 }

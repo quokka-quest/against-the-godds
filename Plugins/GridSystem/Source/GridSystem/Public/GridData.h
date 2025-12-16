@@ -5,6 +5,15 @@
 #include "CoreMinimal.h"
 #include "GridData.Generated.h"
 
+UENUM(Blueprintable, BlueprintType)
+enum EPatternRotation
+{
+	R0,
+	R90,
+	R180,
+	R270
+};
+
 USTRUCT(BlueprintType)
 struct FGridData
 {
