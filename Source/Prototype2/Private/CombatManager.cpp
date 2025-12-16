@@ -38,8 +38,10 @@ void ACombatManager::SpawnPlayerCharacters()
 		FIntVector2 Coord = SpawnableCells[RandIndex];
 		SpawnableCells.Remove(Coord);
 
+		EPatternRotation spawnRot = Cast<AGridCellParent>(GridManager->GridCells[Coord])->SpawnedEntityRotation;
+		float ZRot = (spawnRot == R0)? 90: (spawnRot == R90)? 0: (spawnRot == R180)? -90: 180;
 		FVector Loc = GridManager->GridCells[Coord]->GetActorLocation();
-		FRotator Rot = GridManager->GridCells[Coord]->GetActorRotation();
+		FRotator Rot = FRotator(0, ZRot, 0);
 		FTransform Trans = FTransform(Rot, Loc);
 		AEntityBase* APlayer = GetWorld()->SpawnActor<AEntityBase>(Player.Key, Trans);
 		Combatants.Add(APlayer);
@@ -58,7 +60,11 @@ void ACombatManager::SpawnEnemies()
 		AGridCellParent* Value = Cast<AGridCellParent>(Cell.Value);
 		if (Value->IsEnemySpawnCell)
 		{
-			FTransform form = Value->GetTransform();
+			EPatternRotation spawnRot = Cast<AGridCellParent>(GridManager->GridCells[Cell.Key])->SpawnedEntityRotation;
+			float ZRot = (spawnRot == R0)? 90: (spawnRot == R90)? 0: (spawnRot == R180)? -90: 180;
+			FRotator Rot = FRotator(0, ZRot, 0);
+			FVector Pos = GridManager->GridCells[Cell.Key]->GetActorLocation();
+			FTransform form = FTransform(Rot, Pos);
 			AEnemyEntity* enemy = GetWorld()->SpawnActor<AEnemyEntity>(Value->EnemyToSpawn, form);
 			Combatants.Add(enemy);
 			enemy->PositionCoord = Value->CellCoordinate;
