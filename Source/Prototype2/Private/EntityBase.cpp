@@ -6,6 +6,7 @@
 #include "CombatManager.h"
 #include "GameManager.h"
 #include "AttributeHealthSet.h"
+#include "Evaluation/MovieSceneEvaluationTrack.h"
 
 bool AEntityBase::HasEntityDied()
 {
@@ -30,6 +31,15 @@ void AEntityBase::SetCharacterData(FPersistentPlayerInfo& Info)
 	HealthSet->SetCurrentHealth(Info.CurrentHealth);
 }
 
+FPathingData AEntityBase::GetPathingData()
+{
+	FPathingData Result;
+	Result.Actor = this;
+	Result.ActorRotations = EntityRotations;
+	Result.RotationSweep = RotationSweep;
+	Result.CurrentRotation = FacingDirection;
+	return Result;
+}
 
 void AEntityBase::PrintDebugData()
 {

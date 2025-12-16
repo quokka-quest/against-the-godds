@@ -127,7 +127,16 @@ void PathFinder::DiscoverCellForMovement(FIntVector2 CellCoord, FIntVector2 Prev
 	CellInfo.CostFromStart = CostFromStart;
 
 	if (CostFromStart > TotalMovement) return;
-	if (CellCoord != StartCoord && CellCoord != EndCoord && AvoidOccupied && GridCells[CellCoord]->IsOccupied) return;
+	if (CellCoord != StartCoord && CellCoord != EndCoord && AvoidOccupied && GridCells[CellCoord]->IsOccupied && GridCells[CellCoord]->OccupyingActor != PathingData.Actor) return;
+
+	// check if entity can fit in the new area it will move to
+	for (FIntVector2 Offset  : PathingData.ActorRotations[PathingData.CurrentRotation].GetSelectedCellOffsets())
+	{
+		FIntVector2 Coord = CellCoord + Offset;
+		if (!GridCells.Contains(Coord)) return;
+		if (GridCells[Coord]->IsOccupied && GridCells[Coord]->OccupyingActor != PathingData.Actor) return;
+	}
+
 	CellMap.Add(CellCoord, CellInfo);
 	DiscoveredCells.Add(CellInfo);
 }

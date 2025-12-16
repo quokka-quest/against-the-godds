@@ -101,3 +101,18 @@ public:
 	}
 	
 };
+
+USTRUCT(BlueprintType)
+struct FPathingData
+{
+	GENERATED_BODY()
+
+	UPROPERTY()
+	AActor* Actor;
+	UPROPERTY()
+	TMap<TEnumAsByte<EPatternRotation>, FGridData> ActorRotations;
+	UPROPERTY()
+	FGridData RotationSweep;
+	UPROPERTY()
+	TEnumAsByte<EPatternRotation> CurrentRotation;
+};

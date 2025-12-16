@@ -44,9 +44,11 @@ public:
 	int AvailableAttacks;
 
 	UPROPERTY(EditAnywhere, BlueprintReadWrite, Category = "PlayerInfo")
-	FGridData EntitySize;
+	TMap<TEnumAsByte<EPatternRotation>, FGridData> EntityRotations;
+	UPROPERTY(EditAnywhere, BlueprintReadWrite, Category = "PlayerInfo")
+	FGridData RotationSweep;
 	UPROPERTY(BlueprintReadWrite, Category = "PlayerInfo")
-	TEnumAsByte<EPatternRotation> Rotation;
+	TEnumAsByte<EPatternRotation> FacingDirection;
 
 	void PrintDebugData();
 
@@ -57,4 +59,7 @@ public:
 	void OnEntityDeath();
 
 	void SetCharacterData(FPersistentPlayerInfo& Info);
+
+	UFUNCTION(BlueprintCallable, BlueprintPure)
+	FPathingData GetPathingData();
 };

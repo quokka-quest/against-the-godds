@@ -48,7 +48,7 @@ void AEnemyEntity::DetermineMovement()
 
 	AGridManagerTool* GridManager = Cast<AGridManagerTool>(UGameplayStatics::GetActorOfClass(GetWorld(), AGridManagerTool::StaticClass()));
 
-	TArray<FIntVector2> PathToTarget = GridManager->GetPathToPointInRangeOfTarget(PositionCoord, PlayerTarget->PositionCoord, MaxRange);
+	TArray<FIntVector2> PathToTarget = GridManager->GetPathToPointInRangeOfTarget(PositionCoord, PlayerTarget->PositionCoord, MaxRange, GetPathingData());
 
 	// establish the first tile in the path
 	// pathing gives the path in reverse to the last index is the start tile
@@ -122,7 +122,7 @@ bool AEnemyEntity::IsTargetInAttackRange(int Range)
 {
 	AGridManagerTool* GridManager = Cast<AGridManagerTool>(UGameplayStatics::GetActorOfClass(GetWorld(), AGridManagerTool::StaticClass()));
 
-	TArray<FIntVector2> AttackableTiles = GridManager->GetCellsInAttackRange(PositionCoord, Range);
+	TArray<FIntVector2> AttackableTiles = GridManager->GetCellsInAttackRange(PositionCoord, Range, GetPathingData());
 	for (int i = 0; i < AttackableTiles.Num(); i++)
 	{
 		if (!GridManager->GridCells[AttackableTiles[i]]->IsOccupied) continue;

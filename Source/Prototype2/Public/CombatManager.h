@@ -164,6 +164,12 @@ protected:
 	UFUNCTION(BlueprintCallable)
 	void RemoveDeadPlayers();
 
+	UFUNCTION(BlueprintCallable)
+	AEntityBase* SpawnEntity(TSubclassOf<AEntityBase> Entity, FIntVector2 SpawnCoord);
+
+	UFUNCTION(blueprintCallable)
+	void SetCellsOccupier(AEntityBase* Entity, FIntVector2 Coord, bool SetAsOccupied);
+
 	TArray<FIntVector2> PathForCombatantToFollow;
 
 	TArray<FIntVector2> AreaOfAttackEffect;

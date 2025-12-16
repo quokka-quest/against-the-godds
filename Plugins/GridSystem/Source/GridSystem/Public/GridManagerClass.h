@@ -38,19 +38,19 @@ public:
 	void ResetWalkableAndAttackableOnAllCells();
 	
 	UFUNCTION(BlueprintCallable, Category="Grid System")
-	TArray<FIntVector2> GetWalkableCells(FIntVector2 StartCoord, int AvailableMovement);
+	TArray<FIntVector2> GetWalkableCells(FIntVector2 StartCoord, int AvailableMovement, FPathingData PathingData);
 
 	UFUNCTION(BlueprintCallable, Category="Grid System")
-	TArray<FIntVector2> GetCellsInAttackRange(FIntVector2 StartCoord, int Range);
+	TArray<FIntVector2> GetCellsInAttackRange(FIntVector2 StartCoord, int Range, FPathingData PathingData);
 
 	UFUNCTION(BlueprintCallable, Category="Grid System")
-	TArray<FIntVector2> GetCellsInAttackArea(FIntVector2 Target, FGridData AttackPattern, EPatternRotation Rotation);
+	TArray<FIntVector2> GetCellsInAttackArea(FIntVector2 Target, FGridData AttackPattern, EPatternRotation Rotation, FPathingData PathingData);
 
 	UFUNCTION(BlueprintCallable, Category="Grid System")
-	TArray<FIntVector2> GetPathToPointInRangeOfTarget(FIntVector2 Start, FIntVector2 End, int Range);
+	TArray<FIntVector2> GetPathToPointInRangeOfTarget(FIntVector2 Start, FIntVector2 End, int Range, FPathingData PathingData);
 
 	UFUNCTION(BlueprintCallable, Category="Grid System")
-	TArray<FIntVector2> GetPathBetweenCoords(FIntVector2 Start, FIntVector2 End);
+	TArray<FIntVector2> GetPathBetweenCoords(FIntVector2 Start, FIntVector2 End, FPathingData PathingData);
 
 protected:
 

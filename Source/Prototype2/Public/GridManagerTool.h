@@ -30,16 +30,16 @@ public:
 	void ChangeCellsMaterial(AGridCellParent* Tile, ETileMaterial Material);
 
 	UFUNCTION(BlueprintCallable)
-	void DisplayWalkableCells(FIntVector2 Start, int AvailableMovement);
+	void DisplayWalkableCells(FIntVector2 Start, int AvailableMovement, FPathingData PathData);
 
 	UFUNCTION(BlueprintCallable)
-	TArray<FIntVector2> DisplayCellPath(FIntVector2 StartCoord, FIntVector2 EndCoord);
+	TArray<FIntVector2> DisplayCellPath(FIntVector2 StartCoord, FIntVector2 EndCoord, FPathingData PathData);
 
 	UFUNCTION(BlueprintCallable)
-	void DisplayCellsInAttackRange(FIntVector2 Start, int Range);
+	void DisplayCellsInAttackRange(FIntVector2 Start, int Range, FPathingData PathData);
 
 	UFUNCTION(BlueprintCallable)
-	TArray<FIntVector2> DisplayAttackPattern(FIntVector2 TargetCoord, FGridData Pattern, EPatternRotation Rotation);
+	TArray<FIntVector2> DisplayAttackPattern(FIntVector2 TargetCoord, FGridData Pattern, EPatternRotation Rotation, FPathingData PathData);
 
 	UFUNCTION(BlueprintCallable, BlueprintPure)
 	TArray<FIntVector2> GetPlayerSpawnCells();

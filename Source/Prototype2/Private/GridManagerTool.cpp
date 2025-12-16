@@ -43,10 +43,10 @@ void AGridManagerTool::ChangeCellsMaterial(AGridCellParent* Tile, ETileMaterial 
 	CellMesh->SetMaterial(0, (Material == ETileMaterial::Target)? TargetMat : (Material == ETileMaterial::Highlighted)? HighlightedMat : DefaultMat);
 }
 
-void AGridManagerTool::DisplayWalkableCells(FIntVector2 Start, int AvailableMovement)
+void AGridManagerTool::DisplayWalkableCells(FIntVector2 Start, int AvailableMovement, FPathingData PathData)
 {
 	if (AvailableMovement <= 0) return;
-	TArray<FIntVector2> WalkableCells = GetWalkableCells(Start, AvailableMovement);
+	TArray<FIntVector2> WalkableCells = GetWalkableCells(Start, AvailableMovement, PathData);
 	if (WalkableCells.Num() == 0) return;
 
 	for (int i = 0; i < WalkableCells.Num(); i++)
@@ -56,9 +56,9 @@ void AGridManagerTool::DisplayWalkableCells(FIntVector2 Start, int AvailableMove
 	}
 }
 
-TArray<FIntVector2> AGridManagerTool::DisplayCellPath(FIntVector2 StartCoord, FIntVector2 EndCoord)
+TArray<FIntVector2> AGridManagerTool::DisplayCellPath(FIntVector2 StartCoord, FIntVector2 EndCoord, FPathingData PathData)
 {
-	TArray<FIntVector2> Path = GetPathBetweenCoords(StartCoord, EndCoord);
+	TArray<FIntVector2> Path = GetPathBetweenCoords(StartCoord, EndCoord, PathData);
 
 	for (FIntVector2 Cell : Path)
 	{
@@ -68,10 +68,10 @@ TArray<FIntVector2> AGridManagerTool::DisplayCellPath(FIntVector2 StartCoord, FI
 	return Path;
 }
 
-void AGridManagerTool::DisplayCellsInAttackRange(FIntVector2 Start, int Range)
+void AGridManagerTool::DisplayCellsInAttackRange(FIntVector2 Start, int Range, FPathingData PathData)
 {
 	if (Range < 0) return;
-	TArray<FIntVector2> AttackableCells = GetCellsInAttackRange(Start, Range);
+	TArray<FIntVector2> AttackableCells = GetCellsInAttackRange(Start, Range, PathData);
 	if (AttackableCells.Num() == 0) return;
 
 	for (int i = 0; i < AttackableCells.Num(); i++)
@@ -81,9 +81,9 @@ void AGridManagerTool::DisplayCellsInAttackRange(FIntVector2 Start, int Range)
 	}
 }
 
-TArray<FIntVector2> AGridManagerTool::DisplayAttackPattern(FIntVector2 TargetCoord, FGridData Pattern, EPatternRotation Rotation)
+TArray<FIntVector2> AGridManagerTool::DisplayAttackPattern(FIntVector2 TargetCoord, FGridData Pattern, EPatternRotation Rotation, FPathingData PathData)
 {
-	TArray<FIntVector2> Cells = GetCellsInAttackArea(TargetCoord, Pattern, Rotation);
+	TArray<FIntVector2> Cells = GetCellsInAttackArea(TargetCoord, Pattern, Rotation, PathData);
 	if (Cells.Num() == 0) return Cells;
 
 	for (int i = 0; i < Cells.Num(); i++)

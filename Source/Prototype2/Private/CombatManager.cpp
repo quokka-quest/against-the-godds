@@ -7,6 +7,7 @@
 #include "PlayerEntity.h"
 #include "GameManager.h"
 #include "Kismet/GameplayStatics.h"
+#include "Slate/SGameLayerManager.h"
 
 
 // Sets references to needed manager classes on start
@@ -38,15 +39,7 @@ void ACombatManager::SpawnPlayerCharacters()
 		FIntVector2 Coord = SpawnableCells[RandIndex];
 		SpawnableCells.Remove(Coord);
 
-		EPatternRotation spawnRot = Cast<AGridCellParent>(GridManager->GridCells[Coord])->SpawnedEntityRotation;
-		float ZRot = (spawnRot == R0)? 90: (spawnRot == R90)? 0: (spawnRot == R180)? -90: 180;
-		FVector Loc = GridManager->GridCells[Coord]->GetActorLocation();
-		FRotator Rot = FRotator(0, ZRot, 0);
-		FTransform Trans = FTransform(Rot, Loc);
-		AEntityBase* APlayer = GetWorld()->SpawnActor<AEntityBase>(Player.Key, Trans);
-		Combatants.Add(APlayer);
-		APlayer->PositionCoord = Coord;
-		GridManager->GridCells[Coord]->SetOccupier(APlayer);
+		APlayerEntity* APlayer = Cast<APlayerEntity>(SpawnEntity(Player.Key, Coord));
 
 		APlayer->SetCharacterData(Player.Value);
 	}
@@ -60,18 +53,29 @@ void ACombatManager::SpawnEnemies()
 		AGridCellParent* Value = Cast<AGridCellParent>(Cell.Value);
 		if (Value->IsEnemySpawnCell)
 		{
-			EPatternRotation spawnRot = Cast<AGridCellParent>(GridManager->GridCells[Cell.Key])->SpawnedEntityRotation;
-			float ZRot = (spawnRot == R0)? 90: (spawnRot == R90)? 0: (spawnRot == R180)? -90: 180;
-			FRotator Rot = FRotator(0, ZRot, 0);
-			FVector Pos = GridManager->GridCells[Cell.Key]->GetActorLocation();
-			FTransform form = FTransform(Rot, Pos);
-			AEnemyEntity* enemy = GetWorld()->SpawnActor<AEnemyEntity>(Value->EnemyToSpawn, form);
-			Combatants.Add(enemy);
-			enemy->PositionCoord = Value->CellCoordinate;
-			Value->SetOccupier(enemy);
+			SpawnEntity(Value->EnemyToSpawn, Cell.Key);
 		}
 	}
 }
+
+AEntityBase* ACombatManager::SpawnEntity(TSubclassOf<AEntityBase> Entity, FIntVector2 SpawnCoord)
+{
+	EPatternRotation spawnRot = Cast<AGridCellParent>(GridManager->GridCells[SpawnCoord])->SpawnedEntityRotation;
+	float ZRot = (spawnRot == R0)? 90: (spawnRot == R90)? 0: (spawnRot == R180)? -90: 180;
+	FRotator Rot = FRotator(0, ZRot, 0);
+	FVector Pos = GridManager->GridCells[SpawnCoord]->GetActorLocation();
+	FTransform Form = FTransform(Rot, Pos);
+
+	AEntityBase* EntityRef = GetWorld()->SpawnActor<AEntityBase>(Entity, Form);
+	EntityRef->FacingDirection = spawnRot;
+	Combatants.Add(EntityRef);
+	EntityRef->PositionCoord = SpawnCoord;
+
+	SetCellsOccupier(EntityRef, SpawnCoord, true);
+
+	return EntityRef;
+}
+
 
 // Sets random initiative values for all combatants then sorts the array
 void ACombatManager::RollDiceForInitiative()
@@ -190,8 +194,8 @@ void ACombatManager::IncrementTurnIndex()
 // checks for valid locations are done before this function is called so they aren't needed here
 void ACombatManager::MoveCurrentCombatant(FIntVector2 TargetPos)
 {
-	GridManager->GridCells[CurrentTurnCombatant->PositionCoord]->SetOccupier(nullptr);
-	GridManager->GridCells[TargetPos]->SetOccupier(CurrentTurnCombatant);
+	SetCellsOccupier(CurrentTurnCombatant, CurrentTurnCombatant->PositionCoord, false);
+	SetCellsOccupier(CurrentTurnCombatant, TargetPos, true);
 
 	for (int i = PathForCombatantToFollow.Num()-1; i > 0; i--)
 	{
@@ -209,7 +213,7 @@ void ACombatManager::MoveCurrentCombatant(FIntVector2 TargetPos)
 void ACombatManager::DisplayPathForCurrentCombatant(FIntVector2 TargetPos)
 {
 	FIntVector2 StartPos = CurrentTurnCombatant->PositionCoord;
-	PathForCombatantToFollow = GridManager->DisplayCellPath(StartPos, TargetPos);
+	PathForCombatantToFollow = GridManager->DisplayCellPath(StartPos, TargetPos, CurrentTurnCombatant->GetPathingData());
 }
 
 // displays the movement options for the current combatant
@@ -217,7 +221,7 @@ void ACombatManager::DisplayCurrentCombatantsMovement()
 {
 	GridManager->ResetWalkableAndAttackableOnAllCells();
 	GridManager->ChangeAllTilesDisplay(Default);
-	GridManager->DisplayWalkableCells(CurrentTurnCombatant->PositionCoord, CurrentTurnCombatant->AvailableMovement);
+	GridManager->DisplayWalkableCells(CurrentTurnCombatant->PositionCoord, CurrentTurnCombatant->AvailableMovement, CurrentTurnCombatant->GetPathingData());
 }
 
 // displays all the tiles that the player can target
@@ -226,14 +230,14 @@ void ACombatManager::DisplayAttackRange(int Range)
 	AttackRange = Range;
 	GridManager->ResetWalkableAndAttackableOnAllCells();
 	GridManager->ChangeAllTilesDisplay(Default);
-	GridManager->DisplayCellsInAttackRange(CurrentTurnCombatant->PositionCoord, Range);
+	GridManager->DisplayCellsInAttackRange(CurrentTurnCombatant->PositionCoord, Range, CurrentTurnCombatant->GetPathingData());
 }
 
 // displays the attack area and stores the targeted tiles with element 0 being the targeted tile and the rest are the additional area
 void ACombatManager::DisplayAttackPattern(FIntVector2 TargetCoord)
 {
 	DisplayAttackRange(AttackRange);
-	AreaOfAttackEffect = GridManager->DisplayAttackPattern(TargetCoord, AttackPattern, AttackRotation);
+	AreaOfAttackEffect = GridManager->DisplayAttackPattern(TargetCoord, AttackPattern, AttackRotation, CurrentTurnCombatant->GetPathingData());
 }
 
 void ACombatManager::DisplayAttackInformation(TSubclassOf<UGameplayAbilityBase> Ability, FDiceFaceLevels DiceLevels, int Range, FGridData Pattern)
@@ -267,7 +271,7 @@ void ACombatManager::ExecuteAttackOnTarget()
 void ACombatManager::OnEntityDeath(AEntityBase* DeadEntity)
 {
 	// mark the tile the entity was on as empty
-	GridManager->GridCells[DeadEntity->PositionCoord]->SetOccupier(nullptr);
+	SetCellsOccupier(DeadEntity, DeadEntity->PositionCoord, false);
 
 	if (HavePlayersWon()) OnPlayersWin();
 	if (HaveEnemiesWon()) OnPlayersLost();
@@ -277,7 +281,7 @@ void ACombatManager::EnemySetAttackInfo(TSubclassOf<UGameplayAbilityBase> Abilit
 {
 	AbilityToUse = Ability;
 	AttackPattern = Pattern;
-	AreaOfAttackEffect = GridManager->GetCellsInAttackArea(TargetPos, Pattern, Rotation);
+	AreaOfAttackEffect = GridManager->GetCellsInAttackArea(TargetPos, Pattern, Rotation, FPathingData());
 }
 
 bool ACombatManager::HavePlayersWon()
@@ -310,6 +314,15 @@ void ACombatManager::RemoveDeadPlayers()
 		if (!Player) continue;
 		if (Player->HasEntityDied()) {UE_LOG(LogTemp, Warning, TEXT("Player dead on start")) Player->OnEntityDeath();}
 		else {UE_LOG(LogTemp, Warning, TEXT("Player alive on start"))}
+	}
+}
+
+void ACombatManager::SetCellsOccupier(AEntityBase* Entity, FIntVector2 Coord, bool SetAsOccupied)
+{
+	for (FIntVector2 Offset: Entity->EntityRotations[Entity->FacingDirection].GetSelectedCellOffsets())
+	{
+		FIntVector2 CellCoord = Coord + Offset;
+		GridManager->GridCells[CellCoord]->SetOccupier((SetAsOccupied)? Entity: nullptr);
 	}
 }
 

@@ -3,6 +3,7 @@
 #pragma once
 
 #include "CoreMinimal.h"
+#include "GridData.h"
 #include "GridCellBase.h"
 
 struct FCellInfo
@@ -22,10 +23,10 @@ struct FCellInfo
 class PathFinder
 {
 public:
-	PathFinder(TMap<FIntVector2, AGridCellBase*>& InGridCells):GridCells(InGridCells){};
+	PathFinder(TMap<FIntVector2, AGridCellBase*>& InGridCells, FPathingData& InPathingData):GridCells(InGridCells),PathingData(InPathingData){};
 
 	TArray<FIntVector2> FindPath(FIntVector2 Start, FIntVector2 End, bool AvoidOccupiedCells = true);
-	TArray<FIntVector2> FindMoveableCellsInRange(FIntVector2 Start, int AvailableMovement, bool AvoidOccupiedCells = true);
+	TArray<FIntVector2> FindMoveableCellsInRange(FIntVector2 Start, int AvailableMovement,  bool AvoidOccupiedCells = true);
 	TArray<FIntVector2> FindAttackableCellsInRange(FIntVector2 Start, int Range);
 	TArray<FIntVector2> FindPathToPointInRangeOfTarget(FIntVector2 Start, FIntVector2 End, int Range, bool AvoidOccupiedCells = true);
 
@@ -42,6 +43,7 @@ protected:
 	int TotalMovement = 0;
 	int AttackRange = 0;
 	bool AvoidOccupied = true;
+	FPathingData PathingData;
 
 	// Discover functions
 	void DiscoverCellForMovement(FIntVector2 CellCoord, FIntVector2 PreviousCell);
