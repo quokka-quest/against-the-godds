@@ -96,4 +96,6 @@ protected:
 	bool CheckRotationSweep(FIntVector2 Coord);
 
 	FPathInfo GetPathInfoForThisCell(FIntVector2 Coord);
+
+	EPatternRotation GetDirectionBetweenTwoCells(FIntVector2 FromCoord, FIntVector2 ToCoord);
 };

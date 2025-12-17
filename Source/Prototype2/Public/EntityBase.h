@@ -18,6 +18,8 @@ class PROTOTYPE2_API AEntityBase : public ACharacterBase
 	GENERATED_BODY()
 
 public:
+	AEntityBase();
+	
 	UFUNCTION(BlueprintImplementableEvent, BlueprintCallable)
 	void SetupTurnStart();
 
@@ -26,6 +28,8 @@ public:
 
 	UFUNCTION(BlueprintImplementableEvent, BlueprintCallable)
 	void EnqueueMovement(FVector StartPos, FVector EndPos);
+	UFUNCTION(BlueprintImplementableEvent, BlueprintCallable)
+	void EnqueueRotation(FRotator StartRot, FRotator EndRot);
 
 	UPROPERTY(BlueprintReadWrite, Category="PlayerInfo")
 	FIntVector2 PositionCoord;
@@ -49,6 +53,9 @@ public:
 	FGridData RotationSweep;
 	UPROPERTY(BlueprintReadWrite, Category = "PlayerInfo")
 	TEnumAsByte<EPatternRotation> FacingDirection;
+
+	UPROPERTY(BlueprintReadWrite, Category = "PlayerInfo")
+	TMap<TEnumAsByte<EPatternRotation>, FRotator> FacingDirectionRotations;
 
 	void PrintDebugData();
 

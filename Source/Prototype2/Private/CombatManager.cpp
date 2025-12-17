@@ -218,7 +218,7 @@ void ACombatManager::DisplayPathForCurrentCombatant(FIntVector2 TargetPos)
 	TArray<FIntVector2> Path;
 	for (int i = 0; i < PathInfo.Num(); i++)
 	{
-		Path.Add(PathInfo[i].NextCellCoord);
+		Path.Add(PathInfo[i].CellCoordinate);
 	}
 	
 	PathForCombatantToFollow = Path;

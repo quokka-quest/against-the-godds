@@ -40,6 +40,15 @@ TArray<FPathInfo> PathFinder::FindPath(FIntVector2 Start, FIntVector2 End, bool 
 			PrevCoord = CellMap[PrevCoord].PrevCellCoord;
 			Result.Add(GetPathInfoForThisCell(PrevCoord));
 		}
+
+		Result[Result.Num()-1].PrevFacingDir = PathingData.CurrentRotation;
+		Result[Result.Num()-1].FacingDirOnCell = PathingData.CurrentRotation;
+		for (int i = Result.Num()-2; i > 0; i--)
+		{
+			Result[i].PrevFacingDir = Result[i+1].FacingDirOnCell;
+			Result[i].FacingDirOnCell = GetDirectionBetweenTwoCells(Result[i+1].CellCoordinate, Result[i].CellCoordinate);
+		}
+		
 		return Result;
 	}
 
@@ -324,6 +333,7 @@ bool PathFinder::GetCellInArrayClosestToTarget(TArray<FIntVector2>& Cells, FIntV
 	return Result;
 }
 
+// used to check if rotation of the entity is possible (stops large entities being able to rotate through walls)
 bool PathFinder::CheckRotationSweep(FIntVector2 Coord)
 {
 	for (FIntVector2 Offset : PathingData.RotationSweep.GetSelectedCellOffsets())
@@ -337,11 +347,22 @@ bool PathFinder::CheckRotationSweep(FIntVector2 Coord)
 FPathInfo PathFinder::GetPathInfoForThisCell(FIntVector2 Coord)
 {
 	FPathInfo Result;
-	Result.NextCellCoord = Coord;
-	Result.NextRotation = CellMap[Coord].NewRotation;
-	Result.StartingCellCoord = CellMap[Coord].PrevCellCoord;
-	Result.StartingRotation = CellMap[Coord].PrevRotation;
-	Result.needsRotation = Result.NextRotation != Result.StartingRotation;
+	Result.CellCoordinate = CellMap[Coord].Coord;
+	Result.FacingDirOnCell = CellMap[Coord].NewRotation;
+	Result.PrevFacingDir = CellMap[CellMap[Coord].PrevCellCoord].NewRotation;
+	
+	return Result;
+}
+
+EPatternRotation PathFinder::GetDirectionBetweenTwoCells(FIntVector2 FromCoord, FIntVector2 ToCoord)
+{
+	EPatternRotation Result = R0;
+	FIntVector2 Offset = ToCoord - FromCoord;
+
+	if (Offset == FIntVector2(1,0)) Result = R90;
+	if (Offset == FIntVector2(0,1)) Result = R0;
+	if (Offset == FIntVector2(-1,0)) Result = R270;
+	if (Offset == FIntVector2(0,-1)) Result = R180;
 	
 	return Result;
 }
