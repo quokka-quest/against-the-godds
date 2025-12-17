@@ -194,18 +194,24 @@ void ACombatManager::IncrementTurnIndex()
 // checks for valid locations are done before this function is called so they aren't needed here
 void ACombatManager::MoveCurrentCombatant(FIntVector2 TargetPos)
 {
+	for (int i = 0; i < PathForCombatantToFollow.Num(); i++)
+	{
+		FRotator StartRot = CurrentTurnCombatant->FacingDirectionRotations[PathForCombatantToFollow[i].StartingRot];
+		FRotator EndRot = CurrentTurnCombatant->FacingDirectionRotations[PathForCombatantToFollow[i].RotToChangeTo];
+		bool NeedRot = PathForCombatantToFollow[i].StartingRot != PathForCombatantToFollow[i].RotToChangeTo;
+		if (NeedRot) CurrentTurnCombatant->EnqueueRotation(StartRot, EndRot);
+		
+		FVector StartPos = GridManager->GridCells[PathForCombatantToFollow[i].StartingCoord]->GetActorLocation();
+		FVector EndPos = GridManager->GridCells[PathForCombatantToFollow[i].CoordToMoveTo]->GetActorLocation();
+		CurrentTurnCombatant->EnqueueMovement(StartPos, EndPos);
+		CurrentTurnCombatant->AvailableMovement -= GridManager->GridCells[PathForCombatantToFollow[i].CoordToMoveTo]->MovementCost;
+	}
+
 	SetCellsOccupier(CurrentTurnCombatant, CurrentTurnCombatant->PositionCoord, false);
 	SetCellsOccupier(CurrentTurnCombatant, TargetPos, true);
 
-	for (int i = PathForCombatantToFollow.Num()-1; i > 0; i--)
-	{
-		FVector StartPos = GridManager->GridCells[PathForCombatantToFollow[i]]->GetActorLocation();
-		FVector EndPos = GridManager->GridCells[PathForCombatantToFollow[i-1]]->GetActorLocation();
-		CurrentTurnCombatant->EnqueueMovement(StartPos, EndPos);
-		CurrentTurnCombatant->AvailableMovement -= GridManager->GridCells[PathForCombatantToFollow[i-1]]->MovementCost;
-	}
-
 	CurrentTurnCombatant->PositionCoord = TargetPos;
+	CurrentTurnCombatant->FacingDirection = PathForCombatantToFollow[PathForCombatantToFollow.Num()-1].RotToChangeTo;
 	GridManager->ChangeAllTilesDisplay(EEditorGridDisplayType::Default);
 }
 
@@ -215,13 +221,7 @@ void ACombatManager::DisplayPathForCurrentCombatant(FIntVector2 TargetPos)
 	FIntVector2 StartPos = CurrentTurnCombatant->PositionCoord;
 
 	TArray<FPathInfo> PathInfo = GridManager->DisplayCellPath(StartPos, TargetPos, CurrentTurnCombatant->GetPathingData());
-	TArray<FIntVector2> Path;
-	for (int i = 0; i < PathInfo.Num(); i++)
-	{
-		Path.Add(PathInfo[i].CellCoordinate);
-	}
-	
-	PathForCombatantToFollow = Path;
+	PathForCombatantToFollow = PathInfo;
 }
 
 // displays the movement options for the current combatant

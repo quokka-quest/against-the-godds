@@ -170,7 +170,7 @@ protected:
 	UFUNCTION(blueprintCallable)
 	void SetCellsOccupier(AEntityBase* Entity, FIntVector2 Coord, bool SetAsOccupied);
 
-	TArray<FIntVector2> PathForCombatantToFollow;
+	TArray<FPathInfo> PathForCombatantToFollow;
 
 	TArray<FIntVector2> AreaOfAttackEffect;
 

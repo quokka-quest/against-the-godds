@@ -62,7 +62,7 @@ TArray<FPathInfo> AGridManagerTool::DisplayCellPath(FIntVector2 StartCoord, FInt
 
 	for (FPathInfo Cell : Path)
 	{
-		GridCells[Cell.CellCoordinate]->FindComponentByClass<UStaticMeshComponent>()->SetMaterial(0, PathMat);
+		GridCells[Cell.CoordToMoveTo]->FindComponentByClass<UStaticMeshComponent>()->SetMaterial(0, PathMat);
 	}
 	
 	return Path;

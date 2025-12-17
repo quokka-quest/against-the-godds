@@ -14,6 +14,7 @@ TArray<FPathInfo> PathFinder::FindPath(FIntVector2 Start, FIntVector2 End, bool 
 	AnalysedCells.Empty();
 	CellMap.Empty();
 
+	TArray<FIntVector2> ReversPathCoords;
 	TArray<FPathInfo> Result;
 
 	// discover the starting tile
@@ -31,22 +32,34 @@ TArray<FPathInfo> PathFinder::FindPath(FIntVector2 Start, FIntVector2 End, bool 
 		if (!FoundEndPoint) continue;
 
 		// if a path has been found then populate the result array and return it
-		FPathInfo EndPoint = GetPathInfoForThisCell(EndCoord);
-		Result.Add(EndPoint);
-		
+
+		// retrieve the coordinates of the cells in the path (done from end to start)
+		ReversPathCoords.Add(EndCoord);
 		FIntVector2 PrevCoord = EndCoord;
 		while (PrevCoord != StartCoord)
 		{
 			PrevCoord = CellMap[PrevCoord].PrevCellCoord;
-			Result.Add(GetPathInfoForThisCell(PrevCoord));
+			ReversPathCoords.Add(PrevCoord);
 		}
 
-		Result[Result.Num()-1].PrevFacingDir = PathingData.CurrentRotation;
-		Result[Result.Num()-1].FacingDirOnCell = PathingData.CurrentRotation;
-		for (int i = Result.Num()-2; i > 0; i--)
+		// establish the first movement
+		FPathInfo FirstMovement;
+		FirstMovement.StartingCoord = StartCoord;
+		FirstMovement.CoordToMoveTo = ReversPathCoords[ReversPathCoords.Num()-2];
+		FirstMovement.StartingRot = PathingData.CurrentRotation;
+		FirstMovement.RotToChangeTo = GetDirectionBetweenTwoCells(FirstMovement.StartingCoord, FirstMovement.CoordToMoveTo);
+		Result.Add(FirstMovement);
+		int resultIndex = 0;
+		// complete the rest of the path
+		for (int i = ReversPathCoords.Num()-2; i > 0; i--)
 		{
-			Result[i].PrevFacingDir = Result[i+1].FacingDirOnCell;
-			Result[i].FacingDirOnCell = GetDirectionBetweenTwoCells(Result[i+1].CellCoordinate, Result[i].CellCoordinate);
+			FPathInfo NextMovement;
+			NextMovement.StartingCoord = ReversPathCoords[i];
+			NextMovement.CoordToMoveTo = ReversPathCoords[i-1];
+			NextMovement.StartingRot = Result[resultIndex].RotToChangeTo;
+			NextMovement.RotToChangeTo = GetDirectionBetweenTwoCells(NextMovement.StartingCoord, NextMovement.CoordToMoveTo);
+			Result.Add(NextMovement);
+			resultIndex++;
 		}
 		
 		return Result;
@@ -342,16 +355,6 @@ bool PathFinder::CheckRotationSweep(FIntVector2 Coord)
 		if (GridCells[Coord+Offset]->IsOccupied && GridCells[Coord+Offset]->OccupyingActor != PathingData.Actor) return false;
 	}
 	return true;
-}
-
-FPathInfo PathFinder::GetPathInfoForThisCell(FIntVector2 Coord)
-{
-	FPathInfo Result;
-	Result.CellCoordinate = CellMap[Coord].Coord;
-	Result.FacingDirOnCell = CellMap[Coord].NewRotation;
-	Result.PrevFacingDir = CellMap[CellMap[Coord].PrevCellCoord].NewRotation;
-	
-	return Result;
 }
 
 EPatternRotation PathFinder::GetDirectionBetweenTwoCells(FIntVector2 FromCoord, FIntVector2 ToCoord)

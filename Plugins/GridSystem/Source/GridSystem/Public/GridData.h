@@ -123,9 +123,11 @@ struct FPathInfo
 	GENERATED_BODY()
 
 	UPROPERTY()
-	FIntVector2 CellCoordinate;
+	FIntVector2 StartingCoord;
 	UPROPERTY()
-	TEnumAsByte<EPatternRotation> FacingDirOnCell;
+	FIntVector2 CoordToMoveTo;
 	UPROPERTY()
-	TEnumAsByte<EPatternRotation> PrevFacingDir;
+	TEnumAsByte<EPatternRotation> StartingRot;
+	UPROPERTY()
+	TEnumAsByte<EPatternRotation> RotToChangeTo;
 };
