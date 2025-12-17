@@ -207,11 +207,15 @@ void ACombatManager::MoveCurrentCombatant(FIntVector2 TargetPos)
 		CurrentTurnCombatant->AvailableMovement -= GridManager->GridCells[PathForCombatantToFollow[i].CoordToMoveTo]->MovementCost;
 	}
 
+	// remove from old cell and change facing direction
 	SetCellsOccupier(CurrentTurnCombatant, CurrentTurnCombatant->PositionCoord, false);
-	SetCellsOccupier(CurrentTurnCombatant, TargetPos, true);
-
-	CurrentTurnCombatant->PositionCoord = TargetPos;
 	CurrentTurnCombatant->FacingDirection = PathForCombatantToFollow[PathForCombatantToFollow.Num()-1].RotToChangeTo;
+
+	// set as occupier of new cell
+	SetCellsOccupier(CurrentTurnCombatant, TargetPos, true);
+	CurrentTurnCombatant->PositionCoord = TargetPos;
+
+	// reset tile display
 	GridManager->ChangeAllTilesDisplay(EEditorGridDisplayType::Default);
 }
 

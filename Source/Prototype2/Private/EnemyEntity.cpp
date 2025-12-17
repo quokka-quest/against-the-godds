@@ -57,11 +57,9 @@ void AEnemyEntity::DetermineMovement()
 
 	// this for loop establishes how far along the given path this entity can move. The for loop below does the actual movement
 	// this is where any and all movement logic for enemy entities should be
+	// the above pathfinding function can ignore occupied
 	for (int i = 0; i < PathToTarget.Num(); i++)
 	{
-		// breaks the loop if the tile has an entity on it (prevents movement onto an occupied tile)
-		if (GridManager->GridCells[PathToTarget[i].CoordToMoveTo]->IsOccupied) break;
-
 		// check if the available movement will allow for this tile to be moved to
 		int AddMoveCost = GridManager->GridCells[PathToTarget[i].CoordToMoveTo]->MovementCost;
 		if (MoveCost + AddMoveCost > MaxMovement) break;
@@ -70,6 +68,8 @@ void AEnemyEntity::DetermineMovement()
 		MoveCost += AddMoveCost;
 		TargetPosIndex = i; // the target position index changes to be the next cell to move onto
 	}
+
+	if (TargetPosIndex < 0) return;
 
 	// apply the movement cost
 	AvailableMovement -= MoveCost;

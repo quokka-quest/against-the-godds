@@ -338,6 +338,7 @@ bool PathFinder::GetCellInArrayClosestToTarget(TArray<FIntVector2>& Cells, FIntV
 		int Dist = CalculateMinCostBetweenCells(Cells[i], Target);
 		if (Dist >= ShortestDist) continue;
 		if (GridCells[Cells[i]]->IsOccupied) continue;
+		if (!CheckRotationSweep(Cells[i])) continue;
 		ShortestDist = Dist;
 		OutCoord = Cells[i];
 		Result = true;
