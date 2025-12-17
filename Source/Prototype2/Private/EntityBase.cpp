@@ -11,7 +11,7 @@ AEntityBase::AEntityBase()
 {
 	FacingDirectionRotations.Add(R0, FRotator(0, 90, 0));
 	FacingDirectionRotations.Add(R90, FRotator(0, 0, 0));
-	FacingDirectionRotations.Add(R180, FRotator(0, -90, 0));
+	FacingDirectionRotations.Add(R180, FRotator(0, 270, 0));
 	FacingDirectionRotations.Add(R270, FRotator(0, 180, 0));
 }
 
@@ -48,6 +48,12 @@ FPathingData AEntityBase::GetPathingData()
 	Result.CurrentRotation = FacingDirection;
 	return Result;
 }
+
+void AEntityBase::InitialiseStats()
+{
+	HealthSet->SetCurrentHealth(HealthSet->GetMaxHealth());
+}
+
 
 void AEntityBase::PrintDebugData()
 {

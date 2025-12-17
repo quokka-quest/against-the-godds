@@ -67,6 +67,9 @@ public:
 
 	void SetCharacterData(FPersistentPlayerInfo& Info);
 
+	UFUNCTION(BlueprintCallable, Category = "PlayerInfo")
+	void InitialiseStats();
+
 	UFUNCTION(BlueprintCallable, BlueprintPure)
 	FPathingData GetPathingData();
 };

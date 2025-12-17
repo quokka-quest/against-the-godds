@@ -31,7 +31,7 @@ void ACombatManager::SpawnPlayerCharacters()
 	if (SpawnableCells.Num() < 3) {UE_LOG(LogTemp, Error, TEXT("CombatManager->SpawnPlayerCharacters(): insufficient spawnable cells")) return;}
 
 	UGameManager* GameInst =  Cast<UGameManager>(GetGameInstance());
-	if (!GameInst) {UE_LOG(LogTemp, Error, TEXT("GameInst failed to cast")) return;}
+	if (!GameInst) {UE_LOG(LogTemp, Error, TEXT("CombatManager->SpawnPlayerCharacters(): GameInst failed to cast")) return;}
 
 	for (auto& Player : GameInst->CharacterInfo)
 	{
@@ -53,7 +53,7 @@ void ACombatManager::SpawnEnemies()
 		AGridCellParent* Value = Cast<AGridCellParent>(Cell.Value);
 		if (Value->IsEnemySpawnCell)
 		{
-			SpawnEntity(Value->EnemyToSpawn, Cell.Key);
+			Cast<AEnemyEntity>(SpawnEntity(Value->EnemyToSpawn, Cell.Key));
 		}
 	}
 }
