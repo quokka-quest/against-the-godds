@@ -6,6 +6,7 @@
 #include "GridManagerClass.h"
 #include "GlobalDataTypeHeader.h"
 #include "GridCellParent.h"
+#include "GridOutlineActor.h"
 #include "GridManagerTool.generated.h"
 
 /**
@@ -53,7 +54,7 @@ protected:
 	UMaterialInterface* HighlightedMat = LoadObject<UMaterialInterface>(nullptr, TEXT("/Game/Materials/M_TileGreen.M_TileGreen"));
 	UPROPERTY()
 	UMaterialInterface* PathMat = LoadObject<UMaterialInterface>(nullptr, TEXT("/Game/Materials/M_TileGold.M_TileGold"));
-
+	
 	UPROPERTY()
 	TArray<AActor*> DirectionIndicators;
 	UPROPERTY(EditAnywhere, BlueprintReadWrite, Category = "GridDisplay")
@@ -62,7 +63,14 @@ protected:
 	bool DisplayArrows;
 	UFUNCTION(CallInEditor, BlueprintCallable, Category = "GridDisplay")
 	void ToggleDirectionIndicators();
+
+	UPROPERTY()
+	AGridOutlineActor* OutlineActor;
+	UPROPERTY(EditAnywhere, BlueprintReadWrite, Category = "GridDisplay")
+	UMaterialInterface* GridMaterial;
 	
 	virtual void ReplaceGridCell(UWorld* World, FIntVector2 Coord) override;
+
+	virtual void BeginPlay() override;
 	
 };

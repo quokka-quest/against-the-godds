@@ -3,6 +3,24 @@
 
 #include "GridManagerTool.h"
 
+void AGridManagerTool::BeginPlay()
+{
+	Super::BeginPlay();
+
+	OutlineActor = GetWorld()->SpawnActor<AGridOutlineActor>(AGridOutlineActor::StaticClass());
+	OutlineActor->SetMaterial(GridMaterial);
+
+	TMap<FVector, FVector> Edges;
+	float height = 10.2f;
+	Edges.Add(FVector(-100.0f,-100.0f, height), FVector(-100.0f, 100.0f, height));
+	Edges.Add(FVector(-100.0f, 100.0f, height),FVector(300.0f, 100.0f, height));
+	Edges.Add(FVector(300.0f,100.0f,height), FVector(300.0f, -100.0f, height));
+	Edges.Add(FVector(300.0f,-100.0f,height), FVector(-100.0f, -100.0f, height));
+	float LineWidth = 10.0f;
+	OutlineActor->BuildOutlineMesh(Edges, LineWidth);
+}
+
+
 void AGridManagerTool::UpdateDisplay()
 {
 	ChangeAllTilesDisplay(GridDisplayType);
