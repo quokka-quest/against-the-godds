@@ -6,7 +6,6 @@
 #include "GameFramework/Pawn.h"
 #include "GameFramework/PlayerController.h"
 #include "GridCellParent.h"
-#include "TileHighlight.h"
 #include "GridManagerTool.h"
 #include "CombatManager.h"
 #include "GlobalDataTypeHeader.h"
@@ -51,9 +50,6 @@ protected:
 private:
 	UPROPERTY()
 	APlayerController* PlayerCon;
-
-	UPROPERTY()
-	ATileHighlight* TileHighlight;
 	
 	UPROPERTY()
 	AGridCellParent* HighlightedCell;

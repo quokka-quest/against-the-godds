@@ -7,7 +7,6 @@
 #include "PlayerEntity.h"
 #include "GameManager.h"
 #include "Kismet/GameplayStatics.h"
-#include "Slate/SGameLayerManager.h"
 
 
 // Sets references to needed manager classes on start

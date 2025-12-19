@@ -127,3 +127,8 @@ void AGridOutlineActor::AddEdgeQuad(const FLineInfo& LineInfo, float HalfWidth,
 	UVs.Add(FVector2D(1,1));
 	UVs.Add(FVector2D(0,1));
 }
+
+void AGridOutlineActor::SetVisibility(bool IsVisible)
+{
+	ProceduralMesh->SetVisibility(IsVisible);
+}

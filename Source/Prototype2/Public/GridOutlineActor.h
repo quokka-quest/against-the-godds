@@ -28,6 +28,8 @@ public:
 
 	void SetMaterial(UMaterialInterface* Mat) { GridMaterial = Mat; }
 
+	void SetVisibility(bool IsVisible);
+
 protected:
 	UPROPERTY()
 	UProceduralMeshComponent* ProceduralMesh;

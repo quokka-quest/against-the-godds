@@ -9,14 +9,6 @@
 #include "GridOutlineActor.h"
 #include "GridManagerTool.generated.h"
 
-struct FOutlineCellInfo
-{
-	FIntVector2 CellCoord;
-	bool HasPosXNeighbour = false;
-	bool HasPosYNeighbour = false;
-	bool HasNegXNeighbour = false;
-	bool HasNegYNeighbour = false;
-};
 
 /**
  * 
@@ -54,6 +46,9 @@ public:
 	UFUNCTION(BlueprintCallable, BlueprintPure)
 	TArray<FIntVector2> GetPlayerSpawnCells();
 
+	void SetHighlightPosition(FIntVector2 CellCoord);
+	void SetHighlightVisibility(bool IsVisible);
+
 protected:
 	UPROPERTY()
 	UMaterialInterface* DefaultMat = LoadObject<UMaterialInterface>(nullptr, TEXT("/Game/Materials/M_TileRed.M_TileRed"));
@@ -75,10 +70,20 @@ protected:
 
 	UPROPERTY()
 	AGridOutlineActor* OutlineActor;
+	UPROPERTY()
+	AGridOutlineActor* AreaOutlineActor;
+	UPROPERTY()
+	AGridOutlineActor* PathAndAttackOutlineActor;
+	UPROPERTY()
+	AGridOutlineActor* HighlightOutlineActor;
 	UPROPERTY(EditAnywhere, BlueprintReadWrite, Category = "GridDisplay")
 	UMaterialInterface* GridMaterial;
-
-	TMap<FVector, FVector> GenerateFullGridOutline(float height);
+	UPROPERTY(EditAnywhere, BlueprintReadWrite, Category = "GridDisplay")
+	UMaterialInterface* AreaMaterial;
+	UPROPERTY(EditAnywhere, BlueprintReadWrite, Category = "GridDisplay")
+	UMaterialInterface* PathMaterial;
+	UPROPERTY(EditAnywhere, BlueprintReadWrite, Category = "GridDisplay")
+	UMaterialInterface* HighlightMaterial;
 	
 	virtual void ReplaceGridCell(UWorld* World, FIntVector2 Coord) override;
 

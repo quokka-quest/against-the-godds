@@ -12,7 +12,6 @@ APlayerCombatLevelPawn::APlayerCombatLevelPawn()
 	PrimaryActorTick.bCanEverTick = true;
 	HighlightedCell = nullptr;
 	PlayerCon = nullptr;
-	TileHighlight = nullptr;
 	SelectedCell = nullptr;
 	CombatManager = nullptr;
 	GridManager = nullptr;
@@ -31,10 +30,6 @@ void APlayerCombatLevelPawn::BeginPlay()
 
 	CombatManager = Cast<ACombatManager>(UGameplayStatics::GetActorOfClass(GetWorld(), ACombatManager::StaticClass()));
 	if (!CombatManager) {UE_LOG(LogTemp, Error, TEXT("CombatManager is NULL")) return;}
-
-	TileHighlight = Cast<ATileHighlight>(UGameplayStatics::GetActorOfClass(GetWorld(), ATileHighlight::StaticClass()));
-	if (!TileHighlight) {UE_LOG(LogTemp, Error, TEXT("TileHighlight is null")) return;}
-	TileHighlight->SetActorLocation(FVector(0, 0, 0));
 	
 	PlayerCon = Cast<APlayerController>(GetController());
 	if (!PlayerCon) {UE_LOG(LogTemp, Error, TEXT("PlayerController is null")) return;}
@@ -57,14 +52,14 @@ void APlayerCombatLevelPawn::Tick(float DeltaTime)
 
 	if (!Cast<AGridCellParent>(Hit.GetActor()))
 	{
-		TileHighlight->ToggleHighlight(false);
+		GridManager->SetHighlightVisibility(false);
 		HighlightedCell = nullptr;
 		return;
 	}
 	
 	HighlightedCell = Cast<AGridCellParent>(Hit.GetActor());
-	TileHighlight->ToggleHighlight(true);
-	TileHighlight->MoveToPosition(HighlightedCell->GetActorLocation());
+	GridManager->SetHighlightVisibility(true);
+	GridManager->SetHighlightPosition(HighlightedCell->CellCoordinate);
 }
 
 // Called to bind functionality to input
