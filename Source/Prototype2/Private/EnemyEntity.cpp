@@ -78,8 +78,8 @@ void AEnemyEntity::DetermineMovement()
 	for (int i = 0; i <= TargetPosIndex; i++)
 	{
 		bool rot = PathToTarget[i].StartingRot != PathToTarget[i].RotToChangeTo;
-		FRotator StartRot = FacingDirectionRotations[PathToTarget[i].StartingRot];
-		FRotator EndRot = FacingDirectionRotations[PathToTarget[i].RotToChangeTo];
+		float StartRot = DirectionYaws[PathToTarget[i].StartingRot];
+		float EndRot = DirectionYaws[PathToTarget[i].RotToChangeTo];
 		if (rot) EnqueueRotation(StartRot, EndRot);
 
 		FVector StartPos = GridManager->GridCells[PathToTarget[i].StartingCoord]->GetActorLocation();

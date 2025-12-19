@@ -9,6 +9,15 @@
 #include "GridOutlineActor.h"
 #include "GridManagerTool.generated.h"
 
+struct FOutlineCellInfo
+{
+	FIntVector2 CellCoord;
+	bool HasPosXNeighbour = false;
+	bool HasPosYNeighbour = false;
+	bool HasNegXNeighbour = false;
+	bool HasNegYNeighbour = false;
+};
+
 /**
  * 
  */
@@ -68,6 +77,8 @@ protected:
 	AGridOutlineActor* OutlineActor;
 	UPROPERTY(EditAnywhere, BlueprintReadWrite, Category = "GridDisplay")
 	UMaterialInterface* GridMaterial;
+
+	TMap<FVector, FVector> GenerateFullGridOutline(float height);
 	
 	virtual void ReplaceGridCell(UWorld* World, FIntVector2 Coord) override;
 

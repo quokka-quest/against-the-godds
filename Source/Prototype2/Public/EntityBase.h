@@ -29,7 +29,7 @@ public:
 	UFUNCTION(BlueprintImplementableEvent, BlueprintCallable)
 	void EnqueueMovement(FVector StartPos, FVector EndPos);
 	UFUNCTION(BlueprintImplementableEvent, BlueprintCallable)
-	void EnqueueRotation(FRotator StartRot, FRotator EndRot);
+	void EnqueueRotation(float StartYaw, float EndYaw);
 
 	UPROPERTY(BlueprintReadWrite, Category="PlayerInfo")
 	FIntVector2 PositionCoord;
@@ -54,8 +54,8 @@ public:
 	UPROPERTY(BlueprintReadWrite, Category = "PlayerInfo")
 	TEnumAsByte<EPatternRotation> FacingDirection;
 
-	UPROPERTY(BlueprintReadWrite, Category = "PlayerInfo")
-	TMap<TEnumAsByte<EPatternRotation>, FRotator> FacingDirectionRotations;
+	UPROPERTY()
+	TMap<TEnumAsByte<EPatternRotation>, float> DirectionYaws;
 
 	void PrintDebugData();
 

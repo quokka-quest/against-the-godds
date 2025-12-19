@@ -10,12 +10,8 @@ void AGridManagerTool::BeginPlay()
 	OutlineActor = GetWorld()->SpawnActor<AGridOutlineActor>(AGridOutlineActor::StaticClass());
 	OutlineActor->SetMaterial(GridMaterial);
 
-	TMap<FVector, FVector> Edges;
 	float height = 10.2f;
-	Edges.Add(FVector(-100.0f,-100.0f, height), FVector(-100.0f, 100.0f, height));
-	Edges.Add(FVector(-100.0f, 100.0f, height),FVector(300.0f, 100.0f, height));
-	Edges.Add(FVector(300.0f,100.0f,height), FVector(300.0f, -100.0f, height));
-	Edges.Add(FVector(300.0f,-100.0f,height), FVector(-100.0f, -100.0f, height));
+	TMap<FVector, FVector> Edges = GenerateFullGridOutline(height);
 	float LineWidth = 10.0f;
 	OutlineActor->BuildOutlineMesh(Edges, LineWidth);
 }
@@ -226,4 +222,84 @@ void AGridManagerTool::ReplaceGridCell(UWorld* World, FIntVector2 Coord)
 		NewerCell->EnemyToSpawn = EnemyToSpawn;
 		NewerCell->SpawnedEntityRotation = EntityDirection;
 	}
+}
+
+TMap<FVector, FVector> AGridManagerTool::GenerateFullGridOutline(float height)
+{
+	// find all the perimeter cells by checking if neighbours exist (a cell with all 4 neighbours is not on the perimeter)
+	TArray<FOutlineCellInfo> PerimeterCells;
+	for (auto Cell : GridCells)
+	{
+		FOutlineCellInfo CellInfo;
+		CellInfo.CellCoord = Cell.Key;
+		int NeighbourCount = 0;
+		if (GridCells.Contains(Cell.Key + FIntVector2(1,0))) { NeighbourCount++; CellInfo.HasPosXNeighbour = true; }
+		if (GridCells.Contains(Cell.Key + FIntVector2(-1,0))) { NeighbourCount++; CellInfo.HasNegXNeighbour = true; }
+		if (GridCells.Contains(Cell.Key + FIntVector2(0,1))) { NeighbourCount++; CellInfo.HasPosYNeighbour = true; }
+		if (GridCells.Contains(Cell.Key + FIntVector2(0,-1))) { NeighbourCount++; CellInfo.HasNegYNeighbour = true; }
+		if (NeighbourCount < 4) PerimeterCells.Add(CellInfo);
+	}
+
+	// construct the map for start and end points of the grid highlight around each cell individually
+	// NOTE: 'start' to 'end' must have a consistent rotation around the cell (clockwise or anti-clockwise)
+	// The rotation means each 'End' will also be a 'Start' for the adjacent cell's outline which is important for the logic in the while loop below
+	TMap<FVector, FVector> FullStartEndPoints;
+	float HalfCellSizeX = GridCellSizeX * 0.5f;
+	float HalfCellSizeY = GridCellSizeY * 0.5f;
+	for (FOutlineCellInfo Cell : PerimeterCells)
+	{
+		if (!Cell.HasPosXNeighbour)
+		{
+			FVector Start = GridCells[Cell.CellCoord]->GetActorLocation() + FVector(HalfCellSizeX, HalfCellSizeY, height);
+			FVector End = GridCells[Cell.CellCoord]->GetActorLocation() + FVector(HalfCellSizeX, -HalfCellSizeY, height);
+			FullStartEndPoints.Add(Start, End);
+		}
+		if (!Cell.HasNegXNeighbour)
+		{
+			FVector Start = GridCells[Cell.CellCoord]->GetActorLocation() + FVector(-HalfCellSizeX, -HalfCellSizeY, height);
+			FVector End = GridCells[Cell.CellCoord]->GetActorLocation() + FVector(-HalfCellSizeX, HalfCellSizeY, height);
+			FullStartEndPoints.Add(Start, End);
+		}
+		if (!Cell.HasPosYNeighbour)
+		{
+			FVector Start = GridCells[Cell.CellCoord]->GetActorLocation() + FVector(-HalfCellSizeX, HalfCellSizeY, height);
+			FVector End = GridCells[Cell.CellCoord]->GetActorLocation() + FVector(HalfCellSizeX, HalfCellSizeY, height);
+			FullStartEndPoints.Add(Start, End);
+		}
+		if (!Cell.HasNegYNeighbour)
+		{
+			FVector Start = GridCells[Cell.CellCoord]->GetActorLocation() + FVector(HalfCellSizeX, -HalfCellSizeY, height);
+			FVector End = GridCells[Cell.CellCoord]->GetActorLocation() + FVector(-HalfCellSizeX, -HalfCellSizeY, height);
+			FullStartEndPoints.Add(Start, End);
+		}
+	}
+	
+	// construct a compressed map of the grid outline (adjacent cells with an outline in the same direction will be compressed to one outline)
+	TMap<FVector, FVector> CompressedStartEndMap;
+	TArray<FVector> StartPointArray;
+	FullStartEndPoints.GenerateKeyArray(StartPointArray);
+	while (StartPointArray.Num() > 0)
+	{
+		FVector Start = StartPointArray[0];
+		FVector End = FullStartEndPoints[Start];
+		FVector Dir = (End-Start).GetSafeNormal();
+		StartPointArray.Remove(Start);
+
+		FVector NextStart = End;
+		FVector NextEnd = FullStartEndPoints[NextStart];
+		FVector NextDir = (NextEnd-NextStart).GetSafeNormal();
+
+		while (NextDir == Dir)
+		{
+			StartPointArray.Remove(NextStart);
+			End = NextEnd;
+
+			NextStart = End;
+			NextEnd = FullStartEndPoints[NextStart];
+			NextDir = (NextEnd-NextStart).GetSafeNormal();
+		}
+		CompressedStartEndMap.Add(Start, End);
+	}
+
+	return CompressedStartEndMap;
 }

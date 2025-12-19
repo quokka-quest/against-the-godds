@@ -194,10 +194,11 @@ void ACombatManager::IncrementTurnIndex()
 // checks for valid locations are done before this function is called so they aren't needed here
 void ACombatManager::MoveCurrentCombatant(FIntVector2 TargetPos)
 {
+	
 	for (int i = 0; i < PathForCombatantToFollow.Num(); i++)
 	{
-		FRotator StartRot = CurrentTurnCombatant->FacingDirectionRotations[PathForCombatantToFollow[i].StartingRot];
-		FRotator EndRot = CurrentTurnCombatant->FacingDirectionRotations[PathForCombatantToFollow[i].RotToChangeTo];
+		float StartRot = CurrentTurnCombatant->DirectionYaws[PathForCombatantToFollow[i].StartingRot];
+		float EndRot = CurrentTurnCombatant->DirectionYaws[PathForCombatantToFollow[i].RotToChangeTo];
 		bool NeedRot = PathForCombatantToFollow[i].StartingRot != PathForCombatantToFollow[i].RotToChangeTo;
 		if (NeedRot) CurrentTurnCombatant->EnqueueRotation(StartRot, EndRot);
 		
