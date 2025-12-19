@@ -122,10 +122,10 @@ protected:
 	UPROPERTY(EditAnywhere, BlueprintReadWrite, Category = "Map")
 	int maxNodesPerFloor = 7;
 
-	int TotalRooms = floors * maxNodesPerFloor;
-	int RestCount = TotalRooms / 5;
-	int CombatCount = (TotalRooms - RestCount) / 2;
-	int NonCombatCount = (TotalRooms - RestCount) / 2;
+	int TotalRooms = floors * maxNodesPerFloor; // 15 * 7 = 105
+	int RestCount = TotalRooms / 5; // 20% of total rooms = 21
+	int CombatCount = (TotalRooms - RestCount) * 0.6; // 60% of remaining rooms = 84 * 0.6 = 50
+	int NonCombatCount = (TotalRooms - RestCount) * 0.4; // 40% of remaining rooms = 30
 
 	UPROPERTY(BlueprintReadWrite, Category = "Map")
 	TArray<FMapNodeData> Grid;
