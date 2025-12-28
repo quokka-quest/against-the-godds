@@ -3,8 +3,6 @@
 
 #include "GridOutlineActor.h"
 
-#include "Chaos/Collision/ConvexFeature.h"
-
 // Sets default values
 AGridOutlineActor::AGridOutlineActor()
 {
@@ -18,7 +16,7 @@ AGridOutlineActor::AGridOutlineActor()
 	ProceduralMesh->SetCollisionEnabled(ECollisionEnabled::NoCollision);
 }
 
-void AGridOutlineActor::BuildOutlineMesh(const TMap<FVector, FVector>& StartEndMap, float LineWidth)
+void AGridOutlineActor::BuildOutlineMesh(const TArray<FOutlineEdge>& StartEndMap, float LineWidth)
 {
 	TArray<FVector> Verts;
 	TArray<int32> Tris;
@@ -27,12 +25,12 @@ void AGridOutlineActor::BuildOutlineMesh(const TMap<FVector, FVector>& StartEndM
 
 	float HalfWidth = LineWidth * 0.5f;
 
-	TMap<FVector, FLineInfo> Lines;
-	CalculateMiterOffsets(Lines, StartEndMap, HalfWidth);
-
-	for (auto LineInfo : Lines)
+	int counter = 0;
+	for (FOutlineEdge LineInfo : StartEndMap)
 	{
-		AddEdgeQuad(LineInfo.Value, HalfWidth, Verts, Tris, Norms, UVs);
+		//if (counter > 0) continue;
+		AddEdgeQuad(LineInfo, HalfWidth, Verts, Tris, Norms, UVs);
+		counter++;
 	}
 
 	ProceduralMesh->ClearAllMeshSections();
@@ -40,61 +38,21 @@ void AGridOutlineActor::BuildOutlineMesh(const TMap<FVector, FVector>& StartEndM
 	ProceduralMesh->SetMaterial(0, GridMaterial);
 }
 
-void AGridOutlineActor::CalculateMiterOffsets(TMap<FVector, FLineInfo>& OutLineMap, const TMap<FVector, FVector>& StartEndMap, const float HalfWidth)
-{
-	for (auto Line : StartEndMap)
-	{
-		// safety error message to prevent Unreal crashing
-		if (!StartEndMap.Contains(Line.Value))
-		{UE_LOG(LogTemp, Error, TEXT("GridOutlineActor->CalculateMiterOffsets: StartEndMap does not contain a closed loop")) return;}
-		
-		// calculate the direction of the current line and the next line
-		FVector Dir = (Line.Value - Line.Key).GetSafeNormal();
-		FVector NextDir = (StartEndMap[Line.Value] - Line.Value).GetSafeNormal();
-		// calculate their perpendicular vectors
-		FVector Perp = FVector::CrossProduct(Dir, FVector::UpVector).GetSafeNormal();
-		FVector NextPerp = FVector::CrossProduct(NextDir, FVector::UpVector).GetSafeNormal();
 
-		// calculate the Miter offset
-		FVector MiterDir = (Perp + NextPerp).GetSafeNormal();
-		float MiterLength = HalfWidth / FVector::DotProduct(MiterDir, NextPerp);
-		FVector Offset = MiterDir * MiterLength;
-
-		// set the outgoing Miter for the current line
-		// if the current line already exists in the output then set its value. Otherwise, add it to the map
-		if (OutLineMap.Contains(Line.Key)) { OutLineMap[Line.Key].OutgoingMiter = Offset; }
-		else
-		{
-			FLineInfo LineInfo;
-			LineInfo.Start = Line.Key;
-			LineInfo.End = Line.Value;
-			LineInfo.OutgoingMiter = Offset;
-			OutLineMap.Add(Line.Key, LineInfo);
-		}
-
-		// set the incoming miter of the next lines
-		// if the line already exists in the output map then set its value. Otherwise, add it to the map
-		if (OutLineMap.Contains(Line.Value)) { OutLineMap[Line.Value].IncomingMiter = Offset; }
-		else
-		{
-			FLineInfo NextLineInfo;
-			NextLineInfo.Start = Line.Value;
-			NextLineInfo.End = StartEndMap[Line.Value];
-			NextLineInfo.IncomingMiter = Offset;
-			OutLineMap.Add(Line.Value, NextLineInfo);
-		}
-	}
-}
-
-void AGridOutlineActor::AddEdgeQuad(const FLineInfo& LineInfo, float HalfWidth,
+// NOTE: something is going wrong in here??? (definitly a winding order and a miter offset direction issue)
+void AGridOutlineActor::AddEdgeQuad(const FOutlineEdge& LineInfo, float HalfWidth,
 	TArray<FVector>& Verts, TArray<int32>& Tris, TArray<FVector>& Norms, TArray<FVector2D>& UVs)
 {
 	// direction and perpendicular
 	FVector Dir = (LineInfo.End - LineInfo.Start).GetSafeNormal();
 	FVector Perp = FVector::CrossProduct(Dir, FVector::UpVector).GetSafeNormal();
 
-	FVector IncomingOffset = LineInfo.IncomingMiter;
-	FVector OutgoingOffset = LineInfo.OutgoingMiter;
+	FVector IncomingOffset = LineInfo.StartMiter;
+	FVector OutgoingOffset = LineInfo.EndMiter;
+
+	if (IncomingOffset == FVector::ZeroVector) IncomingOffset = Perp * HalfWidth;
+	if (OutgoingOffset == FVector::ZeroVector) OutgoingOffset = Perp * HalfWidth;
+	
 	int32 IndexStart = Verts.Num();
 
 	/*	adds the vertices to the 'Verts' array making a quad with the below shape:
@@ -103,10 +61,17 @@ void AGridOutlineActor::AddEdgeQuad(const FLineInfo& LineInfo, float HalfWidth,
 	 *	Start--> |       | <--End  || Width
 	 *	         D-------C         \/
 	 */
+
 	Verts.Add(LineInfo.Start+IncomingOffset); // vertex A
 	Verts.Add(LineInfo.End+OutgoingOffset);   // Vertex B
 	Verts.Add(LineInfo.End-OutgoingOffset);   // Vertex C
 	Verts.Add(LineInfo.Start-IncomingOffset); // Vertex D
+
+	UE_LOG(LogTemp, Warning, TEXT("Start Miter: %f, %f"), IncomingOffset.X, IncomingOffset.Y)
+	UE_LOG(LogTemp, Warning, TEXT("Vert A pos: %f, %f"), (LineInfo.Start+IncomingOffset).X, (LineInfo.Start+IncomingOffset).Y)
+	UE_LOG(LogTemp, Warning, TEXT("Vert B pos: %f, %f"), (LineInfo.End+OutgoingOffset).X, (LineInfo.End+OutgoingOffset).Y)
+	UE_LOG(LogTemp, Warning, TEXT("Vert C pos: %f, %f"), (LineInfo.End-OutgoingOffset).X, (LineInfo.End-OutgoingOffset).Y)
+	UE_LOG(LogTemp, Warning, TEXT("Vert D pos: %f, %f"), (LineInfo.Start-IncomingOffset).X, (LineInfo.Start-IncomingOffset).Y)
 
 	// Adds the ABC triangle
 	Tris.Add(IndexStart+0);

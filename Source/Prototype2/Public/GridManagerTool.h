@@ -50,14 +50,6 @@ public:
 	void SetHighlightVisibility(bool IsVisible);
 
 protected:
-	UPROPERTY()
-	UMaterialInterface* DefaultMat = LoadObject<UMaterialInterface>(nullptr, TEXT("/Game/Materials/M_TileRed.M_TileRed"));
-	UPROPERTY()
-	UMaterialInterface* TargetMat = LoadObject<UMaterialInterface>(nullptr, TEXT("/Game/Materials/M_TargetTile.M_TargetTile"));
-	UPROPERTY()
-	UMaterialInterface* HighlightedMat = LoadObject<UMaterialInterface>(nullptr, TEXT("/Game/Materials/M_TileGreen.M_TileGreen"));
-	UPROPERTY()
-	UMaterialInterface* PathMat = LoadObject<UMaterialInterface>(nullptr, TEXT("/Game/Materials/M_TileGold.M_TileGold"));
 	
 	UPROPERTY()
 	TArray<AActor*> DirectionIndicators;

@@ -7,12 +7,23 @@
 #include "GameFramework/Actor.h"
 #include "GridOutlineActor.generated.h"
 
-struct FLineInfo
+struct FOutlineEdge
 {
 	FVector Start;
 	FVector End;
-	FVector IncomingMiter;
-	FVector OutgoingMiter;
+
+	FVector StartMiter;
+	FVector EndMiter;
+
+	bool operator==(const FOutlineEdge& Other) const
+	{
+		return (Start == Other.Start && End == Other.End);
+	}
+};
+
+struct FOutlineVertexInfo
+{
+	TArray<FOutlineEdge> Edges;
 };
 
 UCLASS()
@@ -24,7 +35,7 @@ public:
 	// Sets default values for this actor's properties
 	AGridOutlineActor();
 
-	void BuildOutlineMesh(const TMap<FVector, FVector>& StartEndMap, float LineWidth);
+	void BuildOutlineMesh(const TArray<FOutlineEdge>& StartEndMap, float LineWidth);
 
 	void SetMaterial(UMaterialInterface* Mat) { GridMaterial = Mat; }
 
@@ -34,10 +45,8 @@ protected:
 	UPROPERTY()
 	UProceduralMeshComponent* ProceduralMesh;
 
-	void AddEdgeQuad(const FLineInfo& LineInfo, float HalfWidth,
+	void AddEdgeQuad(const FOutlineEdge& LineInfo, float HalfWidth,
 		TArray<FVector>& Verts, TArray<int32>& Tris, TArray<FVector>& Norms, TArray<FVector2D>& UVs);
-
-	void CalculateMiterOffsets(TMap<FVector, FLineInfo>& OutLineMap, const TMap<FVector, FVector>& StartEndMap, const float HalfWidth);
 
 	UPROPERTY()
 	UMaterialInterface* GridMaterial;

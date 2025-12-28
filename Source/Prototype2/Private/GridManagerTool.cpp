@@ -42,19 +42,19 @@ void AGridManagerTool::ChangeAllTilesDisplay(EEditorGridDisplayType DisplayType)
 
 		if (DisplayType == EEditorGridDisplayType::HazardTile && value->IsEnviroHazardCell)
 		{
-			CellMesh->SetMaterial(0, HighlightedMat);
+			//CellMesh->SetMaterial(0, HighlightedMat);
 		}
 		else if (DisplayType == EEditorGridDisplayType::PlayerSpawnTile && value->IsPlayerSpawnCell)
 		{
-			CellMesh->SetMaterial(0, HighlightedMat);
+			//CellMesh->SetMaterial(0, HighlightedMat);
 		}
 		else if (DisplayType == EEditorGridDisplayType::EnemySpawnTile && value->IsEnemySpawnCell)
 		{
-			CellMesh->SetMaterial(0, HighlightedMat);
+			//CellMesh->SetMaterial(0, HighlightedMat);
 		}
 		else
 		{
-			CellMesh->SetMaterial(0, DefaultMat);
+			//CellMesh->SetMaterial(0, DefaultMat);
 		}
 	}
 }
@@ -62,7 +62,7 @@ void AGridManagerTool::ChangeAllTilesDisplay(EEditorGridDisplayType DisplayType)
 void AGridManagerTool::ChangeCellsMaterial(AGridCellParent* Tile, ETileMaterial Material)
 {
 	UStaticMeshComponent* CellMesh = Tile->FindComponentByClass<UStaticMeshComponent>();
-	CellMesh->SetMaterial(0, (Material == ETileMaterial::Target)? TargetMat : (Material == ETileMaterial::Highlighted)? HighlightedMat : DefaultMat);
+	//CellMesh->SetMaterial(0, (Material == ETileMaterial::Target)? TargetMat : (Material == ETileMaterial::Highlighted)? HighlightedMat : DefaultMat);
 }
 
 void AGridManagerTool::DisplayWalkableCells(FIntVector2 Start, int AvailableMovement, FPathingData PathData)
@@ -73,19 +73,28 @@ void AGridManagerTool::DisplayWalkableCells(FIntVector2 Start, int AvailableMove
 
 	for (int i = 0; i < WalkableCells.Num(); i++)
 	{
-		GridCells[WalkableCells[i]]->FindComponentByClass<UStaticMeshComponent>()->SetMaterial(0, HighlightedMat);
 		GridCells[WalkableCells[i]]->IsWalkable = true;
 	}
+	
+	GridOutlineGenerator(AreaOutlineActor).GenerateOutlineFromCoordArray(WalkableCells, Start, GridCellSizeX, GridCellSizeY);
+	AreaOutlineActor->SetActorLocation(GridCells[Start]->GetActorLocation());
+	AreaOutlineActor->SetVisibility(true);
 }
 
 TArray<FPathInfo> AGridManagerTool::DisplayCellPath(FIntVector2 StartCoord, FIntVector2 EndCoord, FPathingData PathData)
 {
 	TArray<FPathInfo> Path = GetPathBetweenCoords(StartCoord, EndCoord, PathData);
+	TArray<FIntVector2> PathCoords;
 
+	PathCoords.Add(StartCoord);
 	for (FPathInfo Cell : Path)
 	{
-		GridCells[Cell.CoordToMoveTo]->FindComponentByClass<UStaticMeshComponent>()->SetMaterial(0, PathMat);
+		PathCoords.Add(Cell.CoordToMoveTo);
 	}
+
+	GridOutlineGenerator(PathAndAttackOutlineActor).GenerateOutlineFromCoordArray(PathCoords, StartCoord, GridCellSizeX, GridCellSizeY);
+	PathAndAttackOutlineActor->SetActorLocation(GridCells[StartCoord]->GetActorLocation());
+	PathAndAttackOutlineActor->SetVisibility(true);
 	
 	return Path;
 }
@@ -99,8 +108,11 @@ void AGridManagerTool::DisplayCellsInAttackRange(FIntVector2 Start, int Range, F
 	for (int i = 0; i < AttackableCells.Num(); i++)
 	{
 		GridCells[AttackableCells[i]]->IsAttackable = true;
-		GridCells[AttackableCells[i]]->FindComponentByClass<UStaticMeshComponent>()->SetMaterial(0, HighlightedMat);
 	}
+
+	GridOutlineGenerator(AreaOutlineActor).GenerateOutlineFromCoordArray(AttackableCells, Start, GridCellSizeX, GridCellSizeY);
+	AreaOutlineActor->SetActorLocation(GridCells[Start]->GetActorLocation());
+	AreaOutlineActor->SetVisibility(true);
 }
 
 TArray<FIntVector2> AGridManagerTool::DisplayAttackPattern(FIntVector2 TargetCoord, FGridData Pattern, EPatternRotation Rotation, FPathingData PathData)
@@ -108,10 +120,9 @@ TArray<FIntVector2> AGridManagerTool::DisplayAttackPattern(FIntVector2 TargetCoo
 	TArray<FIntVector2> Cells = GetCellsInAttackArea(TargetCoord, Pattern, Rotation, PathData);
 	if (Cells.Num() == 0) return Cells;
 
-	for (int i = 0; i < Cells.Num(); i++)
-	{
-		GridCells[Cells[i]]->FindComponentByClass<UStaticMeshComponent>()->SetMaterial(0, TargetMat);
-	}
+	GridOutlineGenerator(PathAndAttackOutlineActor).GenerateOutlineFromCoordArray(Cells, TargetCoord, GridCellSizeX, GridCellSizeY);
+	PathAndAttackOutlineActor->SetActorLocation(GridCells[TargetCoord]->GetActorLocation());
+	PathAndAttackOutlineActor->SetVisibility(true);
 
 	return Cells;
 }
