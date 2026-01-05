@@ -1,6 +1,5 @@
 // Fill out your copyright notice in the Description page of Project Settings.
 
-
 #include "GameManager.h"
 
 void UGameManager::GenerateGrid()
@@ -11,7 +10,7 @@ void UGameManager::GenerateGrid()
 	}
 	else
 	{
-		Grid.SetNum(floors * maxNodesPerFloor);
+		Grid.SetNum(floors * maxNodesPerFloor + 1);
 
 			for (int32 Floor = 0; Floor < floors; ++Floor) // for each floor
 			{
@@ -26,6 +25,11 @@ void UGameManager::GenerateGrid()
 					Grid[FlatIndex] = Node; // add to the grid
 				}
 			}
+
+			FMapNodeData BossNode;
+			BossNode.RoomType = EMapRoomCPP::Boss;
+			BossNode.bVisited = false;
+			Grid[Grid.Num() - 1] = BossNode;
 	}
 }
 
@@ -79,6 +83,18 @@ void UGameManager::CreateMap()
 				}
 			}
 
+			if (Floor == floors - 2 || Floor == 8)
+			{
+				for (int32 NodeIndex = 0; NodeIndex < maxNodesPerFloor; ++NodeIndex)
+				{
+					if (Grid[NodeIndex + Floor * maxNodesPerFloor].RoomType == Selected)
+					{
+						Grid[NodeIndex + Floor * maxNodesPerFloor].RoomType = EMapRoomCPP::Combat;
+						CombatCount -= 1;
+					}
+				}
+			}
+
 			if (Floor == 0)
 			{
 				for (int32 NodeIndex = 0; NodeIndex < maxNodesPerFloor; ++NodeIndex) // for each node in floor
@@ -92,7 +108,7 @@ void UGameManager::CreateMap()
 				}
 			}
 
-			if (Floor != 9 && Floor != floors - 1)
+			if (Floor != 9 && Floor != floors - 1 && Floor != 0)
 			{
 				for (int32 NodeIndex = 0; NodeIndex < maxNodesPerFloor; ++NodeIndex) // for each node in floor
 				{
@@ -205,9 +221,6 @@ void UGameManager::CreateMap()
 		}
 		bMapGenerated = true;
 	}
-
-
-	
 }
 
 void UGameManager::CreateMapPaths()
@@ -442,6 +455,13 @@ bool UGameManager::TryMoveToNode(int32 TargetNodeIndex)
 		CurrentNodeIndex = TargetNodeIndex;
 		Grid[CurrentNodeIndex].bVisited = true;
 		OnCurrentNodeChanged.Broadcast(Grid[CurrentNodeIndex].ConnectedNodes);
+
+		int32 Floor = CurrentNodeIndex / maxNodesPerFloor;
+		if (Floor == floors - 1)
+		{
+			SetCanChallengeBoss(true);
+		}
+
 		return true;
 	}
 	return false;
@@ -465,5 +485,48 @@ bool UGameManager::isEncounterCompleted(FName EncounterName)
 	return true;
 }
 
+void UGameManager::BossCleanup()
+{
+	Grid.Empty();
+	MapNodes.Empty();
+	bMapGenerated = false;
+	CurrentNodeIndex = -1;
+	StartingNodes.Empty();
+	SetCanChallengeBoss(false);
+	CompletedEncounters.Empty();
+	TotalRooms = floors * maxNodesPerFloor;
+	RestCount = TotalRooms / 5;
+	CombatCount = (TotalRooms - RestCount) * 0.6f;
+	NonCombatCount = (TotalRooms - RestCount) * 0.4f;
+	GenerateGrid();
+	CreateMap();
+	BossesDefeated++;
+	if (BossesDefeated == 1)
+	{
+		SetCurrentChapter("Chapter 2: Castle");
+	}
+	else if (BossesDefeated == 2)
+	{
+		SetCurrentChapter("Chapter 3: Hell");
+	}
+}
 
+void UGameManager::GameCleanup()
+{
+	Grid.Empty();
+	MapNodes.Empty();
+	bMapGenerated = false;
+	CurrentNodeIndex = -1;
+	StartingNodes.Empty();
+	SetCanChallengeBoss(false);
+	CompletedEncounters.Empty();
+	TotalRooms = floors * maxNodesPerFloor;
+	RestCount = TotalRooms / 5;
+	CombatCount = (TotalRooms - RestCount) * 0.6f;
+	NonCombatCount = (TotalRooms - RestCount) * 0.4f;
+	GenerateGrid();
+	CreateMap();
+	BossesDefeated = 0;
+	SetCurrentChapter("Chapter 1: Forest");
+}
 

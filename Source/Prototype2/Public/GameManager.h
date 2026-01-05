@@ -11,6 +11,7 @@
 #include "GameManager.generated.h"
 
 DECLARE_DYNAMIC_MULTICAST_DELEGATE_OneParam(FOnCurrentNodeChanged, const TArray<int32>&, ConnectedNodeIndices);
+DECLARE_DYNAMIC_MULTICAST_DELEGATE_OneParam(FOnCanChallengeBossChanged, bool, bNewCanChallengeBoss);
 
 USTRUCT(BlueprintType)
 struct FMapNodeData
@@ -90,6 +91,9 @@ public:
 
 	UPROPERTY(BlueprintAssignable, Category = "Map")
 	FOnCurrentNodeChanged OnCurrentNodeChanged;
+
+	UPROPERTY(BlueprintAssignable, Category = "Map")
+	FOnCanChallengeBossChanged OnCanChallengeBossChanged;
     
 	UFUNCTION(BlueprintCallable, Category = "Map")
 	bool TryMoveToNode(int32 TargetNodeIndex);
@@ -100,7 +104,33 @@ public:
 	UFUNCTION(BlueprintCallable, Category = "Map")
 	bool isEncounterCompleted(FName EncounterName);
 
-	TMap<TSubclassOf<APlayerEntity>, FPersistentPlayerInfo> CharacterInfo; 
+	TMap<TSubclassOf<APlayerEntity>, FPersistentPlayerInfo> CharacterInfo;
+
+	UFUNCTION(BlueprintCallable, Category = "Map")
+	void SetCanChallengeBoss(bool bNewValue)
+	{
+		if (bCanChallengeBoss != bNewValue)
+		{
+			bCanChallengeBoss = bNewValue;
+			OnCanChallengeBossChanged.Broadcast(bCanChallengeBoss);
+		}
+	}
+
+	UFUNCTION(BlueprintCallable, Category = "Map")
+	bool GetCanChallengeBoss() const { return bCanChallengeBoss; }
+
+	UFUNCTION(BlueprintCallable, Category = "Map")
+	void SetCurrentChapter(const FString& NewChapter) { CurrentChapter = NewChapter; }
+
+	UFUNCTION(BlueprintCallable, Category = "Map")
+	FString GetCurrentChapter() const { return CurrentChapter; }
+
+	UFUNCTION(BlueprintCallable, Category = "Map")
+	void BossCleanup();
+
+	UFUNCTION(BlueprintCallable, Category = "Map")
+	void GameCleanup();
+
 
 private:
 	TArray<EMapRoomCPP> AllRooms;
@@ -124,8 +154,8 @@ protected:
 
 	int TotalRooms = floors * maxNodesPerFloor; // 15 * 7 = 105
 	int RestCount = TotalRooms / 5; // 20% of total rooms = 21
-	int CombatCount = (TotalRooms - RestCount) * 0.6; // 60% of remaining rooms = 84 * 0.6 = 50
-	int NonCombatCount = (TotalRooms - RestCount) * 0.4; // 40% of remaining rooms = 30
+	int CombatCount = (TotalRooms - RestCount) * 0.6; // 60% of remaining rooms = 84 * 0.6 = 50ish
+	int NonCombatCount = (TotalRooms - RestCount) * 0.4; // 40% of remaining rooms = 30ish
 
 	UPROPERTY(BlueprintReadWrite, Category = "Map")
 	TArray<FMapNodeData> Grid;
@@ -134,5 +164,12 @@ protected:
 	EMapRoomCPP Selected = EMapRoomCPP::Selected;
 
 	TArray<int> StartingNodes;
-	
+	bool bCanChallengeBoss = false;
+
+	UPROPERTY(EditAnywhere, BlueprintReadWrite, Category = "Map")
+	FString CurrentChapter = "Chapter 1: Forest";
+
+	UPROPERTY(EditAnywhere, BlueprintReadWrite, Category = "Map")
+	int BossesDefeated = 0;
+
 };
