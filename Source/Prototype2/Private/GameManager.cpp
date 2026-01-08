@@ -1,6 +1,5 @@
 // Fill out your copyright notice in the Description page of Project Settings.
 
-
 #include "GameManager.h"
 
 void UGameManager::GenerateGrid()
@@ -11,7 +10,7 @@ void UGameManager::GenerateGrid()
 	}
 	else
 	{
-		Grid.SetNum(floors * maxNodesPerFloor);
+		Grid.SetNum(floors * maxNodesPerFloor + 1);
 
 			for (int32 Floor = 0; Floor < floors; ++Floor) // for each floor
 			{
@@ -26,6 +25,11 @@ void UGameManager::GenerateGrid()
 					Grid[FlatIndex] = Node; // add to the grid
 				}
 			}
+
+			FMapNodeData BossNode;
+			BossNode.RoomType = EMapRoomCPP::Boss;
+			BossNode.bVisited = false;
+			Grid[Grid.Num() - 1] = BossNode;
 	}
 }
 
@@ -72,61 +76,143 @@ void UGameManager::CreateMap()
 				{
 					if (Grid[NodeIndex + Floor * maxNodesPerFloor].RoomType == Selected)
 					{
-						Grid[NodeIndex + Floor * maxNodesPerFloor].RoomType = EMapRoomCPP::Shop; // set all nodes on floor 9 to rest rooms
+						Grid[NodeIndex + Floor * maxNodesPerFloor].RoomType = EMapRoomCPP::Shop; // set all nodes on final floor to rest rooms
 						RestCount -= 1;
 					}
 
 				}
 			}
 
-			if (Floor != 9 && Floor != floors - 1)
+			if (Floor == floors - 2 || Floor == 8)
+			{
+				for (int32 NodeIndex = 0; NodeIndex < maxNodesPerFloor; ++NodeIndex)
+				{
+					if (Grid[NodeIndex + Floor * maxNodesPerFloor].RoomType == Selected)
+					{
+						Grid[NodeIndex + Floor * maxNodesPerFloor].RoomType = EMapRoomCPP::Combat;
+						CombatCount -= 1;
+					}
+				}
+			}
+
+			if (Floor == 0)
 			{
 				for (int32 NodeIndex = 0; NodeIndex < maxNodesPerFloor; ++NodeIndex) // for each node in floor
 				{
 					int32 FlatIndex = GetNodeIndex(Floor, NodeIndex);
 					if (Grid[FlatIndex].RoomType == Selected)
 					{
-						TArray<EMapRoomCPP> AvailableTypes;
-						if (RestCount > 0)
-						{
-							AvailableTypes.Add(EMapRoomCPP::Shop);
-						}
-						if (CombatCount > 0)
-						{
-							AvailableTypes.Add(EMapRoomCPP::Combat);
-						}
-						if (NonCombatCount > 0)
-						{
-							AvailableTypes.Add(EMapRoomCPP::Non_Combat);
-						}
+						Grid[FlatIndex].RoomType = EMapRoomCPP::Combat;
+						CombatCount -= 1;
+					}
+				}
+			}
 
-						if (AvailableTypes.Num() > 0)
+			if (Floor != 9 && Floor != floors - 1 && Floor != 0)
+			{
+				for (int32 NodeIndex = 0; NodeIndex < maxNodesPerFloor; ++NodeIndex) // for each node in floor
+				{
+					int32 FlatIndex = GetNodeIndex(Floor, NodeIndex);
+					bool bPrevWasShop = false;
+					
+					if (Grid[FlatIndex].RoomType == Selected)
+					{
+						int32 RemainingSelectableNodes = 0;
+						for (int32 i = FlatIndex; i < Grid.Num(); ++i)
 						{
-							int32 ChoiceIndex = FMath::RandRange(0, AvailableTypes.Num() - 1);
-							EMapRoomCPP ChosenType = AvailableTypes[ChoiceIndex];
-
-							Grid[FlatIndex].RoomType = ChosenType;
-
-							if (ChosenType == EMapRoomCPP::Shop)
+							if (Grid[i].RoomType == Selected)
 							{
-								RestCount -= 1;
-							}
-							else if (ChosenType == EMapRoomCPP::Combat)
-							{
-								CombatCount -= 1;
-							}
-							else if (ChosenType == EMapRoomCPP::Non_Combat)
-							{
-								NonCombatCount -= 1;
+								RemainingSelectableNodes++;
 							}
 						}
-						else
+
+						if (RemainingSelectableNodes <= 0)
 						{
 							Grid[FlatIndex].RoomType = EMapRoomCPP::Combat;
-							if (CombatCount > 0)
+							CombatCount = FMath::Max(CombatCount - 1, 0);
+							continue;
+						}
+
+						struct FWeightedRoom
+						{
+							EMapRoomCPP Type;
+							float Weight;
+						};
+
+						TArray<FWeightedRoom> WeightedTypes;
+						float TotalWeight = 0.f;
+
+						bool bParentIsRest = false;
+
+						for (int32 ParentIndex : Grid[FlatIndex].IncomingNodes)
+						{
+							if (Grid[ParentIndex].RoomType == EMapRoomCPP::Shop)
 							{
-								CombatCount -= 1;
+								bParentIsRest = true;
+								break;
 							}
+						}
+
+						if (RestCount > 0 && Floor >= 5 && !bParentIsRest)
+						{
+							float Weight = (float)RestCount / (float)RemainingSelectableNodes;
+							WeightedTypes.Add({ EMapRoomCPP::Shop, Weight });
+							TotalWeight += Weight;
+						}
+
+						if (CombatCount > 0)
+						{
+							float Weight = (float)CombatCount / (float)RemainingSelectableNodes;
+							WeightedTypes.Add({ EMapRoomCPP::Combat, Weight });
+							TotalWeight += Weight;
+						}
+
+						if (NonCombatCount > 0)
+						{
+							float Weight = (float)NonCombatCount / (float)RemainingSelectableNodes;
+							WeightedTypes.Add({ EMapRoomCPP::Non_Combat, Weight });
+							TotalWeight += Weight;
+						}
+
+						if (WeightedTypes.Num() == 0 || TotalWeight <= 0.f)
+						{
+							Grid[FlatIndex].RoomType = EMapRoomCPP::Combat;
+							CombatCount = FMath::Max(CombatCount - 1, 0);
+							continue;
+						}
+
+						float Roll = FMath::FRandRange(0.f, TotalWeight);
+						float Running = 0.f;
+
+						EMapRoomCPP ChosenType = EMapRoomCPP::Combat;
+
+						for (const FWeightedRoom& Entry : WeightedTypes)
+						{
+							Running += Entry.Weight;
+							if (Roll <= Running)
+							{
+								ChosenType = Entry.Type;
+								break;
+							}
+						}
+						Grid[FlatIndex].RoomType = ChosenType;
+
+						switch (ChosenType)
+						{
+						case EMapRoomCPP::Shop:
+							RestCount--;
+							break;
+
+						case EMapRoomCPP::Combat:
+							CombatCount--;
+							break;
+
+						case EMapRoomCPP::Non_Combat:
+							NonCombatCount--;
+							break;
+
+						default:
+							break;
 						}
 					}
 				}
@@ -135,9 +221,6 @@ void UGameManager::CreateMap()
 		}
 		bMapGenerated = true;
 	}
-
-
-	
 }
 
 void UGameManager::CreateMapPaths()
@@ -372,6 +455,13 @@ bool UGameManager::TryMoveToNode(int32 TargetNodeIndex)
 		CurrentNodeIndex = TargetNodeIndex;
 		Grid[CurrentNodeIndex].bVisited = true;
 		OnCurrentNodeChanged.Broadcast(Grid[CurrentNodeIndex].ConnectedNodes);
+
+		int32 Floor = CurrentNodeIndex / maxNodesPerFloor;
+		if (Floor == floors - 1)
+		{
+			SetCanChallengeBoss(true);
+		}
+
 		return true;
 	}
 	return false;
@@ -395,5 +485,48 @@ bool UGameManager::isEncounterCompleted(FName EncounterName)
 	return true;
 }
 
+void UGameManager::BossCleanup()
+{
+	Grid.Empty();
+	MapNodes.Empty();
+	bMapGenerated = false;
+	CurrentNodeIndex = -1;
+	StartingNodes.Empty();
+	SetCanChallengeBoss(false);
+	CompletedEncounters.Empty();
+	TotalRooms = floors * maxNodesPerFloor;
+	RestCount = TotalRooms / 5;
+	CombatCount = (TotalRooms - RestCount) * 0.6f;
+	NonCombatCount = (TotalRooms - RestCount) * 0.4f;
+	GenerateGrid();
+	CreateMap();
+	BossesDefeated++;
+	if (BossesDefeated == 1)
+	{
+		SetCurrentChapter("Chapter 2: Castle");
+	}
+	else if (BossesDefeated == 2)
+	{
+		SetCurrentChapter("Chapter 3: Hell");
+	}
+}
 
+void UGameManager::GameCleanup()
+{
+	Grid.Empty();
+	MapNodes.Empty();
+	bMapGenerated = false;
+	CurrentNodeIndex = -1;
+	StartingNodes.Empty();
+	SetCanChallengeBoss(false);
+	CompletedEncounters.Empty();
+	TotalRooms = floors * maxNodesPerFloor;
+	RestCount = TotalRooms / 5;
+	CombatCount = (TotalRooms - RestCount) * 0.6f;
+	NonCombatCount = (TotalRooms - RestCount) * 0.4f;
+	GenerateGrid();
+	CreateMap();
+	BossesDefeated = 0;
+	SetCurrentChapter("Chapter 1: Forest");
+}
 
