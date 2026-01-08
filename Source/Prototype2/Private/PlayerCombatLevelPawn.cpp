@@ -18,6 +18,7 @@ APlayerCombatLevelPawn::APlayerCombatLevelPawn()
 
 	TileSelectionType = ETileSelectionType::None;
 	IsDisplayingAttack = false;
+	isDisplayingPath = false;
 }
 
 // Called when the game starts or when spawned
@@ -82,7 +83,10 @@ void APlayerCombatLevelPawn::OnTileClick()
 	// click logic for when the selected cell is not the cell being clicked on
 	if (SelectedCell != HighlightedCell)
 	{
-		SelectedCell = HighlightedCell;
+		if (!isDisplayingPath && !IsDisplayingAttack) SelectedCell = HighlightedCell;
+
+		if (TileSelectionType == ETileSelectionType::Movement && isDisplayingPath) { TurnOffPathDisplay(); return; }
+		if (TileSelectionType == ETileSelectionType::Attack && IsDisplayingAttack) { TurnOffAttackDisplay(); return; }
 		
 		if (TileSelectionType == ETileSelectionType::Movement) DisplayPathToTile();
 		if (TileSelectionType == ETileSelectionType::Attack) DisplayAttackTargetArea();
@@ -116,6 +120,8 @@ void APlayerCombatLevelPawn::DisplayPathToTile()
 
 	// displays the path to the cell that was clicked
 	CombatManager->DisplayPathForCurrentCombatant(HighlightedCell->CellCoordinate);
+
+	isDisplayingPath = true;
 }
 
 void APlayerCombatLevelPawn::DisplayAttackTargetArea()
@@ -138,12 +144,15 @@ void APlayerCombatLevelPawn::OnPlayerTurnEnd()
 {
 	SelectedCell = nullptr;
 	TileSelectionType = ETileSelectionType::None;
+	IsDisplayingAttack = false;
+	isDisplayingPath = false;
 }
 
 void APlayerCombatLevelPawn::OnMoveButtonClicked()
 {
 	SelectedCell = nullptr;
 	IsDisplayingAttack = false;
+	isDisplayingPath = false;
 	TileSelectionType = ETileSelectionType::Movement;
 }
 
@@ -151,6 +160,7 @@ void APlayerCombatLevelPawn::OnAttackButtonClicked()
 {
 	SelectedCell = nullptr;
 	IsDisplayingAttack = false;
+	isDisplayingPath = false;
 	TileSelectionType = ETileSelectionType::Attack;
 }
 
@@ -171,18 +181,32 @@ void APlayerCombatLevelPawn::OnRotateAttack()
 void APlayerCombatLevelPawn::OnClickedOffTileGrid()
 {
 	SelectedCell = nullptr;
+	IsDisplayingAttack = false;
+	isDisplayingPath = false;
 
 	if (TileSelectionType == ETileSelectionType::None) return;
 	if (TileSelectionType == ETileSelectionType::SpawnSelection) return;
-	if (TileSelectionType == ETileSelectionType::Movement) {CombatManager->DisplayCurrentCombatantsMovement(); return;}
-	if (TileSelectionType == ETileSelectionType::Attack) return; // can implement target pattern reset when merged with Lee-Roy's GAS system
+	if (TileSelectionType == ETileSelectionType::Movement) { TurnOffPathDisplay(); return; }
+	if (TileSelectionType == ETileSelectionType::Attack) { TurnOffAttackDisplay(); }
 }
 
 void APlayerCombatLevelPawn::OnAttackExecuted()
 {
 	TileSelectionType = ETileSelectionType::None;
+	IsDisplayingAttack = false;
 }
 
+void APlayerCombatLevelPawn::TurnOffAttackDisplay()
+{
+	GridManager->ResetHighlights();
+	TileSelectionType = ETileSelectionType::None;
+	IsDisplayingAttack = false;
+}
 
+void APlayerCombatLevelPawn::TurnOffPathDisplay()
+{
+	CombatManager->DisplayCurrentCombatantsMovement();
+	isDisplayingPath = false;
+}
 
 

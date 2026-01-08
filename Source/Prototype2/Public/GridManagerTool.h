@@ -22,14 +22,8 @@ public:
 	UPROPERTY(EditAnywhere, BlueprintReadWrite, Category = "GridDisplay")
 	TEnumAsByte<EEditorGridDisplayType> GridDisplayType;
 
-	UFUNCTION(CallInEditor, BlueprintCallable, Category = "GridDisplay")
-	void UpdateDisplay();
-
 	UFUNCTION(BlueprintCallable)
-	void ChangeAllTilesDisplay(EEditorGridDisplayType DisplayType);
-
-	UFUNCTION()
-	void ChangeCellsMaterial(AGridCellParent* Tile, ETileMaterial Material);
+	void ResetHighlights();
 
 	UFUNCTION(BlueprintCallable)
 	void DisplayWalkableCells(FIntVector2 Start, int AvailableMovement, FPathingData PathData);

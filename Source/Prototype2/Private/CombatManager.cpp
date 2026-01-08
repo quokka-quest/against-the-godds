@@ -15,8 +15,8 @@ void ACombatManager::BeginPlay()
 	Super::BeginPlay();
 
 	GridManager = Cast<AGridManagerTool>(UGameplayStatics::GetActorOfClass(GetWorld(), AGridManagerTool::StaticClass()));
-	GridManager->ChangeAllTilesDisplay(EEditorGridDisplayType::PlayerSpawnTile);
-
+	GridManager->ResetHighlights();
+	
 	CurrentCombatantTurnIndex = 0;
 	SetAttackRotation(EPatternRotation::R0);
 }
@@ -160,7 +160,7 @@ void ACombatManager::EndCurrentTurn()
 
 	if (HaveEnemiesWon() || HavePlayersWon()) {UE_LOG(LogTemp, Warning, TEXT("CombatManager->EndCurrentTurn: someone has won")) return;}
 	
-	GridManager->ChangeAllTilesDisplay(EEditorGridDisplayType::Default);
+	GridManager->ResetHighlights();
 	
 	// for additional Enemy specific logic
 	if (EnemyRef)
@@ -193,7 +193,6 @@ void ACombatManager::IncrementTurnIndex()
 // checks for valid locations are done before this function is called so they aren't needed here
 void ACombatManager::MoveCurrentCombatant(FIntVector2 TargetPos)
 {
-	
 	for (int i = 0; i < PathForCombatantToFollow.Num(); i++)
 	{
 		float StartRot = CurrentTurnCombatant->DirectionYaws[PathForCombatantToFollow[i].StartingRot];
@@ -215,8 +214,8 @@ void ACombatManager::MoveCurrentCombatant(FIntVector2 TargetPos)
 	SetCellsOccupier(CurrentTurnCombatant, TargetPos, true);
 	CurrentTurnCombatant->PositionCoord = TargetPos;
 
-	// reset tile display
-	GridManager->ChangeAllTilesDisplay(EEditorGridDisplayType::Default);
+	// reset highlight display
+	GridManager->ResetHighlights();
 }
 
 // displays the path to be taken by a combatant if they were to move to the target position
@@ -232,7 +231,7 @@ void ACombatManager::DisplayPathForCurrentCombatant(FIntVector2 TargetPos)
 void ACombatManager::DisplayCurrentCombatantsMovement()
 {
 	GridManager->ResetWalkableAndAttackableOnAllCells();
-	GridManager->ChangeAllTilesDisplay(Default);
+	GridManager->ResetHighlights();
 	GridManager->DisplayWalkableCells(CurrentTurnCombatant->PositionCoord, CurrentTurnCombatant->AvailableMovement, CurrentTurnCombatant->GetPathingData());
 }
 
@@ -241,7 +240,7 @@ void ACombatManager::DisplayAttackRange(int Range)
 {
 	AttackRange = Range;
 	GridManager->ResetWalkableAndAttackableOnAllCells();
-	GridManager->ChangeAllTilesDisplay(Default);
+	GridManager->ResetHighlights();
 	GridManager->DisplayCellsInAttackRange(CurrentTurnCombatant->PositionCoord, Range, CurrentTurnCombatant->GetPathingData());
 }
 
@@ -276,7 +275,7 @@ void ACombatManager::ExecuteAttackOnTarget()
 	CurrentTurnCombatant->AvailableAttacks--;
 	CurrentTurnCombatant->ActivateAbilityWithTargets(AbilityToUse, TargetActors);
 	
-	GridManager->ChangeAllTilesDisplay(EEditorGridDisplayType::Default);
+	GridManager->ResetHighlights();
 	OnAttackExecuted.Broadcast();
 }
 

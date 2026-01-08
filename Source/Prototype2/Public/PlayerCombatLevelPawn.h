@@ -64,6 +64,7 @@ private:
 	ACombatManager* CombatManager;
 
 	bool IsDisplayingAttack;
+	bool isDisplayingPath;
 
 	void TryMoveToTile();
 
@@ -86,5 +87,8 @@ private:
 
 	UFUNCTION()
 	void OnAttackExecuted();
+
+	void TurnOffAttackDisplay();
+	void TurnOffPathDisplay();
 
 };

@@ -24,46 +24,13 @@ void AGridManagerTool::BeginPlay()
 	GridOutlineGenerator(HighlightOutlineActor).GenerateOutlineFromGridData(HighlightData, GridCellSizeX, GridCellSizeY);
 }
 
-
-void AGridManagerTool::UpdateDisplay()
+void AGridManagerTool::ResetHighlights()
 {
-	ChangeAllTilesDisplay(GridDisplayType);
+	OutlineActor->SetVisibility(true);
+	AreaOutlineActor->SetVisibility(false);
+	PathAndAttackOutlineActor->SetVisibility(false);
 }
 
-void AGridManagerTool::ChangeAllTilesDisplay(EEditorGridDisplayType DisplayType)
-{
-	for (auto& Cell : GridCells)
-	{
-		AGridCellParent* value = Cast<AGridCellParent>(Cell.Value);
-		if (!value) {UE_LOG(LogTemp, Warning, TEXT("GridManagerTool->ChangeAllTilesDisplay: Cell failed to cast to AGridCellParent")) return;}
-		
-		UStaticMeshComponent* CellMesh = value->FindComponentByClass<UStaticMeshComponent>();
-		if (!CellMesh) {UE_LOG(LogTemp, Warning, TEXT("Cell Mesh could not be found")) return;}
-
-		if (DisplayType == EEditorGridDisplayType::HazardTile && value->IsEnviroHazardCell)
-		{
-			//CellMesh->SetMaterial(0, HighlightedMat);
-		}
-		else if (DisplayType == EEditorGridDisplayType::PlayerSpawnTile && value->IsPlayerSpawnCell)
-		{
-			//CellMesh->SetMaterial(0, HighlightedMat);
-		}
-		else if (DisplayType == EEditorGridDisplayType::EnemySpawnTile && value->IsEnemySpawnCell)
-		{
-			//CellMesh->SetMaterial(0, HighlightedMat);
-		}
-		else
-		{
-			//CellMesh->SetMaterial(0, DefaultMat);
-		}
-	}
-}
-
-void AGridManagerTool::ChangeCellsMaterial(AGridCellParent* Tile, ETileMaterial Material)
-{
-	UStaticMeshComponent* CellMesh = Tile->FindComponentByClass<UStaticMeshComponent>();
-	//CellMesh->SetMaterial(0, (Material == ETileMaterial::Target)? TargetMat : (Material == ETileMaterial::Highlighted)? HighlightedMat : DefaultMat);
-}
 
 void AGridManagerTool::DisplayWalkableCells(FIntVector2 Start, int AvailableMovement, FPathingData PathData)
 {
@@ -79,6 +46,7 @@ void AGridManagerTool::DisplayWalkableCells(FIntVector2 Start, int AvailableMove
 	GridOutlineGenerator(AreaOutlineActor).GenerateOutlineFromCoordArray(WalkableCells, Start, GridCellSizeX, GridCellSizeY);
 	AreaOutlineActor->SetActorLocation(GridCells[Start]->GetActorLocation());
 	AreaOutlineActor->SetVisibility(true);
+	OutlineActor->SetVisibility(false);
 }
 
 TArray<FPathInfo> AGridManagerTool::DisplayCellPath(FIntVector2 StartCoord, FIntVector2 EndCoord, FPathingData PathData)
@@ -95,6 +63,7 @@ TArray<FPathInfo> AGridManagerTool::DisplayCellPath(FIntVector2 StartCoord, FInt
 	GridOutlineGenerator(PathAndAttackOutlineActor).GenerateOutlineFromCoordArray(PathCoords, StartCoord, GridCellSizeX, GridCellSizeY);
 	PathAndAttackOutlineActor->SetActorLocation(GridCells[StartCoord]->GetActorLocation());
 	PathAndAttackOutlineActor->SetVisibility(true);
+	AreaOutlineActor->SetVisibility(false);
 	
 	return Path;
 }
@@ -113,6 +82,7 @@ void AGridManagerTool::DisplayCellsInAttackRange(FIntVector2 Start, int Range, F
 	GridOutlineGenerator(AreaOutlineActor).GenerateOutlineFromCoordArray(AttackableCells, Start, GridCellSizeX, GridCellSizeY);
 	AreaOutlineActor->SetActorLocation(GridCells[Start]->GetActorLocation());
 	AreaOutlineActor->SetVisibility(true);
+	OutlineActor->SetVisibility(false);
 }
 
 TArray<FIntVector2> AGridManagerTool::DisplayAttackPattern(FIntVector2 TargetCoord, FGridData Pattern, EPatternRotation Rotation, FPathingData PathData)
@@ -123,7 +93,8 @@ TArray<FIntVector2> AGridManagerTool::DisplayAttackPattern(FIntVector2 TargetCoo
 	GridOutlineGenerator(PathAndAttackOutlineActor).GenerateOutlineFromCoordArray(Cells, TargetCoord, GridCellSizeX, GridCellSizeY);
 	PathAndAttackOutlineActor->SetActorLocation(GridCells[TargetCoord]->GetActorLocation());
 	PathAndAttackOutlineActor->SetVisibility(true);
-
+	AreaOutlineActor->SetVisibility(false);
+	
 	return Cells;
 }
 
