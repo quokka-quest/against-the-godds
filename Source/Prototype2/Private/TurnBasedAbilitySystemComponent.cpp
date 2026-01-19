@@ -5,7 +5,7 @@
 #include "GameplayEffectTypes.h"
 #include "GameplayEffect.h"
 
-FActiveGameplayEffectHandle UTurnBasedAbilitySystemComponent::ApplyEffectWithInstantOnStackLoss(
+FActiveGameplayEffectHandle UTurnBasedAbilitySystemComponent::BindGameplayEffectToOnStackLoss(
     const FGameplayEffectSpecHandle& EffectSpecHandle, const FGameplayEffectSpecHandle& InstantEffectSpecHandle)
 {
     // Validate the outgoing spec handle before applying

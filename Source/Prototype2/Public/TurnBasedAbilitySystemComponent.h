@@ -18,7 +18,7 @@ class PROTOTYPE2_API UTurnBasedAbilitySystemComponent : public UAbilitySystemCom
 public:
 	// Apply a stacking gameplay effect and register to apply `InstantEffectToApply` whenever a stack is removed.
 	UFUNCTION(BlueprintCallable, Category = "TurnBasedAbilitySystemComponent")
-	FActiveGameplayEffectHandle ApplyEffectWithInstantOnStackLoss(const FGameplayEffectSpecHandle& EffectSpecHandle, const FGameplayEffectSpecHandle& InstantEffectSpecHandle);
+	FActiveGameplayEffectHandle BindGameplayEffectToOnStackLoss(const FGameplayEffectSpecHandle& EffectSpecHandle, const FGameplayEffectSpecHandle& InstantEffectSpecHandle);
 
 protected:
 	// Callback for when a stack count changes
