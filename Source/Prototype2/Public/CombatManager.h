@@ -94,6 +94,12 @@ public:
 	bool HavePlayersWon();
 	UFUNCTION(BlueprintCallable, BlueprintPure)
 	bool HaveEnemiesWon();
+
+	UFUNCTION(BlueprintCallable, Category="PlayerMovement")
+	void ChangeEntityLocation(AEntityBase* Entity, FIntVector2 NewCoord);
+
+	UFUNCTION(blueprintCallable, Category="PlayerMovement")
+	void SwapEntitiesLocations(AEntityBase* Entity, AEntityBase* TargetEntity);
 	
 	////////////////////////////////////////////////// blueprint getters and setters:
 	UFUNCTION(BlueprintCallable)

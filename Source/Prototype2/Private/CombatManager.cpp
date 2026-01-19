@@ -337,6 +337,26 @@ void ACombatManager::SetCellsOccupier(AEntityBase* Entity, FIntVector2 Coord, bo
 	}
 }
 
+void ACombatManager::ChangeEntityLocation(AEntityBase* Entity, FIntVector2 NewCoord)
+{
+	SetCellsOccupier(Entity, Entity->PositionCoord, false);
+	SetCellsOccupier(Entity, NewCoord, true);
+	Entity->PositionCoord = NewCoord;
+}
+
+void ACombatManager::SwapEntitiesLocations(AEntityBase* Entity, AEntityBase* TargetEntity)
+{
+	FIntVector2 originCoord = Entity->PositionCoord;
+	FIntVector2 targetCoord = TargetEntity->PositionCoord;
+
+	SetCellsOccupier(Entity, originCoord, false);
+	SetCellsOccupier(TargetEntity, targetCoord, false);
+
+	SetCellsOccupier(Entity, targetCoord, true);
+	SetCellsOccupier(TargetEntity, originCoord, true);
+}
+
+
 /////////////////////////////////////////////////////////////////////////// Blueprint friendly Getters and setters:
 
 EPatternRotation ACombatManager::GetAttackRotation()
