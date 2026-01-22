@@ -24,7 +24,7 @@ public:
 
 	// Apply a stacking gameplay effect and register to apply `InstantEffectToApply` whenever a stack is removed.
 	UFUNCTION(BlueprintCallable, Category = "TurnBasedAbilitySystemComponent")
-	FActiveGameplayEffectHandle BindGameplayEffectToOnStackLoss(const FGameplayEffectSpecHandle& EffectSpecHandle, const FGameplayEffectSpecHandle& InstantEffectSpecHandle);
+	FActiveGameplayEffectHandle BindGameplayEffectToOnStackLoss(const FGameplayEffectSpecHandle& EffectSpecHandle, const FGameplayEffectSpecHandle& InstantEffectSpecHandle, bool bApplyPerStack = true);
 
 protected:
 	// Callback for when a stack count changes
@@ -33,6 +33,12 @@ protected:
 	
 
 private:
+	struct FStackLossEffectData
+	{
+		FGameplayEffectSpecHandle InstantEffectSpecHandle;
+		bool bApplyPerStack = true;
+	};
+
 	// Maps active effect handles to instant effects that should be applied on stack loss
-	TMap<FActiveGameplayEffectHandle, FGameplayEffectSpecHandle> StackLossEffectMap;
+	TMap<FActiveGameplayEffectHandle, FStackLossEffectData> StackLossEffectMap;
 };
