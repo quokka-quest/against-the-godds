@@ -88,9 +88,11 @@ void UTurnBasedAbilitySystemComponent::OnEffectRemoved(FActiveGameplayEffectHand
             // Apply instant effect one final time for the last stack
             ApplyGameplayEffectSpecToSelf(*InstantSpecHandle.Data.Get());
         }
+
+        // Broadcast the event when the final stack is removed
+        OnFinalStackRemoved.Broadcast(Handle, *SpecHandlePtr);
     }
     
     // Clean up the mapping
     StackLossEffectMap.Remove(Handle);
 }
-
