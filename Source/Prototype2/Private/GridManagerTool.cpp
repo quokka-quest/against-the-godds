@@ -38,12 +38,23 @@ void AGridManagerTool::DisplayWalkableCells(FIntVector2 Start, int AvailableMove
 	TArray<FIntVector2> WalkableCells = GetWalkableCells(Start, AvailableMovement, PathData);
 	if (WalkableCells.Num() == 0) return;
 
+	TArray<FIntVector2> DisplayCells;
+	TArray<FIntVector2> SizeOffsets = PathData.RotationSweep.GetSelectedCellOffsets();
 	for (int i = 0; i < WalkableCells.Num(); i++)
 	{
 		GridCells[WalkableCells[i]]->IsWalkable = true;
+
+		for (FIntVector2 Offset : SizeOffsets)
+		{
+			FIntVector2 OffsetCoord = WalkableCells[i] + Offset;
+			if (!GridCells.Contains(OffsetCoord)) {UE_LOG(LogTemp, Error, TEXT("GridManagerTool.cpp->DisplayWalkableCells: tried to display a cell that doesnt exist")); continue;}
+			if (DisplayCells.Contains(OffsetCoord)) continue;
+			DisplayCells.Add(OffsetCoord);
+		}
 	}
 	
-	GridOutlineGenerator(AreaOutlineActor).GenerateOutlineFromCoordArray(WalkableCells, Start, GridCellSizeX, GridCellSizeY);
+	
+	GridOutlineGenerator(AreaOutlineActor).GenerateOutlineFromCoordArray(DisplayCells, Start, GridCellSizeX, GridCellSizeY);
 	AreaOutlineActor->SetActorLocation(GridCells[Start]->GetActorLocation());
 	AreaOutlineActor->SetVisibility(true);
 	OutlineActor->SetVisibility(false);
@@ -52,19 +63,32 @@ void AGridManagerTool::DisplayWalkableCells(FIntVector2 Start, int AvailableMove
 TArray<FPathInfo> AGridManagerTool::DisplayCellPath(FIntVector2 StartCoord, FIntVector2 EndCoord, FPathingData PathData)
 {
 	TArray<FPathInfo> Path = GetPathBetweenCoords(StartCoord, EndCoord, PathData);
-	TArray<FIntVector2> PathCoords;
-
-	PathCoords.Add(StartCoord);
+	TArray<FIntVector2> DisplayCells;
+	
+	TArray<FIntVector2> SizeOffsets = PathData.RotationSweep.GetSelectedCellOffsets();
 	for (FPathInfo Cell : Path)
 	{
-		PathCoords.Add(Cell.CoordToMoveTo);
+		for (FIntVector2 Offset : SizeOffsets)
+		{
+			FIntVector2 OffsetCoord = Cell.CoordToMoveTo + Offset;
+			if (!GridCells.Contains(OffsetCoord)) { UE_LOG(LogTemp, Error, TEXT("GridManagerTool.cpp->DisplayCellPath: tried to display a cell that doesnt exist")); continue; }
+			DisplayCells.Add(OffsetCoord);
+		}
 	}
 
-	GridOutlineGenerator(PathAndAttackOutlineActor).GenerateOutlineFromCoordArray(PathCoords, StartCoord, GridCellSizeX, GridCellSizeY);
+	// add the start coord for display since 'GetPathBetweenCoords' does not contain the start coord
+	for (FIntVector2 Offset : SizeOffsets)
+	{
+		FIntVector2 OffsetCoord = StartCoord + Offset;
+		if (!GridCells.Contains(OffsetCoord)) { UE_LOG(LogTemp, Error, TEXT("GridManagerTool.cpp->DisplayCellPath: tried to display a cell that doesnt exist")); continue; }
+		DisplayCells.Add(OffsetCoord);
+	}
+
+	GridOutlineGenerator(PathAndAttackOutlineActor).GenerateOutlineFromCoordArray(DisplayCells, StartCoord, GridCellSizeX, GridCellSizeY);
 	PathAndAttackOutlineActor->SetActorLocation(GridCells[StartCoord]->GetActorLocation());
 	PathAndAttackOutlineActor->SetVisibility(true);
 	AreaOutlineActor->SetVisibility(false);
-	
+
 	return Path;
 }
 
@@ -146,6 +170,12 @@ void AGridManagerTool::SetHighlightVisibility(bool IsVisible)
 {
 	HighlightOutlineActor->SetVisibility(IsVisible);
 }
+
+void AGridManagerTool::ChangeHighlightMesh(FGridData& HighlightData)
+{
+	GridOutlineGenerator(HighlightOutlineActor).GenerateOutlineFromGridData(HighlightData, GridCellSizeX, GridCellSizeY);
+}
+
 
 void AGridManagerTool::ReplaceGridCell(UWorld* World, FIntVector2 Coord)
 {

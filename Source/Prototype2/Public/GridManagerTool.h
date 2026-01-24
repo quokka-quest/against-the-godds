@@ -43,6 +43,9 @@ public:
 	void SetHighlightPosition(FIntVector2 CellCoord);
 	void SetHighlightVisibility(bool IsVisible);
 
+	UFUNCTION(BlueprintCallable)
+	void ChangeHighlightMesh(FGridData& HighlightData);
+
 protected:
 	
 	UPROPERTY()

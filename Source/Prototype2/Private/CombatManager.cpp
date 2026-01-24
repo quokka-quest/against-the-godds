@@ -216,6 +216,9 @@ void ACombatManager::MoveCurrentCombatant(FIntVector2 TargetPos)
 
 	// reset highlight display
 	GridManager->ResetHighlights();
+
+	FGridData DefaultHighlightSize = FGridData();
+	GridManager->ChangeHighlightMesh(DefaultHighlightSize);
 }
 
 // displays the path to be taken by a combatant if they were to move to the target position
@@ -389,6 +392,11 @@ bool ACombatManager::HasRoundEnded()
 void ACombatManager::BroadcastOnMoveClickedEvent()
 {
 	OnMoveButtonClicked.Broadcast();
+
+	APlayerEntity* PlayerRef = Cast<APlayerEntity>(CurrentTurnCombatant);
+	if (!PlayerRef) return;
+
+	GridManager->ChangeHighlightMesh(PlayerRef->RotationSweep);
 }
 
 void ACombatManager::BroadcastOnAttackClickedEvent() 
