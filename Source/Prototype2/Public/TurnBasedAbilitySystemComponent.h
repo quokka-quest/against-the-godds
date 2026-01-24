@@ -6,7 +6,7 @@
 #include "AbilitySystemComponent.h"
 #include "TurnBasedAbilitySystemComponent.generated.h"
 
-DECLARE_DYNAMIC_MULTICAST_DELEGATE_TwoParams(FOnFinalStackRemovedDelegate, FActiveGameplayEffectHandle, EffectHandle, FGameplayEffectSpecHandle, InstantEffectHandle);
+DECLARE_DYNAMIC_MULTICAST_DELEGATE_TwoParams(FOnFinalStackRemovedDelegate, TSubclassOf<UGameplayEffect>, EffectClass, TSubclassOf<UGameplayEffect>, InstantEffectClass);
 
 /**
  * 
@@ -36,6 +36,8 @@ private:
 	struct FStackLossEffectData
 	{
 		FGameplayEffectSpecHandle InstantEffectSpecHandle;
+		TSubclassOf<UGameplayEffect> EffectClass;
+		TSubclassOf<UGameplayEffect> InstantEffectClass;
 		bool bApplyPerStack = true;
 	};
 

@@ -19,6 +19,20 @@ FActiveGameplayEffectHandle UTurnBasedAbilitySystemComponent::BindGameplayEffect
 
     if (Handle.IsValid())
     {
+        // Extract effect classes from the spec handles
+        TSubclassOf<UGameplayEffect> EffectClass = nullptr;
+        TSubclassOf<UGameplayEffect> InstantEffectClass = nullptr;
+
+        if (EffectSpecHandle.Data.IsValid() && EffectSpecHandle.Data->Def)
+        {
+            EffectClass = EffectSpecHandle.Data->Def->GetClass();
+        }
+
+        if (InstantEffectSpecHandle.IsValid() && InstantEffectSpecHandle.Data.IsValid() && InstantEffectSpecHandle.Data->Def)
+        {
+            InstantEffectClass = InstantEffectSpecHandle.Data->Def->GetClass();
+        }
+
         // If we already have this handle tracked, just update its data and avoid rebinding delegates
         if (StackLossEffectMap.Contains(Handle))
         {
@@ -29,6 +43,7 @@ FActiveGameplayEffectHandle UTurnBasedAbilitySystemComponent::BindGameplayEffect
                 if (InstantEffectSpecHandle.IsValid())
                 {
                     ExistingData->InstantEffectSpecHandle = InstantEffectSpecHandle;
+                    ExistingData->InstantEffectClass = InstantEffectClass;
                 }
                 ExistingData->bApplyPerStack = bApplyPerStack;
             }
@@ -38,12 +53,12 @@ FActiveGameplayEffectHandle UTurnBasedAbilitySystemComponent::BindGameplayEffect
             // Store the instant effect spec handle to apply on stack loss (only if it's valid)
             if (InstantEffectSpecHandle.IsValid())
             {
-                StackLossEffectMap.Add(Handle, {InstantEffectSpecHandle, bApplyPerStack});
+                StackLossEffectMap.Add(Handle, {InstantEffectSpecHandle, EffectClass, InstantEffectClass, bApplyPerStack});
             }
             else
             {
                 // Add with an invalid InstantEffectSpecHandle; allows future updates without rebinding
-                StackLossEffectMap.Add(Handle, {FGameplayEffectSpecHandle(), bApplyPerStack});
+                StackLossEffectMap.Add(Handle, {FGameplayEffectSpecHandle(), EffectClass, InstantEffectClass, bApplyPerStack});
             }
 
             // Bind to stack change event ONCE per active effect handle
@@ -114,14 +129,17 @@ void UTurnBasedAbilitySystemComponent::OnEffectRemoved(FActiveGameplayEffectHand
     if (FStackLossEffectData* EffectData = StackLossEffectMap.Find(Handle))
     {
         const FGameplayEffectSpecHandle& InstantSpecHandle = EffectData->InstantEffectSpecHandle;
+        TSubclassOf<UGameplayEffect> EffectClass = EffectData->EffectClass;
+        TSubclassOf<UGameplayEffect> InstantEffectClass = EffectData->InstantEffectClass;
+
+        // Apply instant effect one final time for the last stack
         if (InstantSpecHandle.IsValid() && InstantSpecHandle.Data.IsValid())
         {
-            // Apply instant effect one final time for the last stack
             ApplyGameplayEffectSpecToSelf(*InstantSpecHandle.Data.Get());
         }
 
-        // Broadcast the event when the final stack is removed
-        OnFinalStackRemoved.Broadcast(Handle, InstantSpecHandle);
+        // Broadcast the event when the final stack is removed with the cached effect classes
+        OnFinalStackRemoved.Broadcast(EffectClass, InstantEffectClass);
     }
     
     // Clean up the mapping
