@@ -175,6 +175,9 @@ void ACombatManager::EndCurrentTurn()
 		Player->ToggleTurnInputMapping(false);
 		OnPlayerTurnEnd.Broadcast();
 	}
+
+	FGridData DefaultHighlightSize = FGridData();
+	GridManager->ChangeHighlightMesh(DefaultHighlightSize);
 	
 	IncrementTurnIndex();
 	BlueprintEndTurnEvents(); // calls a function defined in the game-mode blueprint that will transition UI and start the next turn
@@ -254,11 +257,13 @@ void ACombatManager::DisplayAttackPattern(FIntVector2 TargetCoord)
 	AreaOfAttackEffect = GridManager->DisplayAttackPattern(TargetCoord, AttackPattern, AttackRotation, CurrentTurnCombatant->GetPathingData());
 }
 
-void ACombatManager::DisplayAttackInformation(TSubclassOf<UGameplayAbilityBase> Ability, FDiceFaceLevels DiceLevels, int Range, FGridData Pattern)
+void ACombatManager::DisplayAttackInformation(TSubclassOf<UGameplayAbilityBase> Ability, FDiceFaceLevels DiceLevels, int Range, FGridData Pattern, bool DisplayPatternForTargeting)
 {
 	AbilityToUse = Ability;
 	AttackPattern = Pattern;
 	DisplayAttackRange(Range);
+
+	if (DisplayPatternForTargeting) GridManager->ChangeHighlightMesh(Pattern);
 }
 
 void ACombatManager::ExecuteAttackOnTarget()
@@ -277,8 +282,12 @@ void ACombatManager::ExecuteAttackOnTarget()
 
 	CurrentTurnCombatant->AvailableAttacks--;
 	CurrentTurnCombatant->ActivateAbilityWithTargets(AbilityToUse, TargetActors);
-	
+
+	FGridData defaultHighlight = FGridData();
 	GridManager->ResetHighlights();
+	GridManager->ChangeHighlightMesh(defaultHighlight);
+	SetAttackRotation(R0);
+	
 	OnAttackExecuted.Broadcast();
 }
 
@@ -359,6 +368,37 @@ void ACombatManager::SwapEntitiesLocations(AEntityBase* Entity, AEntityBase* Tar
 	SetCellsOccupier(TargetEntity, originCoord, true);
 }
 
+// checks if a given grid pattern is available for placement on a given target entity
+// (mostly used to check if the PhysTank can grow to 2x2)
+bool ACombatManager::ValidateFullGridPatternAtTarget(AEntityBase* TargetEntity, FGridData Pattern)
+{
+	TArray<FIntVector2> Offsets = Pattern.GetSelectedCellOffsets();
+	FIntVector2 TargetCoord = TargetEntity->PositionCoord;
+
+	for (FIntVector2 Offset: Offsets)
+	{
+		FIntVector2 CellCoord = TargetCoord + Offset;
+		if (!GridManager->GridCells.Contains(CellCoord)) return false;
+		if (GridManager->GridCells[CellCoord]->IsOccupied && GridManager->GridCells[CellCoord]->OccupyingActor != TargetEntity) return false;
+	}
+	
+	return true;
+}
+
+bool ACombatManager::ValidateFullGridPatternAtCoord(FIntVector2 const TargetCoord, FGridData Pattern)
+{
+	TArray<FIntVector2> Offsets = Pattern.GetSelectedCellOffsets();
+
+	for (FIntVector2 Offset: Offsets)
+	{
+		FIntVector2 CellCoord = TargetCoord + Offset;
+		if (!GridManager->GridCells.Contains(CellCoord)) return false;
+		if (GridManager->GridCells[CellCoord]->IsOccupied) return false;
+	}
+	
+	return true;
+}
+
 
 /////////////////////////////////////////////////////////////////////////// Blueprint friendly Getters and setters:
 
@@ -370,6 +410,8 @@ EPatternRotation ACombatManager::GetAttackRotation()
 void ACombatManager::SetAttackRotation(EPatternRotation Rotation)
 {
 	AttackRotation = Rotation;
+	float rot = (AttackRotation == R0)? 0.0f : (AttackRotation == R90)? -90.0f : (AttackRotation == R180)? 180.0f : 90.0f;
+	GridManager->SetHighlightRotation(rot);
 }
 
 AEntityBase* ACombatManager::GetCurrentCombatant()
@@ -395,7 +437,8 @@ void ACombatManager::BroadcastOnMoveClickedEvent()
 
 	APlayerEntity* PlayerRef = Cast<APlayerEntity>(CurrentTurnCombatant);
 	if (!PlayerRef) return;
-
+	if (PlayerRef->AvailableMovement == 0) return;
+	
 	GridManager->ChangeHighlightMesh(PlayerRef->RotationSweep);
 }
 

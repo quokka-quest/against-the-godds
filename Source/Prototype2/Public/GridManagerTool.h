@@ -42,6 +42,7 @@ public:
 
 	void SetHighlightPosition(FIntVector2 CellCoord);
 	void SetHighlightVisibility(bool IsVisible);
+	void SetHighlightRotation(float Rotation);
 
 	UFUNCTION(BlueprintCallable)
 	void ChangeHighlightMesh(FGridData& HighlightData);

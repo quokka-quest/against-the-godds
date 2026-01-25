@@ -199,6 +199,8 @@ void APlayerCombatLevelPawn::OnAttackExecuted()
 void APlayerCombatLevelPawn::TurnOffAttackDisplay()
 {
 	GridManager->ResetHighlights();
+	FGridData DefaultHighlight = FGridData();
+	GridManager->ChangeHighlightMesh(DefaultHighlight);
 	TileSelectionType = ETileSelectionType::None;
 	IsDisplayingAttack = false;
 }

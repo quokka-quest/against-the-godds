@@ -81,7 +81,7 @@ public:
 	void DisplayAttackPattern(FIntVector2 TargetCoord);
 
 	UFUNCTION(BlueprintCallable)
-	void DisplayAttackInformation(TSubclassOf<UGameplayAbilityBase> Ability, FDiceFaceLevels DiceLevels, int Range, FGridData Pattern);
+	void DisplayAttackInformation(TSubclassOf<UGameplayAbilityBase> Ability, FDiceFaceLevels DiceLevels, int Range, FGridData Pattern, bool DisplayPatternForTargeting);
 
 	void ExecuteAttackOnTarget();
 
@@ -120,6 +120,12 @@ public:
 
 	UFUNCTION(BlueprintCallable)
 	void BroadcastOnAttackClickedEvent();
+
+	UFUNCTION(BlueprintCallable)
+	bool ValidateFullGridPatternAtTarget(AEntityBase* TargetEntity, FGridData Pattern);
+
+	UFUNCTION(BlueprintCallable)
+	bool ValidateFullGridPatternAtCoord(FIntVector2 const TargetCoord, FGridData Pattern);
 
 protected:
 	UPROPERTY(EditAnywhere, BlueprintReadWrite, category = "Combat")

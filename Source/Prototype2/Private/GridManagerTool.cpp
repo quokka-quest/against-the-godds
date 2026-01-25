@@ -31,6 +31,11 @@ void AGridManagerTool::ResetHighlights()
 	PathAndAttackOutlineActor->SetVisibility(false);
 }
 
+void AGridManagerTool::SetHighlightRotation(float Rotation)
+{
+	FRotator rot = FRotator(0.0f, Rotation, 0.0f);
+	HighlightOutlineActor->SetActorRotation(rot);
+}
 
 void AGridManagerTool::DisplayWalkableCells(FIntVector2 Start, int AvailableMovement, FPathingData PathData)
 {
