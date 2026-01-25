@@ -81,7 +81,7 @@ public:
 	void DisplayAttackPattern(FIntVector2 TargetCoord);
 
 	UFUNCTION(BlueprintCallable)
-	void DisplayAttackInformation(TSubclassOf<UGameplayAbilityBase> Ability, FDiceFaceLevels DiceLevels, int Range, FGridData Pattern, bool DisplayPatternForTargeting);
+	void DisplayAttackInformation(TSubclassOf<UGameplayAbilityBase> Ability, FDiceFaceLevels DiceLevels, int Range, FGridData Pattern, bool DisplayPatternForTargeting, ETargetType TargetType);
 
 	void ExecuteAttackOnTarget();
 
@@ -189,5 +189,6 @@ protected:
 	int AttackRange;
 	FGridData AttackPattern;
 	EPatternRotation AttackRotation;
+	ETargetType AttackTargetType;
 	
 };

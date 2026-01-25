@@ -32,6 +32,15 @@ void ACombatManager::SpawnPlayerCharacters()
 	UGameManager* GameInst =  Cast<UGameManager>(GetGameInstance());
 	if (!GameInst) {UE_LOG(LogTemp, Error, TEXT("CombatManager->SpawnPlayerCharacters(): GameInst failed to cast")) return;}
 
+	// fallback for testing the game without having to go through all the game menus
+	if (GameInst->CharacterInfo.IsEmpty())
+	{
+		const int RandIndex = FMath::RandRange(0, SpawnableCells.Num() - 1);
+		FIntVector2 Coord = SpawnableCells[RandIndex];
+		SpawnEntity(PlayerClass, Coord);
+		return;
+	}
+	
 	for (auto& Player : GameInst->CharacterInfo)
 	{
 		const int RandIndex = FMath::RandRange(0, SpawnableCells.Num() - 1);
@@ -257,10 +266,11 @@ void ACombatManager::DisplayAttackPattern(FIntVector2 TargetCoord)
 	AreaOfAttackEffect = GridManager->DisplayAttackPattern(TargetCoord, AttackPattern, AttackRotation, CurrentTurnCombatant->GetPathingData());
 }
 
-void ACombatManager::DisplayAttackInformation(TSubclassOf<UGameplayAbilityBase> Ability, FDiceFaceLevels DiceLevels, int Range, FGridData Pattern, bool DisplayPatternForTargeting)
+void ACombatManager::DisplayAttackInformation(TSubclassOf<UGameplayAbilityBase> Ability, FDiceFaceLevels DiceLevels, int Range, FGridData Pattern, bool DisplayPatternForTargeting, ETargetType TargetType)
 {
 	AbilityToUse = Ability;
 	AttackPattern = Pattern;
+	AttackTargetType = TargetType;
 	DisplayAttackRange(Range);
 
 	if (DisplayPatternForTargeting) GridManager->ChangeHighlightMesh(Pattern);
@@ -269,13 +279,20 @@ void ACombatManager::DisplayAttackInformation(TSubclassOf<UGameplayAbilityBase> 
 void ACombatManager::ExecuteAttackOnTarget()
 {
 	TArray<AActor*> TargetActors;
-
 	for (int i = 0; i < AreaOfAttackEffect.Num(); i++)
 	{
 		if (!GridManager->GridCells.Contains(AreaOfAttackEffect[i])) continue; // continue if cell coordinate is invalid
+
+		// if the ability is targeting the cells then add the cell to the target array and continue
+		if (AttackTargetType == ETargetType::TT_Tile)
+		{
+			AActor* TileActor = Cast<AActor>(GridManager->GridCells[AreaOfAttackEffect[i]]);
+			TargetActors.Add(TileActor);
+			continue;
+		}
+		
 		if (!GridManager->GridCells[AreaOfAttackEffect[i]]->IsOccupied) continue; // continue if cell is not occupied
-		if (!GridManager->GridCells[AreaOfAttackEffect[i]]->OccupyingActor)
-			{ UE_LOG(LogTemp, Warning, TEXT("CombatManager->ExecuteAttackOnTarget() found an occupied cell with a null occupant")) continue;} // continue if cell is occupied but the entity is null
+		if (!GridManager->GridCells[AreaOfAttackEffect[i]]->OccupyingActor) { UE_LOG(LogTemp, Warning, TEXT("CombatManager->ExecuteAttackOnTarget() found an occupied cell with a null occupant")) continue;} // continue if cell is occupied but the entity is null
 		
 		TargetActors.Add(Cast<AActor>(GridManager->GridCells[AreaOfAttackEffect[i]]->OccupyingActor));
 	}

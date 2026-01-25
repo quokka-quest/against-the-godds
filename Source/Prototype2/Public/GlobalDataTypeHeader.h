@@ -45,7 +45,7 @@ enum ETileSelectionType
 	None
 };
 
-UENUM()
+UENUM(BlueprintType)
 enum class ETargetType : uint8
 {
 	TT_Character UMETA(DisplayName = "Character"),
