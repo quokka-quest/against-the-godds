@@ -62,6 +62,8 @@ public:
 	virtual void ActivateAbility(TSubclassOf<UGameplayAbility> AbilityClass);
 	UFUNCTION(BlueprintCallable, Category = "GAS")
 	virtual void ActivateAbilityWithTargets(TSubclassOf<UGameplayAbility> AbilityClass, const TArray<AActor*> InTargetsActor);
+	UFUNCTION(BlueprintCallable, Category = "GAS")
+	virtual void ActivateAbilityTargetingSelf(TSubclassOf<UGameplayAbility> AbilityClass);
 
 	UFUNCTION(BlueprintCallable, Category = "GAS")
 	float GetFlatDamageModifier() const;

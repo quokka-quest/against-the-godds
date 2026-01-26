@@ -214,7 +214,16 @@ void ACombatManager::MoveCurrentCombatant(FIntVector2 TargetPos)
 		
 		FVector StartPos = GridManager->GridCells[PathForCombatantToFollow[i].StartingCoord]->GetActorLocation();
 		FVector EndPos = GridManager->GridCells[PathForCombatantToFollow[i].CoordToMoveTo]->GetActorLocation();
-		CurrentTurnCombatant->EnqueueMovement(StartPos, EndPos);
+
+		// check for ability on hazard to trigger when walked on
+		TSubclassOf<UGameplayAbilityBase> CellAbility = nullptr;
+		if (Cast<AGridCellParent>(GridManager->GridCells[PathForCombatantToFollow[i].CoordToMoveTo])->TemporaryCellEffect)
+		{
+			CellAbility = Cast<AGridCellParent>(GridManager->GridCells[PathForCombatantToFollow[i].CoordToMoveTo])->TemporaryCellEffect;
+		}
+
+		// enqueue movement animation
+		CurrentTurnCombatant->EnqueueMovement(StartPos, EndPos, CellAbility);
 		CurrentTurnCombatant->AvailableMovement -= GridManager->GridCells[PathForCombatantToFollow[i].CoordToMoveTo]->MovementCost;
 	}
 
