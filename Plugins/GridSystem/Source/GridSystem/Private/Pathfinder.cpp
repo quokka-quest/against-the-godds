@@ -95,17 +95,18 @@ TArray<FIntVector2> PathFinder::FindMoveableCellsInRange(FIntVector2 Start, int 
 	return Result;
 }
 
-TArray<FIntVector2> PathFinder::FindAttackableCellsInRange(FIntVector2 Start, int Range)
+TArray<FIntVector2> PathFinder::FindAttackableCellsInRange(FIntVector2 Start, int Range, TArray<TEnumAsByte<EAttackRules>>& Rules)
 {
 	AttackRange = Range;
 	StartCoord = Start;
+	AttackRules = Rules;
 	DiscoveredCells.Empty();
 	AnalysedCells.Empty();
 	CellMap.Empty();
 
 	TArray<FIntVector2> Result;
 
-	DiscoverCellForAttack(Start, Start);
+	DiscoverCellForAttack(Start, Start, PathingData.CurrentRotation);
 
 	while (DiscoveredCells.Num() > 0)
 	{
@@ -120,9 +121,9 @@ TArray<FIntVector2> PathFinder::FindAttackableCellsInRange(FIntVector2 Start, in
 	return Result;
 }
 
-TArray<FPathInfo> PathFinder::FindPathToPointInRangeOfTarget(FIntVector2 Start, FIntVector2 End, int Range, bool AvoidOccupiedCells)
+TArray<FPathInfo> PathFinder::FindPathToPointInRangeOfTarget(FIntVector2 Start, FIntVector2 End, int Range, TArray<TEnumAsByte<EAttackRules>>& Rules, bool AvoidOccupiedCells)
 {
-	TArray<FIntVector2> CellsInAttackRange = FindAttackableCellsInRange(End, Range);
+	TArray<FIntVector2> CellsInAttackRange = FindAttackableCellsInRange(End, Range, Rules);
 	TArray<FIntVector2> PerimeterCells = GetPerimeterCells(CellsInAttackRange);
 
 	FIntVector2 ClosestTile = FIntVector2(0);
@@ -167,13 +168,14 @@ void PathFinder::DiscoverCellForMovement(FIntVector2 CellCoord, FIntVector2 Prev
 	DiscoveredCells.Add(CellInfo);
 }
 
-void PathFinder::DiscoverCellForAttack(FIntVector2 CellCoord, FIntVector2 PreviousCell)
+void PathFinder::DiscoverCellForAttack(FIntVector2 CellCoord, FIntVector2 PreviousCell, TEnumAsByte<EPatternRotation> Direction)
 {
 	FCellInfo CellInfo;
 	CellInfo.Coord = CellCoord;
 	CellInfo.EntryCost = 1;
 	CellInfo.MinCostToTarget = 0;
 	CellInfo.PrevCellCoord = PreviousCell;
+	CellInfo.NewRotation = Direction;
 
 	int CostFromStart = (!CellMap.IsEmpty())? CellMap[PreviousCell].CostFromStart + CellInfo.EntryCost: 0;
 	CellInfo.CostFromStart = CostFromStart;
@@ -191,7 +193,7 @@ bool PathFinder::AnalyseNextCellForPathing()
 	FCellInfo CellInfo = PullCheapestMoveCostCellFromDiscoveredCells();
 	MoveCellFromDiscoveredToAnalysed(CellInfo);
 
-	TArray<FNeighbourInfo> ValidNeighbours = GetValidNeighbours(CellInfo.Coord);
+	TArray<FNeighbourInfo> ValidNeighbours = GetValidNeighboursForMovement(CellInfo.Coord);
 	if (ValidNeighbours.Num() == 0) return false;
 	
 	for (FNeighbourInfo Neighbour : ValidNeighbours)
@@ -208,7 +210,7 @@ bool PathFinder::AnalyseNextCellForPathing()
 void PathFinder::AnalyseNextCellForMovement()
 {
 	FCellInfo CellInfo = PullNextAnalysableCell();
-	TArray<FNeighbourInfo> ValidNeighbours = GetValidNeighbours(CellInfo.Coord);
+	TArray<FNeighbourInfo> ValidNeighbours = GetValidNeighboursForMovement(CellInfo.Coord);
 
 	if (ValidNeighbours.Num() == 0) return;
 
@@ -228,7 +230,7 @@ void PathFinder::AnalyseNextCellForMovement()
 void PathFinder::AnalyseNextCellForAttack()
 {
 	FCellInfo CellInfo = PullNextAnalysableCell();
-	TArray<FNeighbourInfo> ValidNeighbours = GetValidNeighbours(CellInfo.Coord);
+	TArray<FNeighbourInfo> ValidNeighbours = GetValidNeighboursForAttack(CellInfo.Coord);
 
 	if (ValidNeighbours.Num() == 0) return;
 
@@ -236,7 +238,7 @@ void PathFinder::AnalyseNextCellForAttack()
 	{
 		if (IsCellAlreadyDiscovered(Neighbour.Coord)) continue;
 
-		DiscoverCellForAttack(Neighbour.Coord, CellInfo.Coord);
+		DiscoverCellForAttack(Neighbour.Coord, CellInfo.Coord, Neighbour.Direction);
 	}
 }
 
@@ -276,7 +278,7 @@ bool PathFinder::IsCellAlreadyDiscovered(FIntVector2 CellCoord)
 }
 
 // returns the valid neighbours for a given cell. Checks if a direction can be travelled through and if the coordinate exists
-TArray<FNeighbourInfo> PathFinder::GetValidNeighbours(FIntVector2 CellCoord)
+TArray<FNeighbourInfo> PathFinder::GetValidNeighboursForMovement(FIntVector2 CellCoord)
 {
 	TArray<FNeighbourInfo> ValidNeighbours;
 
@@ -287,22 +289,67 @@ TArray<FNeighbourInfo> PathFinder::GetValidNeighbours(FIntVector2 CellCoord)
 	
 	if (GridCells.Contains(PosXNeighbour.Coord)
 		&& !GridCells[CellCoord]->BlockPositiveX
-		&& !GridCells[PosXNeighbour.Coord]->BlockPositiveX) ValidNeighbours.Add(PosXNeighbour);
+		&& !GridCells[PosXNeighbour.Coord]->BlockNegativeX) ValidNeighbours.Add(PosXNeighbour);
 
 	if (GridCells.Contains(NegXNeighbour.Coord)
 		&& !GridCells[CellCoord]->BlockNegativeX
-		&& !GridCells[NegXNeighbour.Coord]->BlockNegativeX) ValidNeighbours.Add(NegXNeighbour);
+		&& !GridCells[NegXNeighbour.Coord]->BlockPositiveX) ValidNeighbours.Add(NegXNeighbour);
 
 	if (GridCells.Contains(PosYNeighbour.Coord)
 		&& !GridCells[CellCoord]->BlockPositiveY
-		&& !GridCells[PosYNeighbour.Coord]->BlockPositiveY) ValidNeighbours.Add(PosYNeighbour);
+		&& !GridCells[PosYNeighbour.Coord]->BlockNegativeY) ValidNeighbours.Add(PosYNeighbour);
 
 	if (GridCells.Contains(NegYNeighbour.Coord)
 		&& !GridCells[CellCoord]->BlockNegativeY
-		&& !GridCells[NegYNeighbour.Coord]->BlockNegativeY) ValidNeighbours.Add(NegYNeighbour);
+		&& !GridCells[NegYNeighbour.Coord]->BlockPositiveY) ValidNeighbours.Add(NegYNeighbour);
 	
 	return ValidNeighbours;
 }
+
+TArray<FNeighbourInfo> PathFinder::GetValidNeighboursForAttack(FIntVector2 CellCoord)
+{
+	TArray<FNeighbourInfo> ValidNeighbours;
+
+	FNeighbourInfo PosXNeighbour = FNeighbourInfo(CellCoord + FIntVector2(1,0), R90);
+	FNeighbourInfo PosYNeighbour = FNeighbourInfo(CellCoord + FIntVector2(0,1), R0);
+	FNeighbourInfo NegXNeighbour = FNeighbourInfo(CellCoord + FIntVector2(-1,0), R270);
+	FNeighbourInfo NegYNeighbour = FNeighbourInfo(CellCoord + FIntVector2(0,-1), R180);
+
+	bool ObeyTraversal = AttackRules.Contains(EAttackRules::ObeyTraversalRules);
+	bool StraightLine = AttackRules.Contains(EAttackRules::StraightLineOnly);
+
+	if (GridCells.Contains(PosXNeighbour.Coord) && CheckCoordIsValidNeighborForAttack(CellCoord, PosXNeighbour)) ValidNeighbours.Add(PosXNeighbour);
+	if (GridCells.Contains(PosYNeighbour.Coord) && CheckCoordIsValidNeighborForAttack(CellCoord, PosYNeighbour)) ValidNeighbours.Add(PosYNeighbour);
+	if (GridCells.Contains(NegXNeighbour.Coord) && CheckCoordIsValidNeighborForAttack(CellCoord, NegXNeighbour)) ValidNeighbours.Add(NegXNeighbour);
+	if (GridCells.Contains(NegYNeighbour.Coord) && CheckCoordIsValidNeighborForAttack(CellCoord, NegYNeighbour)) ValidNeighbours.Add(NegYNeighbour);
+
+	return ValidNeighbours;
+}
+
+bool PathFinder::CheckCoordIsValidNeighborForAttack(FIntVector2 Coord, FNeighbourInfo Neighbor)
+{
+	if (Coord == StartCoord) return true; // return true if checking for the start coord
+	if (AttackRules.IsEmpty()) return true; // return true is there are no rules to follow (ToDo: need to implement line of sight checks)
+	if (AttackRules.Num() == 1 && AttackRules.Contains(EAttackRules::IgnoreLineOfSight)) return true; // see the 'ToDo' above
+
+	bool ObeyTraversal = AttackRules.Contains(EAttackRules::ObeyTraversalRules);
+	bool StraightLine = AttackRules.Contains(EAttackRules::StraightLineOnly);
+
+	bool IsStraight = (CellMap[Coord].NewRotation == Neighbor.Direction);
+	
+	bool ObeysTravel = false;
+	if (Neighbor.Direction == R90) {ObeysTravel = (!GridCells[Coord]->BlockPositiveX && !GridCells[Neighbor.Coord]->BlockNegativeX);}
+	else if (Neighbor.Direction == R270) {ObeysTravel = (!GridCells[Coord]->BlockNegativeX && !GridCells[Neighbor.Coord]->BlockPositiveX);}
+	else if (Neighbor.Direction == R0) {ObeysTravel = (!GridCells[Coord]->BlockPositiveY && !GridCells[Neighbor.Coord]->BlockNegativeY);}
+	else {ObeysTravel = (!GridCells[Coord]->BlockNegativeY && !GridCells[Neighbor.Coord]->BlockPositiveY);}
+
+	if (ObeyTraversal && StraightLine) { return (IsStraight && ObeysTravel); }
+	if (ObeyTraversal && ObeysTravel) { return true; }
+	if (StraightLine && IsStraight) { return true; }
+
+	return false;
+}
+
 
 FCellInfo PathFinder::PullNextAnalysableCell()
 {

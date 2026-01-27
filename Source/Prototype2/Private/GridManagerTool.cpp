@@ -97,10 +97,10 @@ TArray<FPathInfo> AGridManagerTool::DisplayCellPath(FIntVector2 StartCoord, FInt
 	return Path;
 }
 
-void AGridManagerTool::DisplayCellsInAttackRange(FIntVector2 Start, int Range, FPathingData PathData)
+void AGridManagerTool::DisplayCellsInAttackRange(FIntVector2 Start, int Range, FPathingData PathData, TArray<TEnumAsByte<EAttackRules>>& Rules)
 {
 	if (Range < 0) return;
-	TArray<FIntVector2> AttackableCells = GetCellsInAttackRange(Start, Range, PathData);
+	TArray<FIntVector2> AttackableCells = GetCellsInAttackRange(Start, Range, PathData, Rules);
 	if (AttackableCells.Num() == 0) return;
 
 	for (int i = 0; i < AttackableCells.Num(); i++)
@@ -112,6 +112,19 @@ void AGridManagerTool::DisplayCellsInAttackRange(FIntVector2 Start, int Range, F
 	AreaOutlineActor->SetActorLocation(GridCells[Start]->GetActorLocation());
 	AreaOutlineActor->SetVisibility(true);
 	OutlineActor->SetVisibility(false);
+}
+
+void AGridManagerTool::DisplayCellsInComplexAttackRange(FIntVector2 Start, FGridData ComplexRange, FPathingData PathData)
+{
+	TArray<FIntVector2> Offsets = ComplexRange.GetSelectedCellOffsets();
+	TArray<FIntVector2> AttackableCells;
+
+	for (FIntVector2 Offset : Offsets)
+	{
+		FIntVector2 Coord = Start + Offset;
+
+		if (!GridCells.Contains(Coord)) continue; // continue if the coord doesn't exist
+	}
 }
 
 TArray<FIntVector2> AGridManagerTool::DisplayAttackPattern(FIntVector2 TargetCoord, FGridData Pattern, EPatternRotation Rotation, FPathingData PathData)
@@ -181,6 +194,16 @@ void AGridManagerTool::ChangeHighlightMesh(FGridData& HighlightData)
 	GridOutlineGenerator(HighlightOutlineActor).GenerateOutlineFromGridData(HighlightData, GridCellSizeX, GridCellSizeY);
 }
 
+void AGridManagerTool::ToggleAxisIndicator()
+{
+	if (AxisActorRef) {AxisActorRef->Destroy(); AxisActorRef = nullptr; return;}
+	
+	FTransform spawnTrans = FTransform(FRotator(), FVector(0,0,30.0f), FVector(1));
+	AActor* Arrow = GetWorld()->SpawnActor(AxisIndicator);
+	Arrow->SetActorTransform(spawnTrans);
+	Arrow->SetFolderPath(FName("CellManager/Arrows"));
+	AxisActorRef = Arrow;
+}
 
 void AGridManagerTool::ReplaceGridCell(UWorld* World, FIntVector2 Coord)
 {

@@ -32,10 +32,13 @@ public:
 	TArray<FPathInfo> DisplayCellPath(FIntVector2 StartCoord, FIntVector2 EndCoord, FPathingData PathData);
 
 	UFUNCTION(BlueprintCallable)
-	void DisplayCellsInAttackRange(FIntVector2 Start, int Range, FPathingData PathData);
+	void DisplayCellsInAttackRange(FIntVector2 Start, int Range, FPathingData PathData, TArray<TEnumAsByte<EAttackRules>>& Rules);
 
 	UFUNCTION(BlueprintCallable)
 	TArray<FIntVector2> DisplayAttackPattern(FIntVector2 TargetCoord, FGridData Pattern, EPatternRotation Rotation, FPathingData PathData);
+
+	UFUNCTION(BlueprintCallable)
+	void DisplayCellsInComplexAttackRange(FIntVector2 Start, FGridData ComplexRange, FPathingData PathData);
 
 	UFUNCTION(BlueprintCallable, BlueprintPure)
 	TArray<FIntVector2> GetPlayerSpawnCells();
@@ -53,10 +56,16 @@ protected:
 	TArray<AActor*> DirectionIndicators;
 	UPROPERTY(EditAnywhere, BlueprintReadWrite, Category = "GridDisplay")
 	TSubclassOf<AActor> ArrowIndicator;
+	UPROPERTY(EditAnywhere, BlueprintReadWrite, Category = "GridDisplay")
+	TSubclassOf<AActor> AxisIndicator;
 	UPROPERTY()
 	bool DisplayArrows;
+	UPROPERTY()
+	AActor* AxisActorRef;
 	UFUNCTION(CallInEditor, BlueprintCallable, Category = "GridDisplay")
 	void ToggleDirectionIndicators();
+	UFUNCTION(CallInEditor, BlueprintCallable, Category = "GridDisplay")
+	void ToggleAxisIndicator();
 
 	UPROPERTY()
 	AGridOutlineActor* OutlineActor;

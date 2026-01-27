@@ -48,7 +48,8 @@ void AEnemyEntity::DetermineMovement()
 
 	AGridManagerTool* GridManager = Cast<AGridManagerTool>(UGameplayStatics::GetActorOfClass(GetWorld(), AGridManagerTool::StaticClass()));
 
-	TArray<FPathInfo> PathToTarget = GridManager->GetPathToPointInRangeOfTarget(PositionCoord, PlayerTarget->PositionCoord, MaxRange, GetPathingData());
+	TArray<TEnumAsByte<EAttackRules>> Rules; // empty but needed to use the below function
+	TArray<FPathInfo> PathToTarget = GridManager->GetPathToPointInRangeOfTarget(PositionCoord, PlayerTarget->PositionCoord, MaxRange, GetPathingData(), Rules);
 
 	// this variable is used to track which index of the 'PathToTarget' array the movement of this entity should stop at
 	int TargetPosIndex = -1;
@@ -104,34 +105,29 @@ void AEnemyEntity::DetermineMovement()
 	PositionCoord = PathToTarget[TargetPosIndex].CoordToMoveTo;
 }
 
+// TODO: improve attack selection
 bool AEnemyEntity::DetermineAttack()
 {
 	ACombatManager* CombatManager = Cast<ACombatManager>(UGameplayStatics::GetActorOfClass(GetWorld(), ACombatManager::StaticClass()));
-	
-	TSubclassOf<UGameplayAbilityBase> AbilityToUse;
-	FGridData Pattern;
 	int DistToTarget = abs(PositionCoord.X - PlayerTarget->PositionCoord.X) + abs(PositionCoord.Y - PlayerTarget->PositionCoord.Y);
 
 	for (UGameplayAbilityBase* Ability: GetAllAbilityInstances())
 	{
 		if (DistToTarget > Ability->Range) continue;
-		AbilityToUse = Ability->GetClass();
-		Pattern = Ability->Pattern;
-		break;
+		CombatManager->EnemySetAttackInfo(Ability, PlayerTarget->PositionCoord, EPatternRotation::R0);
+		CombatManager->ExecuteAttackOnTarget();
+		return true;
 	}
 
-	if (!AbilityToUse) return false;
-	CombatManager->EnemySetAttackInfo(AbilityToUse, AbilityDiceMap[AbilityToUse], Pattern, PlayerTarget->PositionCoord, EPatternRotation::R0);
-	CombatManager->ExecuteAttackOnTarget();
-
-	return true;
+	return false;
 }
 
 bool AEnemyEntity::IsTargetInAttackRange(int Range)
 {
 	AGridManagerTool* GridManager = Cast<AGridManagerTool>(UGameplayStatics::GetActorOfClass(GetWorld(), AGridManagerTool::StaticClass()));
 
-	TArray<FIntVector2> AttackableTiles = GridManager->GetCellsInAttackRange(PositionCoord, Range, GetPathingData());
+	TArray<TEnumAsByte<EAttackRules>> Rules; // empty but needed to use below function
+	TArray<FIntVector2> AttackableTiles = GridManager->GetCellsInAttackRange(PositionCoord, Range, GetPathingData(), Rules);
 	for (int i = 0; i < AttackableTiles.Num(); i++)
 	{
 		if (!GridManager->GridCells[AttackableTiles[i]]->IsOccupied) continue;

@@ -65,7 +65,7 @@ public:
 	AEntityBase* CurrentTurnCombatant;
 
 	UPROPERTY(BlueprintReadWrite, category = "Combat")
-	TSubclassOf<UGameplayAbilityBase> AbilityToUse;
+	UGameplayAbilityBase* AbilityRef;
 
 	// functions
 	void MoveCurrentCombatant(FIntVector2 TargetPos);
@@ -81,14 +81,14 @@ public:
 	void DisplayAttackPattern(FIntVector2 TargetCoord);
 
 	UFUNCTION(BlueprintCallable)
-	void DisplayAttackInformation(TSubclassOf<UGameplayAbilityBase> Ability, FDiceFaceLevels DiceLevels, int Range, FGridData Pattern, bool DisplayPatternForTargeting, ETargetType TargetType);
+	void DisplayAttackInformation(UGameplayAbilityBase* AbilityInstance);
 
 	void ExecuteAttackOnTarget();
 
 	UFUNCTION(BlueprintCallable)
 	void OnEntityDeath(AEntityBase* DeadEntity);
 
-	void EnemySetAttackInfo(TSubclassOf<UGameplayAbilityBase> Ability, FDiceFaceLevels DiceLevels, FGridData Pattern, FIntVector2 TargetPos, EPatternRotation Rotation);
+	void EnemySetAttackInfo(UGameplayAbilityBase* AbilityInstance, FIntVector2 TargetPos, EPatternRotation Rotation);
 
 	UFUNCTION(BlueprintCallable, BlueprintPure)
 	bool HavePlayersWon();
@@ -185,10 +185,6 @@ protected:
 	TArray<FPathInfo> PathForCombatantToFollow;
 
 	TArray<FIntVector2> AreaOfAttackEffect;
-
-	int AttackRange;
-	FGridData AttackPattern;
-	EPatternRotation AttackRotation;
-	ETargetType AttackTargetType;
 	
+	EPatternRotation AttackRotation;
 };

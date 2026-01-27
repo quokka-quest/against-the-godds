@@ -3,6 +3,7 @@
 
 #include "CombatManager.h"
 
+#include "DiceActor.h"
 #include "PlayerCombatLevelPawn.h"
 #include "PlayerEntity.h"
 #include "GameManager.h"
@@ -38,6 +39,7 @@ void ACombatManager::SpawnPlayerCharacters()
 		const int RandIndex = FMath::RandRange(0, SpawnableCells.Num() - 1);
 		FIntVector2 Coord = SpawnableCells[RandIndex];
 		SpawnEntity(PlayerClass, Coord);
+		
 		return;
 	}
 	
@@ -262,27 +264,24 @@ void ACombatManager::DisplayCurrentCombatantsMovement()
 // displays all the tiles that the player can target
 void ACombatManager::DisplayAttackRange(int Range) 
 {
-	AttackRange = Range;
 	GridManager->ResetWalkableAndAttackableOnAllCells();
 	GridManager->ResetHighlights();
-	GridManager->DisplayCellsInAttackRange(CurrentTurnCombatant->PositionCoord, Range, CurrentTurnCombatant->GetPathingData());
+	GridManager->DisplayCellsInAttackRange(CurrentTurnCombatant->PositionCoord, Range, CurrentTurnCombatant->GetPathingData(), AbilityRef->TargetingRules);
 }
 
 // displays the attack area and stores the targeted tiles with element 0 being the targeted tile and the rest are the additional area
 void ACombatManager::DisplayAttackPattern(FIntVector2 TargetCoord)
 {
-	DisplayAttackRange(AttackRange);
-	AreaOfAttackEffect = GridManager->DisplayAttackPattern(TargetCoord, AttackPattern, AttackRotation, CurrentTurnCombatant->GetPathingData());
+	DisplayAttackRange(AbilityRef->Range); // NOTE: Check if this line can be removed since moving to the new proc mesh system
+	AreaOfAttackEffect = GridManager->DisplayAttackPattern(TargetCoord, AbilityRef->Pattern, AttackRotation, CurrentTurnCombatant->GetPathingData());
 }
 
-void ACombatManager::DisplayAttackInformation(TSubclassOf<UGameplayAbilityBase> Ability, FDiceFaceLevels DiceLevels, int Range, FGridData Pattern, bool DisplayPatternForTargeting, ETargetType TargetType)
+void ACombatManager::DisplayAttackInformation(UGameplayAbilityBase* AbilityInstance)
 {
-	AbilityToUse = Ability;
-	AttackPattern = Pattern;
-	AttackTargetType = TargetType;
-	DisplayAttackRange(Range);
+	AbilityRef = AbilityInstance;
+	DisplayAttackRange(AbilityInstance->Range);
 
-	if (DisplayPatternForTargeting) GridManager->ChangeHighlightMesh(Pattern);
+	if (AbilityInstance->DisplayPatternForTargeting) GridManager->ChangeHighlightMesh(AbilityInstance->Pattern);
 }
 
 void ACombatManager::ExecuteAttackOnTarget()
@@ -293,7 +292,7 @@ void ACombatManager::ExecuteAttackOnTarget()
 		if (!GridManager->GridCells.Contains(AreaOfAttackEffect[i])) continue; // continue if cell coordinate is invalid
 
 		// if the ability is targeting the cells then add the cell to the target array and continue
-		if (AttackTargetType == ETargetType::TT_Tile)
+		if (AbilityRef->TargetType == ETargetType::TT_Tile)
 		{
 			AActor* TileActor = Cast<AActor>(GridManager->GridCells[AreaOfAttackEffect[i]]);
 			TargetActors.Add(TileActor);
@@ -307,7 +306,7 @@ void ACombatManager::ExecuteAttackOnTarget()
 	}
 
 	CurrentTurnCombatant->AvailableAttacks--;
-	CurrentTurnCombatant->ActivateAbilityWithTargets(AbilityToUse, TargetActors);
+	CurrentTurnCombatant->ActivateAbilityWithTargets(AbilityRef->GetClass(), TargetActors);
 
 	FGridData defaultHighlight = FGridData();
 	GridManager->ResetHighlights();
@@ -326,11 +325,10 @@ void ACombatManager::OnEntityDeath(AEntityBase* DeadEntity)
 	if (HaveEnemiesWon()) OnPlayersLost();
 }
 
-void ACombatManager::EnemySetAttackInfo(TSubclassOf<UGameplayAbilityBase> Ability, FDiceFaceLevels DiceLevels, FGridData Pattern, FIntVector2 TargetPos, EPatternRotation Rotation)
+void ACombatManager::EnemySetAttackInfo(UGameplayAbilityBase* AbilityInstance, FIntVector2 TargetPos, EPatternRotation Rotation)
 {
-	AbilityToUse = Ability;
-	AttackPattern = Pattern;
-	AreaOfAttackEffect = GridManager->GetCellsInAttackArea(TargetPos, Pattern, Rotation, FPathingData());
+	AbilityRef = AbilityInstance;
+	AreaOfAttackEffect = GridManager->GetCellsInAttackArea(TargetPos, AbilityInstance->Pattern, Rotation, FPathingData());
 }
 
 bool ACombatManager::HavePlayersWon()

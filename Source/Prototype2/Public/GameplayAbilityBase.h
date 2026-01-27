@@ -45,5 +45,8 @@ public:
 
 	UPROPERTY(EditAnywhere, BlueprintReadWrite, Category = "Ability")
 	bool DisplayPatternForTargeting;
+
+	UPROPERTY(EditAnywhere, BlueprintReadWrite, Category = "Ability")
+	TArray<TEnumAsByte<EAttackRules>> TargetingRules;
 	
 };

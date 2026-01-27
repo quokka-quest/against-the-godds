@@ -48,11 +48,13 @@ public:
 
 	TArray<FPathInfo> FindPath(FIntVector2 Start, FIntVector2 End, bool AvoidOccupiedCells = true);
 	TArray<FIntVector2> FindMoveableCellsInRange(FIntVector2 Start, int AvailableMovement,  bool AvoidOccupiedCells = true);
-	TArray<FIntVector2> FindAttackableCellsInRange(FIntVector2 Start, int Range);
-	TArray<FPathInfo> FindPathToPointInRangeOfTarget(FIntVector2 Start, FIntVector2 End, int Range, bool AvoidOccupiedCells = true);
+	TArray<FIntVector2> FindAttackableCellsInRange(FIntVector2 Start, int Range, TArray<TEnumAsByte<EAttackRules>>& Rules);
+	TArray<FPathInfo> FindPathToPointInRangeOfTarget(FIntVector2 Start, FIntVector2 End, int Range, TArray<TEnumAsByte<EAttackRules>>& Rules, bool AvoidOccupiedCells = true);
 
 protected:
 	TMap<FIntVector2, AGridCellBase*> GridCells;
+
+	TArray<TEnumAsByte<EAttackRules>> AttackRules;
 
 	FIntVector2 StartCoord = FIntVector2(0,0);
 	FIntVector2 EndCoord = FIntVector2(0,0);
@@ -68,7 +70,7 @@ protected:
 
 	// Discover functions
 	void DiscoverCellForMovement(FIntVector2 CellCoord, FIntVector2 PreviousCell, TEnumAsByte<EPatternRotation> Direction);
-	void DiscoverCellForAttack(FIntVector2 CellCoord, FIntVector2 PreviousCell);
+	void DiscoverCellForAttack(FIntVector2 CellCoord, FIntVector2 PreviousCell, TEnumAsByte<EPatternRotation> Direction);
 
 	// Analyse functions
 	bool AnalyseNextCellForPathing();
@@ -85,7 +87,9 @@ protected:
 
 	bool IsCellAlreadyDiscovered(FIntVector2 CellCoord);
 
-	TArray<FNeighbourInfo> GetValidNeighbours(FIntVector2 CellCoord);
+	TArray<FNeighbourInfo> GetValidNeighboursForMovement(FIntVector2 CellCoord);
+
+	TArray<FNeighbourInfo> GetValidNeighboursForAttack(FIntVector2 CellCoord);
 
 	FCellInfo PullNextAnalysableCell();
 
@@ -96,4 +100,6 @@ protected:
 	bool CheckRotationSweep(FIntVector2 Coord);
 
 	EPatternRotation GetDirectionBetweenTwoCells(FIntVector2 FromCoord, FIntVector2 ToCoord);
+
+	bool CheckCoordIsValidNeighborForAttack(FIntVector2 Coord, FNeighbourInfo Neighbor);
 };
