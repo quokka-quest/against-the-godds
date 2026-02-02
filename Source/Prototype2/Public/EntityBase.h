@@ -5,7 +5,6 @@
 #include "CoreMinimal.h"
 #include "CharacterBase.h"
 #include "GlobalDataTypeHeader.h"
-#include "Components/StaticMeshComponent.h"
 #include "GameplayAbilityBase.h"
 #include "PersistentDataStruct.h"
 #include "EntityBase.generated.h"
@@ -19,6 +18,8 @@ class PROTOTYPE2_API AEntityBase : public ACharacterBase
 	GENERATED_BODY()
 
 public:
+	AEntityBase();
+	
 	UFUNCTION(BlueprintImplementableEvent, BlueprintCallable)
 	void SetupTurnStart();
 
@@ -26,7 +27,9 @@ public:
 	void OnTurnEnd();
 
 	UFUNCTION(BlueprintImplementableEvent, BlueprintCallable)
-	void EnqueueMovement(FVector StartPos, FVector EndPos);
+	void EnqueueMovement(FVector StartPos, FVector EndPos, TSubclassOf<UGameplayAbilityBase> AbilityTrigggered);
+	UFUNCTION(BlueprintImplementableEvent, BlueprintCallable)
+	void EnqueueRotation(float StartYaw, float EndYaw);
 
 	UPROPERTY(BlueprintReadWrite, Category="PlayerInfo")
 	FIntVector2 PositionCoord;
@@ -44,6 +47,16 @@ public:
 	UPROPERTY(BlueprintReadWrite, Category = "PlayerInfo")
 	int AvailableAttacks;
 
+	UPROPERTY(EditAnywhere, BlueprintReadWrite, Category = "PlayerInfo")
+	TMap<TEnumAsByte<EPatternRotation>, FGridData> EntityRotations;
+	UPROPERTY(EditAnywhere, BlueprintReadWrite, Category = "PlayerInfo")
+	FGridData RotationSweep;
+	UPROPERTY(BlueprintReadWrite, Category = "PlayerInfo")
+	TEnumAsByte<EPatternRotation> FacingDirection;
+
+	UPROPERTY()
+	TMap<TEnumAsByte<EPatternRotation>, float> DirectionYaws;
+
 	void PrintDebugData();
 
 	UFUNCTION(BlueprintCallable, BlueprintPure, Category = "PlayerInfo")
@@ -53,4 +66,10 @@ public:
 	void OnEntityDeath();
 
 	void SetCharacterData(FPersistentPlayerInfo& Info);
+
+	UFUNCTION(BlueprintCallable, Category = "PlayerInfo")
+	void InitialiseStats();
+
+	UFUNCTION(BlueprintCallable, BlueprintPure)
+	FPathingData GetPathingData();
 };

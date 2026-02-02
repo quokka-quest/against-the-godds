@@ -5,6 +5,15 @@
 #include "CoreMinimal.h"
 #include "GridData.Generated.h"
 
+UENUM(Blueprintable, BlueprintType)
+enum EPatternRotation
+{
+	R0,
+	R90,
+	R180,
+	R270
+};
+
 USTRUCT(BlueprintType)
 struct FGridData
 {
@@ -91,4 +100,42 @@ public:
 		return SelectedCellOffsets;
 	}
 	
+};
+
+USTRUCT(BlueprintType)
+struct FPathingData
+{
+	GENERATED_BODY()
+
+	UPROPERTY()
+	AActor* Actor;
+	UPROPERTY()
+	TMap<TEnumAsByte<EPatternRotation>, FGridData> ActorRotations;
+	UPROPERTY()
+	FGridData RotationSweep;
+	UPROPERTY()
+	TEnumAsByte<EPatternRotation> CurrentRotation;
+};
+
+USTRUCT(BlueprintType)
+struct FPathInfo
+{
+	GENERATED_BODY()
+
+	UPROPERTY()
+	FIntVector2 StartingCoord;
+	UPROPERTY()
+	FIntVector2 CoordToMoveTo;
+	UPROPERTY()
+	TEnumAsByte<EPatternRotation> StartingRot;
+	UPROPERTY()
+	TEnumAsByte<EPatternRotation> RotToChangeTo;
+};
+
+UENUM(BlueprintType)
+enum EAttackRules
+{
+	ObeyTraversalRules,
+	IgnoreLineOfSight,
+	StraightLineOnly,
 };

@@ -65,7 +65,7 @@ public:
 	AEntityBase* CurrentTurnCombatant;
 
 	UPROPERTY(BlueprintReadWrite, category = "Combat")
-	TSubclassOf<UGameplayAbilityBase> AbilityToUse;
+	UGameplayAbilityBase* AbilityRef;
 
 	// functions
 	void MoveCurrentCombatant(FIntVector2 TargetPos);
@@ -81,19 +81,25 @@ public:
 	void DisplayAttackPattern(FIntVector2 TargetCoord);
 
 	UFUNCTION(BlueprintCallable)
-	void DisplayAttackInformation(TSubclassOf<UGameplayAbilityBase> Ability, FDiceFaceLevels DiceLevels, int Range, FGridData Pattern);
+	void DisplayAttackInformation(UGameplayAbilityBase* AbilityInstance);
 
 	void ExecuteAttackOnTarget();
 
 	UFUNCTION(BlueprintCallable)
 	void OnEntityDeath(AEntityBase* DeadEntity);
 
-	void EnemySetAttackInfo(TSubclassOf<UGameplayAbilityBase> Ability, FDiceFaceLevels DiceLevels, FGridData Pattern, FIntVector2 TargetPos, EPatternRotation Rotation);
+	void EnemySetAttackInfo(UGameplayAbilityBase* AbilityInstance, FIntVector2 TargetPos, EPatternRotation Rotation);
 
 	UFUNCTION(BlueprintCallable, BlueprintPure)
 	bool HavePlayersWon();
 	UFUNCTION(BlueprintCallable, BlueprintPure)
 	bool HaveEnemiesWon();
+
+	UFUNCTION(BlueprintCallable, Category="PlayerMovement")
+	void ChangeEntityLocation(AEntityBase* Entity, FIntVector2 NewCoord);
+
+	UFUNCTION(blueprintCallable, Category="PlayerMovement")
+	void SwapEntitiesLocations(AEntityBase* Entity, AEntityBase* TargetEntity);
 	
 	////////////////////////////////////////////////// blueprint getters and setters:
 	UFUNCTION(BlueprintCallable)
@@ -114,6 +120,12 @@ public:
 
 	UFUNCTION(BlueprintCallable)
 	void BroadcastOnAttackClickedEvent();
+
+	UFUNCTION(BlueprintCallable)
+	bool ValidateFullGridPatternAtTarget(AEntityBase* TargetEntity, FGridData Pattern);
+
+	UFUNCTION(BlueprintCallable)
+	bool ValidateFullGridPatternAtCoord(FIntVector2 const TargetCoord, FGridData Pattern);
 
 protected:
 	UPROPERTY(EditAnywhere, BlueprintReadWrite, category = "Combat")
@@ -164,12 +176,15 @@ protected:
 	UFUNCTION(BlueprintCallable)
 	void RemoveDeadPlayers();
 
-	TArray<FIntVector2> PathForCombatantToFollow;
+	UFUNCTION(BlueprintCallable)
+	AEntityBase* SpawnEntity(TSubclassOf<AEntityBase> Entity, FIntVector2 SpawnCoord);
+
+	UFUNCTION(blueprintCallable)
+	void SetCellsOccupier(AEntityBase* Entity, FIntVector2 Coord, bool SetAsOccupied);
+
+	TArray<FPathInfo> PathForCombatantToFollow;
 
 	TArray<FIntVector2> AreaOfAttackEffect;
-
-	int AttackRange;
-	FGridData AttackPattern;
-	EPatternRotation AttackRotation;
 	
+	EPatternRotation AttackRotation;
 };

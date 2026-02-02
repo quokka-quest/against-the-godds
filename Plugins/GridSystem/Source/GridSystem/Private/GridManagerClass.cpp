@@ -174,17 +174,17 @@ void AGridManagerClass::ResetWalkableAndAttackableOnAllCells()
 	}
 }
 
-TArray<FIntVector2> AGridManagerClass::GetWalkableCells(FIntVector2 StartCoord, int AvailableMovement)
+TArray<FIntVector2> AGridManagerClass::GetWalkableCells(FIntVector2 StartCoord, int AvailableMovement, FPathingData PathingData)
 {
-	return PathFinder(GridCells).FindMoveableCellsInRange(StartCoord, AvailableMovement);
+	return PathFinder(GridCells, PathingData).FindMoveableCellsInRange(StartCoord, AvailableMovement);
 }
 
-TArray<FIntVector2> AGridManagerClass::GetCellsInAttackRange(FIntVector2 StartCoord, int Range)
+TArray<FIntVector2> AGridManagerClass::GetCellsInAttackRange(FIntVector2 StartCoord, int Range, FPathingData PathingData, TArray<TEnumAsByte<EAttackRules>>& Rules)
 {
-	return PathFinder(GridCells).FindAttackableCellsInRange(StartCoord, Range);
+	return PathFinder(GridCells, PathingData).FindAttackableCellsInRange(StartCoord, Range, Rules);
 }
 
-TArray<FIntVector2> AGridManagerClass::GetCellsInAttackArea(FIntVector2 Target, FGridData AttackPattern, EPatternRotation Rotation)
+TArray<FIntVector2> AGridManagerClass::GetCellsInAttackArea(FIntVector2 Target, FGridData AttackPattern, EPatternRotation Rotation, FPathingData PathingData)
 {
 	TArray<FIntVector2> Offsets = AttackPattern.GetSelectedCellOffsets();
 	RotateOffsets(Offsets, Rotation);
@@ -198,12 +198,12 @@ TArray<FIntVector2> AGridManagerClass::GetCellsInAttackArea(FIntVector2 Target, 
 	return Results;
 }
 
-TArray<FIntVector2> AGridManagerClass::GetPathToPointInRangeOfTarget(FIntVector2 Start, FIntVector2 End, int Range)
+TArray<FPathInfo> AGridManagerClass::GetPathToPointInRangeOfTarget(FIntVector2 Start, FIntVector2 End, int Range, FPathingData PathingData, TArray<TEnumAsByte<EAttackRules>>& Rules)
 {
-	return PathFinder(GridCells).FindPathToPointInRangeOfTarget(Start, End, Range);
+	return PathFinder(GridCells, PathingData).FindPathToPointInRangeOfTarget(Start, End, Range, Rules);
 }
 
-TArray<FIntVector2> AGridManagerClass::GetPathBetweenCoords(FIntVector2 Start, FIntVector2 End)
+TArray<FPathInfo> AGridManagerClass::GetPathBetweenCoords(FIntVector2 Start, FIntVector2 End, FPathingData PathingData)
 {
-	return PathFinder(GridCells).FindPath(Start, End);
+	return PathFinder(GridCells, PathingData).FindPath(Start, End);
 }

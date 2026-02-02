@@ -2,7 +2,8 @@
 
 
 #include "GameplayAbilityTargeted.h"
-
+#include "GlobalDataTypeHeader.h"
+#include "GridCellBase.h"
 #include "CharacterBase.h"
 
 TArray<AActor*> UGameplayAbilityTargeted::GetTargets() const
@@ -33,14 +34,14 @@ TArray<AActor*> UGameplayAbilityTargeted::GetTargets() const
 				return TArray<AActor*>();
 			}
 		}
-		// elif (NewTarget->IsA(ATile::StaticClass()))
-		// {
-		// 	if (TargetType != ETargetType::TT_Tile)
-		// 	{
-		// 		UE_LOG(LogTemp, Warning, TEXT("UGameplayAbilityBase::GetTargets: TargetType mismatch, expected Character but got Tile"));
-		// 		return TArray<AActor*>();
-		// 	}
-		// }
+		else if (NewTarget->IsA(AGridCellBase::StaticClass()))
+		{
+			if (TargetType != ETargetType::TT_Tile)
+		 	{
+		 		UE_LOG(LogTemp, Warning, TEXT("UGameplayAbilityBase::GetTargets: TargetType mismatch, expected Character but got Tile"));
+		 		return TArray<AActor*>();
+		 	}
+		}
 		else
 		{
 			return TArray<AActor*>();

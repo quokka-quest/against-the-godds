@@ -7,6 +7,15 @@
 #include "GameManager.h"
 #include "AttributeHealthSet.h"
 
+AEntityBase::AEntityBase()
+{
+	DirectionYaws.Add(R0, 90.0f);
+	DirectionYaws.Add(R90, 0.0f);
+	DirectionYaws.Add(R180, 270.0f);
+	DirectionYaws.Add(R270, 180.0f);
+}
+
+
 bool AEntityBase::HasEntityDied()
 {
 	return (HealthSet->GetCurrentHealth() <= 0);
@@ -28,6 +37,21 @@ void AEntityBase::SetCharacterData(FPersistentPlayerInfo& Info)
 
 	HealthSet->SetMaxHealth(Info.MaxHealth);
 	HealthSet->SetCurrentHealth(Info.CurrentHealth);
+}
+
+FPathingData AEntityBase::GetPathingData()
+{
+	FPathingData Result;
+	Result.Actor = this;
+	Result.ActorRotations = EntityRotations;
+	Result.RotationSweep = RotationSweep;
+	Result.CurrentRotation = FacingDirection;
+	return Result;
+}
+
+void AEntityBase::InitialiseStats()
+{
+	HealthSet->SetCurrentHealth(HealthSet->GetMaxHealth());
 }
 
 

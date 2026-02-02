@@ -29,4 +29,6 @@ protected:
 	bool DetermineAttack();
 
 	bool IsTargetInAttackRange(int Range);
+
+	void ChangeOccupancy(FIntVector2 Coord, bool SetAsOccupier);
 };

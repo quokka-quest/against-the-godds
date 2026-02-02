@@ -12,13 +12,13 @@ APlayerCombatLevelPawn::APlayerCombatLevelPawn()
 	PrimaryActorTick.bCanEverTick = true;
 	HighlightedCell = nullptr;
 	PlayerCon = nullptr;
-	TileHighlight = nullptr;
 	SelectedCell = nullptr;
 	CombatManager = nullptr;
 	GridManager = nullptr;
 
 	TileSelectionType = ETileSelectionType::None;
 	IsDisplayingAttack = false;
+	isDisplayingPath = false;
 }
 
 // Called when the game starts or when spawned
@@ -31,10 +31,6 @@ void APlayerCombatLevelPawn::BeginPlay()
 
 	CombatManager = Cast<ACombatManager>(UGameplayStatics::GetActorOfClass(GetWorld(), ACombatManager::StaticClass()));
 	if (!CombatManager) {UE_LOG(LogTemp, Error, TEXT("CombatManager is NULL")) return;}
-
-	TileHighlight = Cast<ATileHighlight>(UGameplayStatics::GetActorOfClass(GetWorld(), ATileHighlight::StaticClass()));
-	if (!TileHighlight) {UE_LOG(LogTemp, Error, TEXT("TileHighlight is null")) return;}
-	TileHighlight->SetActorLocation(FVector(0, 0, 0));
 	
 	PlayerCon = Cast<APlayerController>(GetController());
 	if (!PlayerCon) {UE_LOG(LogTemp, Error, TEXT("PlayerController is null")) return;}
@@ -57,14 +53,14 @@ void APlayerCombatLevelPawn::Tick(float DeltaTime)
 
 	if (!Cast<AGridCellParent>(Hit.GetActor()))
 	{
-		TileHighlight->ToggleHighlight(false);
+		GridManager->SetHighlightVisibility(false);
 		HighlightedCell = nullptr;
 		return;
 	}
 	
 	HighlightedCell = Cast<AGridCellParent>(Hit.GetActor());
-	TileHighlight->ToggleHighlight(true);
-	TileHighlight->MoveToPosition(HighlightedCell->GetActorLocation());
+	GridManager->SetHighlightVisibility(true);
+	GridManager->SetHighlightPosition(HighlightedCell->CellCoordinate);
 }
 
 // Called to bind functionality to input
@@ -87,7 +83,10 @@ void APlayerCombatLevelPawn::OnTileClick()
 	// click logic for when the selected cell is not the cell being clicked on
 	if (SelectedCell != HighlightedCell)
 	{
-		SelectedCell = HighlightedCell;
+		if (!isDisplayingPath && !IsDisplayingAttack) SelectedCell = HighlightedCell;
+
+		if (TileSelectionType == ETileSelectionType::Movement && isDisplayingPath) { TurnOffPathDisplay(); return; }
+		if (TileSelectionType == ETileSelectionType::Attack && IsDisplayingAttack) { TurnOffAttackDisplay(); return; }
 		
 		if (TileSelectionType == ETileSelectionType::Movement) DisplayPathToTile();
 		if (TileSelectionType == ETileSelectionType::Attack) DisplayAttackTargetArea();
@@ -121,6 +120,8 @@ void APlayerCombatLevelPawn::DisplayPathToTile()
 
 	// displays the path to the cell that was clicked
 	CombatManager->DisplayPathForCurrentCombatant(HighlightedCell->CellCoordinate);
+
+	isDisplayingPath = true;
 }
 
 void APlayerCombatLevelPawn::DisplayAttackTargetArea()
@@ -143,12 +144,15 @@ void APlayerCombatLevelPawn::OnPlayerTurnEnd()
 {
 	SelectedCell = nullptr;
 	TileSelectionType = ETileSelectionType::None;
+	IsDisplayingAttack = false;
+	isDisplayingPath = false;
 }
 
 void APlayerCombatLevelPawn::OnMoveButtonClicked()
 {
 	SelectedCell = nullptr;
 	IsDisplayingAttack = false;
+	isDisplayingPath = false;
 	TileSelectionType = ETileSelectionType::Movement;
 }
 
@@ -156,6 +160,7 @@ void APlayerCombatLevelPawn::OnAttackButtonClicked()
 {
 	SelectedCell = nullptr;
 	IsDisplayingAttack = false;
+	isDisplayingPath = false;
 	TileSelectionType = ETileSelectionType::Attack;
 }
 
@@ -176,18 +181,34 @@ void APlayerCombatLevelPawn::OnRotateAttack()
 void APlayerCombatLevelPawn::OnClickedOffTileGrid()
 {
 	SelectedCell = nullptr;
+	IsDisplayingAttack = false;
+	isDisplayingPath = false;
 
 	if (TileSelectionType == ETileSelectionType::None) return;
 	if (TileSelectionType == ETileSelectionType::SpawnSelection) return;
-	if (TileSelectionType == ETileSelectionType::Movement) {CombatManager->DisplayCurrentCombatantsMovement(); return;}
-	if (TileSelectionType == ETileSelectionType::Attack) return; // can implement target pattern reset when merged with Lee-Roy's GAS system
+	if (TileSelectionType == ETileSelectionType::Movement) { TurnOffPathDisplay(); return; }
+	if (TileSelectionType == ETileSelectionType::Attack) { TurnOffAttackDisplay(); }
 }
 
 void APlayerCombatLevelPawn::OnAttackExecuted()
 {
 	TileSelectionType = ETileSelectionType::None;
+	IsDisplayingAttack = false;
 }
 
+void APlayerCombatLevelPawn::TurnOffAttackDisplay()
+{
+	GridManager->ResetHighlights();
+	FGridData DefaultHighlight = FGridData();
+	GridManager->ChangeHighlightMesh(DefaultHighlight);
+	TileSelectionType = ETileSelectionType::None;
+	IsDisplayingAttack = false;
+}
 
+void APlayerCombatLevelPawn::TurnOffPathDisplay()
+{
+	CombatManager->DisplayCurrentCombatantsMovement();
+	isDisplayingPath = false;
+}
 
 

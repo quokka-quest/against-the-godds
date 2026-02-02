@@ -5,6 +5,7 @@
 #include "CoreMinimal.h"
 #include "GridCellBase.h"
 #include "EnemyEntity.h"
+#include "GridData.h"
 #include "GridCellParent.generated.h"
 
 /**
@@ -24,5 +25,12 @@ public:
 	bool IsEnemySpawnCell;
 	UPROPERTY(EditAnywhere, BlueprintReadWrite, Category = "CellProperties")
 	TSubclassOf<AEnemyEntity> EnemyToSpawn;
+	UPROPERTY(EditAnywhere, BlueprintReadWrite, Category = "CellProperties")
+	TEnumAsByte<EPatternRotation> SpawnedEntityRotation;
+
+	UFUNCTION(BlueprintImplementableEvent, BlueprintCallable, Category = "CellProperties")
+	void ToggleNiagraForCellEffect(bool Enable);
+	UPROPERTY(BlueprintReadWrite, Category = "CellProperties")
+	TSubclassOf<UGameplayAbilityBase> TemporaryCellEffect;
 	
 };

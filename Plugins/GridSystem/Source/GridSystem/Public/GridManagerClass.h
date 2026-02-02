@@ -7,15 +7,6 @@
 #include "GridCellBase.h"
 #include "GridManagerClass.generated.h"
 
-UENUM(Blueprintable, BlueprintType)
-enum EPatternRotation
-{
-	R0,
-	R90,
-	R180,
-	R270
-};
-
 UCLASS()
 class GRIDSYSTEM_API AGridManagerClass : public AActor
 {
@@ -47,19 +38,19 @@ public:
 	void ResetWalkableAndAttackableOnAllCells();
 	
 	UFUNCTION(BlueprintCallable, Category="Grid System")
-	TArray<FIntVector2> GetWalkableCells(FIntVector2 StartCoord, int AvailableMovement);
+	TArray<FIntVector2> GetWalkableCells(FIntVector2 StartCoord, int AvailableMovement, FPathingData PathingData);
 
 	UFUNCTION(BlueprintCallable, Category="Grid System")
-	TArray<FIntVector2> GetCellsInAttackRange(FIntVector2 StartCoord, int Range);
+	TArray<FIntVector2> GetCellsInAttackRange(FIntVector2 StartCoord, int Range, FPathingData PathingData, TArray<TEnumAsByte<EAttackRules>>& Rules);
 
 	UFUNCTION(BlueprintCallable, Category="Grid System")
-	TArray<FIntVector2> GetCellsInAttackArea(FIntVector2 Target, FGridData AttackPattern, EPatternRotation Rotation);
+	TArray<FIntVector2> GetCellsInAttackArea(FIntVector2 Target, FGridData AttackPattern, EPatternRotation Rotation, FPathingData PathingData);
 
 	UFUNCTION(BlueprintCallable, Category="Grid System")
-	TArray<FIntVector2> GetPathToPointInRangeOfTarget(FIntVector2 Start, FIntVector2 End, int Range);
+	TArray<FPathInfo> GetPathToPointInRangeOfTarget(FIntVector2 Start, FIntVector2 End, int Range, FPathingData PathingData, TArray<TEnumAsByte<EAttackRules>>& Rules);
 
 	UFUNCTION(BlueprintCallable, Category="Grid System")
-	TArray<FIntVector2> GetPathBetweenCoords(FIntVector2 Start, FIntVector2 End);
+	TArray<FPathInfo> GetPathBetweenCoords(FIntVector2 Start, FIntVector2 End, FPathingData PathingData);
 
 protected:
 

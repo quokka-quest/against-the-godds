@@ -48,81 +48,86 @@ void AEnemyEntity::DetermineMovement()
 
 	AGridManagerTool* GridManager = Cast<AGridManagerTool>(UGameplayStatics::GetActorOfClass(GetWorld(), AGridManagerTool::StaticClass()));
 
-	TArray<FIntVector2> PathToTarget = GridManager->GetPathToPointInRangeOfTarget(PositionCoord, PlayerTarget->PositionCoord, MaxRange);
+	TArray<TEnumAsByte<EAttackRules>> Rules; // empty but needed to use the below function
+	TArray<FPathInfo> PathToTarget = GridManager->GetPathToPointInRangeOfTarget(PositionCoord, PlayerTarget->PositionCoord, MaxRange, GetPathingData(), Rules);
 
-	// establish the first tile in the path
-	// pathing gives the path in reverse to the last index is the start tile
-	// the -2 gives the first tile to move to
-	int TargetPosIndex = PathToTarget.Num() - 2;
-	if (TargetPosIndex < 0) return;
+	// this variable is used to track which index of the 'PathToTarget' array the movement of this entity should stop at
+	int TargetPosIndex = -1;
+	// the pathing function used above ignores the idea of movement cost so that is checked in this function
+	int MoveCost = 0;
 
-	// if the target tile is occupied then movement can't be done
-	if (GridManager->GridCells[PathToTarget[TargetPosIndex]]->IsOccupied) return;
-	// If the movement cost is greater than the available movement of this enemy entity, then movement can't be done
-	int MoveCost = GridManager->GridCells[PathToTarget[TargetPosIndex]]->MovementCost;
-	if (MoveCost > MaxMovement) return;
-
-	// -3 is done here because the .Num()-2 tile is done above to establish if movement is possible
-	for (int i = PathToTarget.Num()-3; i >= 0; i--)
+	// this for loop establishes how far along the given path this entity can move. The for loop below does the actual movement
+	// this is where any and all movement logic for enemy entities should be
+	// the above pathfinding function can ignore occupied
+	for (int i = 0; i < PathToTarget.Num(); i++)
 	{
-		// breaks the loop if the tile has an entity on it (prevents movement onto an occupied tile)
-		if (GridManager->GridCells[PathToTarget[i]]->IsOccupied) break;
-
 		// check if the available movement will allow for this tile to be moved to
-		int AddMoveCost = GridManager->GridCells[PathToTarget[i]]->MovementCost;
+		int AddMoveCost = GridManager->GridCells[PathToTarget[i].CoordToMoveTo]->MovementCost;
 		if (MoveCost + AddMoveCost > MaxMovement) break;
 
 		// if it can then the current tile is set as the new target
 		MoveCost += AddMoveCost;
-		TargetPosIndex = i;
+		TargetPosIndex = i; // the target position index changes to be the next cell to move onto
 	}
 
+	if (TargetPosIndex < 0) return;
+
+	// apply the movement cost
 	AvailableMovement -= MoveCost;
-	for (int i = PathToTarget.Num()-1; i > TargetPosIndex; i--)
+
+	// this for loop queues the needed movement and rotations
+	for (int i = 0; i <= TargetPosIndex; i++)
 	{
-		FVector StartPos = GridManager->GridCells[PathToTarget[i]]->GetActorLocation();
-		FVector EndPos = GridManager->GridCells[PathToTarget[i-1]]->GetActorLocation();
-		EnqueueMovement(StartPos, EndPos);
+		bool rot = PathToTarget[i].StartingRot != PathToTarget[i].RotToChangeTo;
+		float StartRot = DirectionYaws[PathToTarget[i].StartingRot];
+		float EndRot = DirectionYaws[PathToTarget[i].RotToChangeTo];
+		if (rot) EnqueueRotation(StartRot, EndRot);
+
+		FVector StartPos = GridManager->GridCells[PathToTarget[i].StartingCoord]->GetActorLocation();
+		FVector EndPos = GridManager->GridCells[PathToTarget[i].CoordToMoveTo]->GetActorLocation();
+
+		// check for ability on hazard to trigger when walked on
+		TSubclassOf<UGameplayAbilityBase> CellAbility = nullptr;
+		if (Cast<AGridCellParent>(GridManager->GridCells[PathToTarget[i].CoordToMoveTo])->TemporaryCellEffect)
+		{
+			CellAbility = Cast<AGridCellParent>(GridManager->GridCells[PathToTarget[i].CoordToMoveTo])->TemporaryCellEffect;
+		}
+		
+		EnqueueMovement(StartPos, EndPos, CellAbility);
 	}
 
 	// removes this entity from the cell it started in
-	GridManager->GridCells[PositionCoord]->IsOccupied = false;
-	GridManager->GridCells[PositionCoord]->OccupyingActor = nullptr;
+	ChangeOccupancy(PositionCoord, false);
+	FacingDirection = PathToTarget[TargetPosIndex].RotToChangeTo;
 
-	// tells the cell it moved to that it is occupied
-	PositionCoord = PathToTarget[TargetPosIndex];
-	GridManager->GridCells[PositionCoord]->IsOccupied = true;
-	GridManager->GridCells[PositionCoord]->OccupyingActor = Cast<AEntityBase>(this);
+	// set occupancy on the cell that was moved onto
+	ChangeOccupancy(PathToTarget[TargetPosIndex].CoordToMoveTo, true);
+	PositionCoord = PathToTarget[TargetPosIndex].CoordToMoveTo;
 }
 
+// TODO: improve attack selection
 bool AEnemyEntity::DetermineAttack()
 {
 	ACombatManager* CombatManager = Cast<ACombatManager>(UGameplayStatics::GetActorOfClass(GetWorld(), ACombatManager::StaticClass()));
-	
-	TSubclassOf<UGameplayAbilityBase> AbilityToUse;
-	FGridData Pattern;
 	int DistToTarget = abs(PositionCoord.X - PlayerTarget->PositionCoord.X) + abs(PositionCoord.Y - PlayerTarget->PositionCoord.Y);
 
 	for (UGameplayAbilityBase* Ability: GetAllAbilityInstances())
 	{
 		if (DistToTarget > Ability->Range) continue;
-		AbilityToUse = Ability->GetClass();
-		Pattern = Ability->Pattern;
-		break;
+		CombatManager->EnemySetAttackInfo(Ability, PlayerTarget->PositionCoord, EPatternRotation::R0);
+		CombatManager->ExecuteAttackOnTarget();
+		return true;
 	}
 
-	if (!AbilityToUse) return false;
-	CombatManager->EnemySetAttackInfo(AbilityToUse, AbilityDiceMap[AbilityToUse], Pattern, PlayerTarget->PositionCoord, EPatternRotation::R0);
-	CombatManager->ExecuteAttackOnTarget();
-
-	return true;
+	return false;
 }
 
 bool AEnemyEntity::IsTargetInAttackRange(int Range)
 {
 	AGridManagerTool* GridManager = Cast<AGridManagerTool>(UGameplayStatics::GetActorOfClass(GetWorld(), AGridManagerTool::StaticClass()));
 
-	TArray<FIntVector2> AttackableTiles = GridManager->GetCellsInAttackRange(PositionCoord, Range);
+	TArray<TEnumAsByte<EAttackRules>> Rules; // empty but needed to use below function
+	TArray<FIntVector2> AttackableTiles = GridManager->GetCellsInAttackRange(PositionCoord, Range, GetPathingData(), Rules);
 	for (int i = 0; i < AttackableTiles.Num(); i++)
 	{
 		if (!GridManager->GridCells[AttackableTiles[i]]->IsOccupied) continue;
@@ -130,4 +135,15 @@ bool AEnemyEntity::IsTargetInAttackRange(int Range)
 	}
 	
 	return false;
+}
+
+void AEnemyEntity::ChangeOccupancy(FIntVector2 Coord, bool SetAsOccupier)
+{
+	AGridManagerTool* GridManager = Cast<AGridManagerTool>(UGameplayStatics::GetActorOfClass(GetWorld(), AGridManagerTool::StaticClass()));
+
+	for (FIntVector2 Offset : EntityRotations[FacingDirection].GetSelectedCellOffsets())
+	{
+		FIntVector2 CellCoord = Coord + Offset;
+		GridManager->GridCells[CellCoord]->SetOccupier((SetAsOccupier)? this : nullptr);
+	}
 }

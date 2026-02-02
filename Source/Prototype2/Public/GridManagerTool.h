@@ -6,7 +6,9 @@
 #include "GridManagerClass.h"
 #include "GlobalDataTypeHeader.h"
 #include "GridCellParent.h"
+#include "GridOutlineActor.h"
 #include "GridManagerTool.generated.h"
+
 
 /**
  * 
@@ -20,40 +22,70 @@ public:
 	UPROPERTY(EditAnywhere, BlueprintReadWrite, Category = "GridDisplay")
 	TEnumAsByte<EEditorGridDisplayType> GridDisplayType;
 
-	UFUNCTION(CallInEditor, BlueprintCallable, Category = "GridDisplay")
-	void UpdateDisplay();
+	UFUNCTION(BlueprintCallable)
+	void ResetHighlights();
 
 	UFUNCTION(BlueprintCallable)
-	void ChangeAllTilesDisplay(EEditorGridDisplayType DisplayType);
-
-	UFUNCTION()
-	void ChangeCellsMaterial(AGridCellParent* Tile, ETileMaterial Material);
+	void DisplayWalkableCells(FIntVector2 Start, int AvailableMovement, FPathingData PathData);
 
 	UFUNCTION(BlueprintCallable)
-	void DisplayWalkableCells(FIntVector2 Start, int AvailableMovement);
+	TArray<FPathInfo> DisplayCellPath(FIntVector2 StartCoord, FIntVector2 EndCoord, FPathingData PathData);
 
 	UFUNCTION(BlueprintCallable)
-	TArray<FIntVector2> DisplayCellPath(FIntVector2 StartCoord, FIntVector2 EndCoord);
+	void DisplayCellsInAttackRange(FIntVector2 Start, int Range, FPathingData PathData, TArray<TEnumAsByte<EAttackRules>>& Rules);
 
 	UFUNCTION(BlueprintCallable)
-	void DisplayCellsInAttackRange(FIntVector2 Start, int Range);
+	TArray<FIntVector2> DisplayAttackPattern(FIntVector2 TargetCoord, FGridData Pattern, EPatternRotation Rotation, FPathingData PathData);
 
 	UFUNCTION(BlueprintCallable)
-	TArray<FIntVector2> DisplayAttackPattern(FIntVector2 TargetCoord, FGridData Pattern, EPatternRotation Rotation);
+	void DisplayCellsInComplexAttackRange(FIntVector2 Start, FGridData ComplexRange, FPathingData PathData);
 
 	UFUNCTION(BlueprintCallable, BlueprintPure)
 	TArray<FIntVector2> GetPlayerSpawnCells();
 
-protected:
-	UPROPERTY()
-	UMaterialInterface* DefaultMat = LoadObject<UMaterialInterface>(nullptr, TEXT("/Game/Materials/M_TileRed.M_TileRed"));
-	UPROPERTY()
-	UMaterialInterface* TargetMat = LoadObject<UMaterialInterface>(nullptr, TEXT("/Game/Materials/M_TargetTile.M_TargetTile"));
-	UPROPERTY()
-	UMaterialInterface* HighlightedMat = LoadObject<UMaterialInterface>(nullptr, TEXT("/Game/Materials/M_TileGreen.M_TileGreen"));
-	UPROPERTY()
-	UMaterialInterface* PathMat = LoadObject<UMaterialInterface>(nullptr, TEXT("/Game/Materials/M_TileGold.M_TileGold"));
+	void SetHighlightPosition(FIntVector2 CellCoord);
+	void SetHighlightVisibility(bool IsVisible);
+	void SetHighlightRotation(float Rotation);
 
+	UFUNCTION(BlueprintCallable)
+	void ChangeHighlightMesh(FGridData& HighlightData);
+
+protected:
+	
+	UPROPERTY()
+	TArray<AActor*> DirectionIndicators;
+	UPROPERTY(EditAnywhere, BlueprintReadWrite, Category = "GridDisplay")
+	TSubclassOf<AActor> ArrowIndicator;
+	UPROPERTY(EditAnywhere, BlueprintReadWrite, Category = "GridDisplay")
+	TSubclassOf<AActor> AxisIndicator;
+	UPROPERTY()
+	bool DisplayArrows;
+	UPROPERTY()
+	AActor* AxisActorRef;
+	UFUNCTION(CallInEditor, BlueprintCallable, Category = "GridDisplay")
+	void ToggleDirectionIndicators();
+	UFUNCTION(CallInEditor, BlueprintCallable, Category = "GridDisplay")
+	void ToggleAxisIndicator();
+
+	UPROPERTY()
+	AGridOutlineActor* OutlineActor;
+	UPROPERTY()
+	AGridOutlineActor* AreaOutlineActor;
+	UPROPERTY()
+	AGridOutlineActor* PathAndAttackOutlineActor;
+	UPROPERTY()
+	AGridOutlineActor* HighlightOutlineActor;
+	UPROPERTY(EditAnywhere, BlueprintReadWrite, Category = "GridDisplay")
+	UMaterialInterface* GridMaterial;
+	UPROPERTY(EditAnywhere, BlueprintReadWrite, Category = "GridDisplay")
+	UMaterialInterface* AreaMaterial;
+	UPROPERTY(EditAnywhere, BlueprintReadWrite, Category = "GridDisplay")
+	UMaterialInterface* PathMaterial;
+	UPROPERTY(EditAnywhere, BlueprintReadWrite, Category = "GridDisplay")
+	UMaterialInterface* HighlightMaterial;
+	
 	virtual void ReplaceGridCell(UWorld* World, FIntVector2 Coord) override;
+
+	virtual void BeginPlay() override;
 	
 };

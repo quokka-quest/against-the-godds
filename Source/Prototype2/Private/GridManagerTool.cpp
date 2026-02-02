@@ -2,95 +2,141 @@
 
 
 #include "GridManagerTool.h"
+#include "GridOutlineGenerator.h"
 
-void AGridManagerTool::UpdateDisplay()
+void AGridManagerTool::BeginPlay()
 {
-	ChangeAllTilesDisplay(GridDisplayType);
+	Super::BeginPlay();
+
+	OutlineActor = GetWorld()->SpawnActor<AGridOutlineActor>(AGridOutlineActor::StaticClass());
+	OutlineActor->SetMaterial(GridMaterial);
+	AreaOutlineActor = GetWorld()->SpawnActor<AGridOutlineActor>(AGridOutlineActor::StaticClass());
+	AreaOutlineActor->SetMaterial(AreaMaterial);
+	PathAndAttackOutlineActor = GetWorld()->SpawnActor<AGridOutlineActor>(AGridOutlineActor::StaticClass());
+	PathAndAttackOutlineActor->SetMaterial(PathMaterial);
+	HighlightOutlineActor = GetWorld()->SpawnActor<AGridOutlineActor>(AGridOutlineActor::StaticClass());
+	HighlightOutlineActor->SetMaterial(HighlightMaterial);
+
+	float height = 0.0f;
+	GridOutlineGenerator(OutlineActor).GenerateFullGridOutline(GridCells, height, GridCellSizeX, GridCellSizeY);
+
+	FGridData HighlightData = FGridData();
+	GridOutlineGenerator(HighlightOutlineActor).GenerateOutlineFromGridData(HighlightData, GridCellSizeX, GridCellSizeY);
 }
 
-void AGridManagerTool::ChangeAllTilesDisplay(EEditorGridDisplayType DisplayType)
+void AGridManagerTool::ResetHighlights()
 {
-	for (auto& Cell : GridCells)
-	{
-		AGridCellParent* value = Cast<AGridCellParent>(Cell.Value);
-		if (!value) {UE_LOG(LogTemp, Warning, TEXT("GridManagerTool->ChangeAllTilesDisplay: Cell failed to cast to AGridCellParent")) return;}
-		
-		UStaticMeshComponent* CellMesh = value->FindComponentByClass<UStaticMeshComponent>();
-		if (!CellMesh) {UE_LOG(LogTemp, Warning, TEXT("Cell Mesh could not be found")) return;}
-
-		if (DisplayType == EEditorGridDisplayType::HazardTile && value->IsEnviroHazardCell)
-		{
-			CellMesh->SetMaterial(0, HighlightedMat);
-		}
-		else if (DisplayType == EEditorGridDisplayType::PlayerSpawnTile && value->IsPlayerSpawnCell)
-		{
-			CellMesh->SetMaterial(0, HighlightedMat);
-		}
-		else if (DisplayType == EEditorGridDisplayType::EnemySpawnTile && value->IsEnemySpawnCell)
-		{
-			CellMesh->SetMaterial(0, HighlightedMat);
-		}
-		else
-		{
-			CellMesh->SetMaterial(0, DefaultMat);
-		}
-	}
+	OutlineActor->SetVisibility(true);
+	AreaOutlineActor->SetVisibility(false);
+	PathAndAttackOutlineActor->SetVisibility(false);
 }
 
-void AGridManagerTool::ChangeCellsMaterial(AGridCellParent* Tile, ETileMaterial Material)
+void AGridManagerTool::SetHighlightRotation(float Rotation)
 {
-	UStaticMeshComponent* CellMesh = Tile->FindComponentByClass<UStaticMeshComponent>();
-	CellMesh->SetMaterial(0, (Material == ETileMaterial::Target)? TargetMat : (Material == ETileMaterial::Highlighted)? HighlightedMat : DefaultMat);
+	FRotator rot = FRotator(0.0f, Rotation, 0.0f);
+	HighlightOutlineActor->SetActorRotation(rot);
 }
 
-void AGridManagerTool::DisplayWalkableCells(FIntVector2 Start, int AvailableMovement)
+void AGridManagerTool::DisplayWalkableCells(FIntVector2 Start, int AvailableMovement, FPathingData PathData)
 {
 	if (AvailableMovement <= 0) return;
-	TArray<FIntVector2> WalkableCells = GetWalkableCells(Start, AvailableMovement);
+	TArray<FIntVector2> WalkableCells = GetWalkableCells(Start, AvailableMovement, PathData);
 	if (WalkableCells.Num() == 0) return;
 
+	TArray<FIntVector2> DisplayCells;
+	TArray<FIntVector2> SizeOffsets = PathData.RotationSweep.GetSelectedCellOffsets();
 	for (int i = 0; i < WalkableCells.Num(); i++)
 	{
-		GridCells[WalkableCells[i]]->FindComponentByClass<UStaticMeshComponent>()->SetMaterial(0, HighlightedMat);
 		GridCells[WalkableCells[i]]->IsWalkable = true;
-	}
-}
 
-TArray<FIntVector2> AGridManagerTool::DisplayCellPath(FIntVector2 StartCoord, FIntVector2 EndCoord)
-{
-	TArray<FIntVector2> Path = GetPathBetweenCoords(StartCoord, EndCoord);
-
-	for (FIntVector2 Cell : Path)
-	{
-		GridCells[Cell]->FindComponentByClass<UStaticMeshComponent>()->SetMaterial(0, PathMat);
+		for (FIntVector2 Offset : SizeOffsets)
+		{
+			FIntVector2 OffsetCoord = WalkableCells[i] + Offset;
+			if (!GridCells.Contains(OffsetCoord)) {UE_LOG(LogTemp, Error, TEXT("GridManagerTool.cpp->DisplayWalkableCells: tried to display a cell that doesnt exist")); continue;}
+			if (DisplayCells.Contains(OffsetCoord)) continue;
+			DisplayCells.Add(OffsetCoord);
+		}
 	}
 	
+	
+	GridOutlineGenerator(AreaOutlineActor).GenerateOutlineFromCoordArray(DisplayCells, Start, GridCellSizeX, GridCellSizeY);
+	AreaOutlineActor->SetActorLocation(GridCells[Start]->GetActorLocation());
+	AreaOutlineActor->SetVisibility(true);
+	OutlineActor->SetVisibility(false);
+}
+
+TArray<FPathInfo> AGridManagerTool::DisplayCellPath(FIntVector2 StartCoord, FIntVector2 EndCoord, FPathingData PathData)
+{
+	TArray<FPathInfo> Path = GetPathBetweenCoords(StartCoord, EndCoord, PathData);
+	TArray<FIntVector2> DisplayCells;
+	
+	TArray<FIntVector2> SizeOffsets = PathData.RotationSweep.GetSelectedCellOffsets();
+	for (FPathInfo Cell : Path)
+	{
+		for (FIntVector2 Offset : SizeOffsets)
+		{
+			FIntVector2 OffsetCoord = Cell.CoordToMoveTo + Offset;
+			if (!GridCells.Contains(OffsetCoord)) { UE_LOG(LogTemp, Error, TEXT("GridManagerTool.cpp->DisplayCellPath: tried to display a cell that doesnt exist")); continue; }
+			DisplayCells.Add(OffsetCoord);
+		}
+	}
+
+	// add the start coord for display since 'GetPathBetweenCoords' does not contain the start coord
+	for (FIntVector2 Offset : SizeOffsets)
+	{
+		FIntVector2 OffsetCoord = StartCoord + Offset;
+		if (!GridCells.Contains(OffsetCoord)) { UE_LOG(LogTemp, Error, TEXT("GridManagerTool.cpp->DisplayCellPath: tried to display a cell that doesnt exist")); continue; }
+		DisplayCells.Add(OffsetCoord);
+	}
+
+	GridOutlineGenerator(PathAndAttackOutlineActor).GenerateOutlineFromCoordArray(DisplayCells, StartCoord, GridCellSizeX, GridCellSizeY);
+	PathAndAttackOutlineActor->SetActorLocation(GridCells[StartCoord]->GetActorLocation());
+	PathAndAttackOutlineActor->SetVisibility(true);
+	AreaOutlineActor->SetVisibility(false);
+
 	return Path;
 }
 
-void AGridManagerTool::DisplayCellsInAttackRange(FIntVector2 Start, int Range)
+void AGridManagerTool::DisplayCellsInAttackRange(FIntVector2 Start, int Range, FPathingData PathData, TArray<TEnumAsByte<EAttackRules>>& Rules)
 {
 	if (Range < 0) return;
-	TArray<FIntVector2> AttackableCells = GetCellsInAttackRange(Start, Range);
+	TArray<FIntVector2> AttackableCells = GetCellsInAttackRange(Start, Range, PathData, Rules);
 	if (AttackableCells.Num() == 0) return;
 
 	for (int i = 0; i < AttackableCells.Num(); i++)
 	{
 		GridCells[AttackableCells[i]]->IsAttackable = true;
-		GridCells[AttackableCells[i]]->FindComponentByClass<UStaticMeshComponent>()->SetMaterial(0, HighlightedMat);
+	}
+
+	GridOutlineGenerator(AreaOutlineActor).GenerateOutlineFromCoordArray(AttackableCells, Start, GridCellSizeX, GridCellSizeY);
+	AreaOutlineActor->SetActorLocation(GridCells[Start]->GetActorLocation());
+	AreaOutlineActor->SetVisibility(true);
+	OutlineActor->SetVisibility(false);
+}
+
+void AGridManagerTool::DisplayCellsInComplexAttackRange(FIntVector2 Start, FGridData ComplexRange, FPathingData PathData)
+{
+	TArray<FIntVector2> Offsets = ComplexRange.GetSelectedCellOffsets();
+	TArray<FIntVector2> AttackableCells;
+
+	for (FIntVector2 Offset : Offsets)
+	{
+		FIntVector2 Coord = Start + Offset;
+
+		if (!GridCells.Contains(Coord)) continue; // continue if the coord doesn't exist
 	}
 }
 
-TArray<FIntVector2> AGridManagerTool::DisplayAttackPattern(FIntVector2 TargetCoord, FGridData Pattern, EPatternRotation Rotation)
+TArray<FIntVector2> AGridManagerTool::DisplayAttackPattern(FIntVector2 TargetCoord, FGridData Pattern, EPatternRotation Rotation, FPathingData PathData)
 {
-	TArray<FIntVector2> Cells = GetCellsInAttackArea(TargetCoord, Pattern, Rotation);
+	TArray<FIntVector2> Cells = GetCellsInAttackArea(TargetCoord, Pattern, Rotation, PathData);
 	if (Cells.Num() == 0) return Cells;
 
-	for (int i = 0; i < Cells.Num(); i++)
-	{
-		GridCells[Cells[i]]->FindComponentByClass<UStaticMeshComponent>()->SetMaterial(0, TargetMat);
-	}
-
+	GridOutlineGenerator(PathAndAttackOutlineActor).GenerateOutlineFromCoordArray(Cells, TargetCoord, GridCellSizeX, GridCellSizeY);
+	PathAndAttackOutlineActor->SetActorLocation(GridCells[TargetCoord]->GetActorLocation());
+	PathAndAttackOutlineActor->SetVisibility(true);
+	AreaOutlineActor->SetVisibility(false);
+	
 	return Cells;
 }
 
@@ -104,6 +150,59 @@ TArray<FIntVector2> AGridManagerTool::GetPlayerSpawnCells()
 		if (CellRef->IsPlayerSpawnCell) PlayerSpawnCells.Add(Coord);
 	}
 	return PlayerSpawnCells;
+}
+
+void AGridManagerTool::ToggleDirectionIndicators()
+{
+	for (AActor* Arrow : DirectionIndicators)
+	{
+		if (!Arrow) continue;
+		Arrow->Destroy();
+	}
+	DisplayArrows = !DisplayArrows;
+	if (!DisplayArrows) return;
+
+	for (auto& Cell : GridCells)
+	{
+		AGridCellParent* CellRef = Cast<AGridCellParent>(Cell.Value);
+		if ((CellRef->IsPlayerSpawnCell && GridDisplayType == PlayerSpawnTile) || (CellRef->IsEnemySpawnCell && GridDisplayType == EnemySpawnTile))
+		{
+			EPatternRotation temp = CellRef->SpawnedEntityRotation;
+			FRotator spawnRot = FRotator(90, 0, (temp == R0)? 0: (temp == R90)? 90: (temp == R180)? 180: -90);
+			FVector spawnPos = CellRef->GetActorLocation() + FVector(0, 0, 100);
+			FTransform spawnTrans = FTransform(spawnRot, spawnPos, FVector(1));
+			AActor* Arrow = GetWorld()->SpawnActor(ArrowIndicator);
+			Arrow->SetActorTransform(spawnTrans);
+			Arrow->SetFolderPath(FName("CellManager/Arrows"));
+			DirectionIndicators.Add(Arrow);
+		}
+	}
+}
+
+void AGridManagerTool::SetHighlightPosition(FIntVector2 CellCoord)
+{
+	HighlightOutlineActor->SetActorLocation(GridCells[CellCoord]->GetActorLocation());
+}
+
+void AGridManagerTool::SetHighlightVisibility(bool IsVisible)
+{
+	HighlightOutlineActor->SetVisibility(IsVisible);
+}
+
+void AGridManagerTool::ChangeHighlightMesh(FGridData& HighlightData)
+{
+	GridOutlineGenerator(HighlightOutlineActor).GenerateOutlineFromGridData(HighlightData, GridCellSizeX, GridCellSizeY);
+}
+
+void AGridManagerTool::ToggleAxisIndicator()
+{
+	if (AxisActorRef) {AxisActorRef->Destroy(); AxisActorRef = nullptr; return;}
+	
+	FTransform spawnTrans = FTransform(FRotator(), FVector(0,0,30.0f), FVector(1));
+	AActor* Arrow = GetWorld()->SpawnActor(AxisIndicator);
+	Arrow->SetActorTransform(spawnTrans);
+	Arrow->SetFolderPath(FName("CellManager/Arrows"));
+	AxisActorRef = Arrow;
 }
 
 void AGridManagerTool::ReplaceGridCell(UWorld* World, FIntVector2 Coord)
@@ -124,6 +223,7 @@ void AGridManagerTool::ReplaceGridCell(UWorld* World, FIntVector2 Coord)
 	bool EnviroHazard = false;
 	bool EnemySpawn = false;
 	TSubclassOf<AEnemyEntity> EnemyToSpawn = nullptr;
+	TEnumAsByte<EPatternRotation> EntityDirection = R0;
 	
 	if (Cell)
 	{
@@ -131,7 +231,7 @@ void AGridManagerTool::ReplaceGridCell(UWorld* World, FIntVector2 Coord)
 		EnviroHazard = Cell->IsEnviroHazardCell;
 		EnemySpawn = Cell->IsEnemySpawnCell;
 		EnemyToSpawn = Cell->EnemyToSpawn;
-		
+		EntityDirection = Cell->SpawnedEntityRotation;
 	}
 
 	// destroy old cell
@@ -177,6 +277,6 @@ void AGridManagerTool::ReplaceGridCell(UWorld* World, FIntVector2 Coord)
 		NewerCell->IsEnviroHazardCell = EnviroHazard;
 		NewerCell->IsEnemySpawnCell = EnemySpawn;
 		NewerCell->EnemyToSpawn = EnemyToSpawn;
-		
+		NewerCell->SpawnedEntityRotation = EntityDirection;
 	}
 }
