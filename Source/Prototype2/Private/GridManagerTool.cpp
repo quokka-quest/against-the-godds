@@ -47,6 +47,7 @@ void AGridManagerTool::DisplayWalkableCells(FIntVector2 Start, int AvailableMove
 	TArray<FIntVector2> SizeOffsets = PathData.RotationSweep.GetSelectedCellOffsets();
 	for (int i = 0; i < WalkableCells.Num(); i++)
 	{
+		// the Pathfinder handles all validity checks so every cell passed back to here should be valid to walk on
 		GridCells[WalkableCells[i]]->IsWalkable = true;
 
 		for (FIntVector2 Offset : SizeOffsets)
@@ -103,33 +104,51 @@ void AGridManagerTool::DisplayCellsInAttackRange(FIntVector2 Start, int Range, F
 	TArray<FIntVector2> AttackableCells = GetCellsInAttackRange(Start, Range, PathData, Rules);
 	if (AttackableCells.Num() == 0) return;
 
+	TArray<FIntVector2> SizeOffsets = PathData.RotationSweep.GetSelectedCellOffsets();
+	TArray<FIntVector2> DisplayCells;
 	for (int i = 0; i < AttackableCells.Num(); i++)
 	{
+		if (!Rules.Contains(EAttackRules::MustFitOnTargetCell)) {GridCells[AttackableCells[i]]->IsAttackable = true; DisplayCells.Add(AttackableCells[i]); continue;}
+
+		if (!DoesPatternFitOnCell(AttackableCells[i], SizeOffsets, PathData)) continue;
 		GridCells[AttackableCells[i]]->IsAttackable = true;
+		
+		for (FIntVector2 Offset : SizeOffsets)
+		{
+			FIntVector2 OffsetCoord = AttackableCells[i]+Offset;
+			DisplayCells.Add(OffsetCoord);
+		}
 	}
 
-	GridOutlineGenerator(AreaOutlineActor).GenerateOutlineFromCoordArray(AttackableCells, Start, GridCellSizeX, GridCellSizeY);
+	GridOutlineGenerator(AreaOutlineActor).GenerateOutlineFromCoordArray(DisplayCells, Start, GridCellSizeX, GridCellSizeY);
 	AreaOutlineActor->SetActorLocation(GridCells[Start]->GetActorLocation());
 	AreaOutlineActor->SetVisibility(true);
 	OutlineActor->SetVisibility(false);
 }
 
-void AGridManagerTool::DisplayCellsInComplexAttackRange(FIntVector2 Start, FGridData ComplexRange, FPathingData PathData)
+TArray<FIntVector2> AGridManagerTool::DisplayAttackPattern(FIntVector2 TargetCoord, FGridData Pattern, EPatternRotation Rotation, FPathingData PathData, TArray<TEnumAsByte<EAttackRules>>& Rules)
 {
-	TArray<FIntVector2> Offsets = ComplexRange.GetSelectedCellOffsets();
-	TArray<FIntVector2> AttackableCells;
-
-	for (FIntVector2 Offset : Offsets)
+	TArray<FIntVector2> Cells;
+	if (!Rules.Contains(EAttackRules::PatternIsPath)) Cells = GetCellsInAttackArea(TargetCoord, Pattern, Rotation, PathData);
+	else
 	{
-		FIntVector2 Coord = Start + Offset;
+		FIntVector2 StartCoord = Cast<AEntityBase>(PathData.Actor)->PositionCoord;
+		TArray<FPathInfo> Path = DisplayCellPath(TargetCoord, StartCoord, PathData);
 
-		if (!GridCells.Contains(Coord)) continue; // continue if the coord doesn't exist
+		Cells.Add(TargetCoord);
+		Cells.Add(StartCoord);
+		for (FPathInfo& PathInfo : Path)
+		{
+			if (Cells.Contains(PathInfo.CoordToMoveTo)) continue;
+			Cells.Add(PathInfo.CoordToMoveTo);
+		}
+		
+		PathAndAttackOutlineActor->SetActorLocation(GridCells[TargetCoord]->GetActorLocation());
+		PathAndAttackOutlineActor->SetVisibility(true);
+		AreaOutlineActor->SetVisibility(false);
+		return Cells;
 	}
-}
-
-TArray<FIntVector2> AGridManagerTool::DisplayAttackPattern(FIntVector2 TargetCoord, FGridData Pattern, EPatternRotation Rotation, FPathingData PathData)
-{
-	TArray<FIntVector2> Cells = GetCellsInAttackArea(TargetCoord, Pattern, Rotation, PathData);
+		
 	if (Cells.Num() == 0) return Cells;
 
 	GridOutlineGenerator(PathAndAttackOutlineActor).GenerateOutlineFromCoordArray(Cells, TargetCoord, GridCellSizeX, GridCellSizeY);
@@ -204,6 +223,19 @@ void AGridManagerTool::ToggleAxisIndicator()
 	Arrow->SetFolderPath(FName("CellManager/Arrows"));
 	AxisActorRef = Arrow;
 }
+
+bool AGridManagerTool::DoesPatternFitOnCell(FIntVector2 CellCoord, TArray<FIntVector2>& Offsets, FPathingData& PathData)
+{
+	for (FIntVector2 Offset : Offsets)
+	{
+		FIntVector2 Coord = CellCoord + Offset;
+		if (!GridCells.Contains(Coord)) return false;
+		if (GridCells[Coord]->IsOccupied && PathData.Actor != GridCells[Coord]->OccupyingActor) return false;
+	}
+
+	return true;
+}
+
 
 void AGridManagerTool::ReplaceGridCell(UWorld* World, FIntVector2 Coord)
 {

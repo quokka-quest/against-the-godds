@@ -68,6 +68,7 @@ public:
 	UGameplayAbilityBase* AbilityRef;
 
 	// functions
+	UFUNCTION(BlueprintCallable, Category="PlayerMovement")
 	void MoveCurrentCombatant(FIntVector2 TargetPos);
 
 	void DisplayPathForCurrentCombatant(FIntVector2 TargetPos);
@@ -100,6 +101,9 @@ public:
 
 	UFUNCTION(blueprintCallable, Category="PlayerMovement")
 	void SwapEntitiesLocations(AEntityBase* Entity, AEntityBase* TargetEntity);
+
+	UFUNCTION(BlueprintCallable, Category="Movement")
+	void AbilityBasedMovement(AEntityBase* EntityToMove, FIntVector2 TargetCoord, float Speed, bool IsKnockback);
 	
 	////////////////////////////////////////////////// blueprint getters and setters:
 	UFUNCTION(BlueprintCallable)
