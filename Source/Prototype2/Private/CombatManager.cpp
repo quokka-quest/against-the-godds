@@ -469,4 +469,10 @@ void ACombatManager::BroadcastOnMoveClickedEvent()
 void ACombatManager::BroadcastOnAttackClickedEvent() 
 {
 	OnAttackButtonClicked.Broadcast();
+
+	APlayerEntity* PlayerRef = Cast<APlayerEntity>(CurrentTurnCombatant);
+	if (!PlayerRef) return;
+
+	if (AbilityRef->TargetingRules.Contains(EAttackRules::ObeyTraversalRules)) GridManager->ChangeHighlightMesh(PlayerRef->RotationSweep);
+	else { FGridData Default = FGridData(); GridManager->ChangeHighlightMesh(Default); }
 }
