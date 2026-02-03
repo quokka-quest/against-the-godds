@@ -135,9 +135,11 @@ TArray<FIntVector2> AGridManagerTool::DisplayAttackPattern(FIntVector2 TargetCoo
 		FIntVector2 StartCoord = Cast<AEntityBase>(PathData.Actor)->PositionCoord;
 		TArray<FPathInfo> Path = DisplayCellPath(TargetCoord, StartCoord, PathData);
 
+		Cells.Add(TargetCoord);
 		Cells.Add(StartCoord);
 		for (FPathInfo& PathInfo : Path)
 		{
+			if (Cells.Contains(PathInfo.CoordToMoveTo)) continue;
 			Cells.Add(PathInfo.CoordToMoveTo);
 		}
 		

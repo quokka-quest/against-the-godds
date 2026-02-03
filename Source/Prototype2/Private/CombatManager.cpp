@@ -422,6 +422,47 @@ bool ACombatManager::ValidateFullGridPatternAtCoord(FIntVector2 const TargetCoor
 	return true;
 }
 
+void ACombatManager::AbilityBasedMovement(AEntityBase* EntityToMove, FIntVector2 TargetCoord, float Speed, bool IsKnockback)
+{
+	PathForCombatantToFollow = GridManager->GetPathBetweenCoords(EntityToMove->PositionCoord, TargetCoord, EntityToMove->GetPathingData());
+	if (PathForCombatantToFollow.IsEmpty()) {UE_LOG(LogTemp, Error, TEXT("CombatManager.cpp->AbilityBasedMovement: path was empty")) return;}
+
+	for (int i = 0; i < PathForCombatantToFollow.Num(); i++)
+	{
+		float StartRot = EntityToMove->DirectionYaws[PathForCombatantToFollow[i].StartingRot];
+		float EndRot = EntityToMove->DirectionYaws[PathForCombatantToFollow[i].RotToChangeTo];
+		bool NeedRot = PathForCombatantToFollow[i].StartingRot != PathForCombatantToFollow[i].RotToChangeTo;
+		if (NeedRot) EntityToMove->EnqueueRotation(StartRot, EndRot);
+		
+		FVector StartPos = GridManager->GridCells[PathForCombatantToFollow[i].StartingCoord]->GetActorLocation();
+		FVector EndPos = GridManager->GridCells[PathForCombatantToFollow[i].CoordToMoveTo]->GetActorLocation();
+
+		// check for ability on hazard to trigger when walked on
+		TSubclassOf<UGameplayAbilityBase> CellAbility = nullptr;
+		if (Cast<AGridCellParent>(GridManager->GridCells[PathForCombatantToFollow[i].CoordToMoveTo])->TemporaryCellEffect)
+		{
+			CellAbility = Cast<AGridCellParent>(GridManager->GridCells[PathForCombatantToFollow[i].CoordToMoveTo])->TemporaryCellEffect;
+		}
+
+		// enqueue movement animation
+		EntityToMove->EnqueueMovement(StartPos, EndPos, CellAbility);
+	}
+
+	// remove from old cell and change facing direction
+	SetCellsOccupier(EntityToMove, EntityToMove->PositionCoord, false);
+	EntityToMove->FacingDirection = PathForCombatantToFollow[PathForCombatantToFollow.Num()-1].RotToChangeTo;
+
+	// set as occupier of new cell
+	SetCellsOccupier(EntityToMove, TargetCoord, true);
+	EntityToMove->PositionCoord = TargetCoord;
+
+	// reset highlight display
+	GridManager->ResetHighlights();
+
+	FGridData DefaultHighlightSize = FGridData();
+	GridManager->ChangeHighlightMesh(DefaultHighlightSize);
+}
+
 
 /////////////////////////////////////////////////////////////////////////// Blueprint friendly Getters and setters:
 
