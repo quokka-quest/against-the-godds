@@ -35,10 +35,7 @@ public:
 	void DisplayCellsInAttackRange(FIntVector2 Start, int Range, FPathingData PathData, TArray<TEnumAsByte<EAttackRules>>& Rules);
 
 	UFUNCTION(BlueprintCallable)
-	TArray<FIntVector2> DisplayAttackPattern(FIntVector2 TargetCoord, FGridData Pattern, EPatternRotation Rotation, FPathingData PathData);
-
-	UFUNCTION(BlueprintCallable)
-	void DisplayCellsInComplexAttackRange(FIntVector2 Start, FGridData ComplexRange, FPathingData PathData);
+	TArray<FIntVector2> DisplayAttackPattern(FIntVector2 TargetCoord, FGridData Pattern, EPatternRotation Rotation, FPathingData PathData, TArray<TEnumAsByte<EAttackRules>>& Rules);
 
 	UFUNCTION(BlueprintCallable, BlueprintPure)
 	TArray<FIntVector2> GetPlayerSpawnCells();
@@ -87,5 +84,7 @@ protected:
 	virtual void ReplaceGridCell(UWorld* World, FIntVector2 Coord) override;
 
 	virtual void BeginPlay() override;
+
+	bool DoesPatternFitOnCell(FIntVector2 CellCoord, TArray<FIntVector2>& Offsets, FPathingData& PathData);
 	
 };

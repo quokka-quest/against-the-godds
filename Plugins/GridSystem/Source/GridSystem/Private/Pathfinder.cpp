@@ -238,6 +238,8 @@ void PathFinder::AnalyseNextCellForAttack()
 	{
 		if (IsCellAlreadyDiscovered(Neighbour.Coord)) continue;
 
+		if (AttackRules.Contains(EAttackRules::ObeyTraversalRules) && !CheckRotationSweep(Neighbour.Coord)) continue;
+
 		DiscoverCellForAttack(Neighbour.Coord, CellInfo.Coord, Neighbour.Direction);
 	}
 }
@@ -337,7 +339,7 @@ bool PathFinder::CheckCoordIsValidNeighborForAttack(FIntVector2 Coord, FNeighbou
 
 	bool IsStraight = (CellMap[Coord].NewRotation == Neighbor.Direction);
 	
-	bool ObeysTravel = false;
+	bool ObeysTravel;
 	if (Neighbor.Direction == R90) {ObeysTravel = (!GridCells[Coord]->BlockPositiveX && !GridCells[Neighbor.Coord]->BlockNegativeX);}
 	else if (Neighbor.Direction == R270) {ObeysTravel = (!GridCells[Coord]->BlockNegativeX && !GridCells[Neighbor.Coord]->BlockPositiveX);}
 	else if (Neighbor.Direction == R0) {ObeysTravel = (!GridCells[Coord]->BlockPositiveY && !GridCells[Neighbor.Coord]->BlockNegativeY);}

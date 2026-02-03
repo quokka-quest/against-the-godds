@@ -262,7 +262,7 @@ void ACombatManager::DisplayCurrentCombatantsMovement()
 }
 
 // displays all the tiles that the player can target
-void ACombatManager::DisplayAttackRange(int Range) 
+void ACombatManager::DisplayAttackRange(int Range)
 {
 	GridManager->ResetWalkableAndAttackableOnAllCells();
 	GridManager->ResetHighlights();
@@ -272,8 +272,7 @@ void ACombatManager::DisplayAttackRange(int Range)
 // displays the attack area and stores the targeted tiles with element 0 being the targeted tile and the rest are the additional area
 void ACombatManager::DisplayAttackPattern(FIntVector2 TargetCoord)
 {
-	DisplayAttackRange(AbilityRef->Range); // NOTE: Check if this line can be removed since moving to the new proc mesh system
-	AreaOfAttackEffect = GridManager->DisplayAttackPattern(TargetCoord, AbilityRef->Pattern, AttackRotation, CurrentTurnCombatant->GetPathingData());
+	AreaOfAttackEffect = GridManager->DisplayAttackPattern(TargetCoord, AbilityRef->Pattern, AttackRotation, CurrentTurnCombatant->GetPathingData(), AbilityRef->TargetingRules);
 }
 
 void ACombatManager::DisplayAttackInformation(UGameplayAbilityBase* AbilityInstance)

@@ -138,4 +138,6 @@ enum EAttackRules
 	ObeyTraversalRules,
 	IgnoreLineOfSight,
 	StraightLineOnly,
+	MustFitOnTargetCell,
+	PatternIsPath,
 };
