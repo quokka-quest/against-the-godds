@@ -372,6 +372,12 @@ void ACombatManager::SetCellsOccupier(AEntityBase* Entity, FIntVector2 Coord, bo
 	}
 }
 
+void ACombatManager::ChangeEntitysOccupancy(AEntityBase* Entity, bool ClearOccupancy)
+{
+	if (ClearOccupancy) SetCellsOccupier(Entity, Entity->PositionCoord, false);
+	else SetCellsOccupier(Entity, Entity->PositionCoord, true);
+}
+
 void ACombatManager::ChangeEntityLocation(AEntityBase* Entity, FIntVector2 NewCoord)
 {
 	SetCellsOccupier(Entity, Entity->PositionCoord, false);
