@@ -67,12 +67,6 @@ void AGridOutlineActor::AddEdgeQuad(const FOutlineEdge& LineInfo, float HalfWidt
 	Verts.Add(LineInfo.End-OutgoingOffset);   // Vertex C
 	Verts.Add(LineInfo.Start-IncomingOffset); // Vertex D
 
-	UE_LOG(LogTemp, Warning, TEXT("Start Miter: %f, %f"), IncomingOffset.X, IncomingOffset.Y)
-	UE_LOG(LogTemp, Warning, TEXT("Vert A pos: %f, %f"), (LineInfo.Start+IncomingOffset).X, (LineInfo.Start+IncomingOffset).Y)
-	UE_LOG(LogTemp, Warning, TEXT("Vert B pos: %f, %f"), (LineInfo.End+OutgoingOffset).X, (LineInfo.End+OutgoingOffset).Y)
-	UE_LOG(LogTemp, Warning, TEXT("Vert C pos: %f, %f"), (LineInfo.End-OutgoingOffset).X, (LineInfo.End-OutgoingOffset).Y)
-	UE_LOG(LogTemp, Warning, TEXT("Vert D pos: %f, %f"), (LineInfo.Start-IncomingOffset).X, (LineInfo.Start-IncomingOffset).Y)
-
 	// Adds the ABC triangle
 	Tris.Add(IndexStart+0);
 	Tris.Add(IndexStart+2);

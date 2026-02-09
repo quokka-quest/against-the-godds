@@ -179,9 +179,9 @@ TArray<FIntVector2> AGridManagerClass::GetWalkableCells(FIntVector2 StartCoord, 
 	return PathFinder(GridCells, PathingData).FindMoveableCellsInRange(StartCoord, AvailableMovement);
 }
 
-TArray<FIntVector2> AGridManagerClass::GetCellsInAttackRange(FIntVector2 StartCoord, int Range, FPathingData PathingData)
+TArray<FIntVector2> AGridManagerClass::GetCellsInAttackRange(FIntVector2 StartCoord, int Range, FPathingData PathingData, TArray<TEnumAsByte<EAttackRules>>& Rules)
 {
-	return PathFinder(GridCells, PathingData).FindAttackableCellsInRange(StartCoord, Range);
+	return PathFinder(GridCells, PathingData).FindAttackableCellsInRange(StartCoord, Range, Rules);
 }
 
 TArray<FIntVector2> AGridManagerClass::GetCellsInAttackArea(FIntVector2 Target, FGridData AttackPattern, EPatternRotation Rotation, FPathingData PathingData)
@@ -198,9 +198,9 @@ TArray<FIntVector2> AGridManagerClass::GetCellsInAttackArea(FIntVector2 Target, 
 	return Results;
 }
 
-TArray<FPathInfo> AGridManagerClass::GetPathToPointInRangeOfTarget(FIntVector2 Start, FIntVector2 End, int Range, FPathingData PathingData)
+TArray<FPathInfo> AGridManagerClass::GetPathToPointInRangeOfTarget(FIntVector2 Start, FIntVector2 End, int Range, FPathingData PathingData, TArray<TEnumAsByte<EAttackRules>>& Rules)
 {
-	return PathFinder(GridCells, PathingData).FindPathToPointInRangeOfTarget(Start, End, Range);
+	return PathFinder(GridCells, PathingData).FindPathToPointInRangeOfTarget(Start, End, Range, Rules);
 }
 
 TArray<FPathInfo> AGridManagerClass::GetPathBetweenCoords(FIntVector2 Start, FIntVector2 End, FPathingData PathingData)

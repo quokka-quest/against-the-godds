@@ -51,14 +51,23 @@ void APlayerCombatLevelPawn::Tick(float DeltaTime)
 	FHitResult Hit;
 	PlayerCon->GetHitResultUnderCursorByChannel(ETraceTypeQuery::TraceTypeQuery1, true, Hit);
 
-	if (!Cast<AGridCellParent>(Hit.GetActor()))
+    AGridCellParent* HoveredCell = Cast<AGridCellParent>(Hit.GetActor());
+
+	if (!HoveredCell ||
+		(TileSelectionType == ETileSelectionType::Movement && !HoveredCell->IsWalkable) ||
+		(isDisplayingPath && HoveredCell != SelectedCell) ||
+		(TileSelectionType == ETileSelectionType::Attack && !HoveredCell->IsAttackable) ||
+		(IsDisplayingAttack && HoveredCell != SelectedCell))
 	{
 		GridManager->SetHighlightVisibility(false);
 		HighlightedCell = nullptr;
 		return;
 	}
 	
-	HighlightedCell = Cast<AGridCellParent>(Hit.GetActor());
+	if (isDisplayingPath && !HoveredCell->IsWalkable) return;
+	if (IsDisplayingAttack && !HoveredCell->IsAttackable) return;
+	
+	HighlightedCell = HoveredCell;
 	GridManager->SetHighlightVisibility(true);
 	GridManager->SetHighlightPosition(HighlightedCell->CellCoordinate);
 }
@@ -199,6 +208,8 @@ void APlayerCombatLevelPawn::OnAttackExecuted()
 void APlayerCombatLevelPawn::TurnOffAttackDisplay()
 {
 	GridManager->ResetHighlights();
+	FGridData DefaultHighlight = FGridData();
+	GridManager->ChangeHighlightMesh(DefaultHighlight);
 	TileSelectionType = ETileSelectionType::None;
 	IsDisplayingAttack = false;
 }

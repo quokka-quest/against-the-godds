@@ -131,3 +131,13 @@ struct FPathInfo
 	UPROPERTY()
 	TEnumAsByte<EPatternRotation> RotToChangeTo;
 };
+
+UENUM(BlueprintType)
+enum EAttackRules
+{
+	ObeyTraversalRules,
+	IgnoreLineOfSight,
+	StraightLineOnly,
+	MustFitOnTargetCell,
+	PatternIsPath,
+};

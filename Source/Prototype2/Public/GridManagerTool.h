@@ -32,16 +32,20 @@ public:
 	TArray<FPathInfo> DisplayCellPath(FIntVector2 StartCoord, FIntVector2 EndCoord, FPathingData PathData);
 
 	UFUNCTION(BlueprintCallable)
-	void DisplayCellsInAttackRange(FIntVector2 Start, int Range, FPathingData PathData);
+	void DisplayCellsInAttackRange(FIntVector2 Start, int Range, FPathingData PathData, TArray<TEnumAsByte<EAttackRules>>& Rules);
 
 	UFUNCTION(BlueprintCallable)
-	TArray<FIntVector2> DisplayAttackPattern(FIntVector2 TargetCoord, FGridData Pattern, EPatternRotation Rotation, FPathingData PathData);
+	TArray<FIntVector2> DisplayAttackPattern(FIntVector2 TargetCoord, FGridData Pattern, EPatternRotation Rotation, FPathingData PathData, TArray<TEnumAsByte<EAttackRules>>& Rules);
 
 	UFUNCTION(BlueprintCallable, BlueprintPure)
 	TArray<FIntVector2> GetPlayerSpawnCells();
 
 	void SetHighlightPosition(FIntVector2 CellCoord);
 	void SetHighlightVisibility(bool IsVisible);
+	void SetHighlightRotation(float Rotation);
+
+	UFUNCTION(BlueprintCallable)
+	void ChangeHighlightMesh(FGridData& HighlightData);
 
 protected:
 	
@@ -49,10 +53,16 @@ protected:
 	TArray<AActor*> DirectionIndicators;
 	UPROPERTY(EditAnywhere, BlueprintReadWrite, Category = "GridDisplay")
 	TSubclassOf<AActor> ArrowIndicator;
+	UPROPERTY(EditAnywhere, BlueprintReadWrite, Category = "GridDisplay")
+	TSubclassOf<AActor> AxisIndicator;
 	UPROPERTY()
 	bool DisplayArrows;
+	UPROPERTY()
+	AActor* AxisActorRef;
 	UFUNCTION(CallInEditor, BlueprintCallable, Category = "GridDisplay")
 	void ToggleDirectionIndicators();
+	UFUNCTION(CallInEditor, BlueprintCallable, Category = "GridDisplay")
+	void ToggleAxisIndicator();
 
 	UPROPERTY()
 	AGridOutlineActor* OutlineActor;
@@ -74,5 +84,7 @@ protected:
 	virtual void ReplaceGridCell(UWorld* World, FIntVector2 Coord) override;
 
 	virtual void BeginPlay() override;
+
+	bool DoesPatternFitOnCell(FIntVector2 CellCoord, TArray<FIntVector2>& Offsets, FPathingData& PathData);
 	
 };

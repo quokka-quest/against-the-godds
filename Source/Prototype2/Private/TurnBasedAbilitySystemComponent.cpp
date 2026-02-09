@@ -6,7 +6,7 @@
 #include "GameplayEffect.h"
 
 FActiveGameplayEffectHandle UTurnBasedAbilitySystemComponent::BindGameplayEffectToOnStackLoss(
-    const FGameplayEffectSpecHandle& EffectSpecHandle, const FGameplayEffectSpecHandle& InstantEffectSpecHandle)
+    const FGameplayEffectSpecHandle& EffectSpecHandle, const FGameplayEffectSpecHandle& InstantEffectSpecHandle, bool bApplyPerStack)
 {
     // Validate the outgoing spec handle before applying
     if (!EffectSpecHandle.IsValid())
@@ -19,31 +19,68 @@ FActiveGameplayEffectHandle UTurnBasedAbilitySystemComponent::BindGameplayEffect
 
     if (Handle.IsValid())
     {
-        // Store the instant effect spec handle to apply on stack loss (only if it's valid)
-        if (InstantEffectSpecHandle.IsValid())
+        // Extract effect classes from the spec handles
+        TSubclassOf<UGameplayEffect> EffectClass = nullptr;
+        TSubclassOf<UGameplayEffect> InstantEffectClass = nullptr;
+
+        if (EffectSpecHandle.Data.IsValid() && EffectSpecHandle.Data->Def)
         {
-            StackLossEffectMap.Add(Handle, InstantEffectSpecHandle);
+            EffectClass = EffectSpecHandle.Data->Def->GetClass();
         }
 
-        // Bind to stack change event
-        FOnActiveGameplayEffectStackChange* StackChangeDelegate = OnGameplayEffectStackChangeDelegate(Handle);
-        if (StackChangeDelegate)
+        if (InstantEffectSpecHandle.IsValid() && InstantEffectSpecHandle.Data.IsValid() && InstantEffectSpecHandle.Data->Def)
         {
-            StackChangeDelegate->AddLambda([this](FActiveGameplayEffectHandle EffectHandle, int32 NewStackCount, int32 PreviousStackCount)
-            {
-                OnStackCountChanged(EffectHandle, NewStackCount, PreviousStackCount);
-            });
+            InstantEffectClass = InstantEffectSpecHandle.Data->Def->GetClass();
         }
 
-        // Bind to removal event to handle last stack removal
-        FOnActiveGameplayEffectRemoved_Info* RemovalDelegate = OnGameplayEffectRemoved_InfoDelegate(Handle);
-        
-        if (RemovalDelegate)
+        // If we already have this handle tracked, just update its data and avoid rebinding delegates
+        if (StackLossEffectMap.Contains(Handle))
         {
-            RemovalDelegate->AddLambda([this](const FGameplayEffectRemovalInfo& RemovalInfo)
+            FStackLossEffectData* ExistingData = StackLossEffectMap.Find(Handle);
+            if (ExistingData)
             {
-                OnEffectRemoved(RemovalInfo.ActiveEffect->Handle);
-            });
+                // Update the instant spec and per-stack flag (if a valid instant spec is provided)
+                if (InstantEffectSpecHandle.IsValid())
+                {
+                    ExistingData->InstantEffectSpecHandle = InstantEffectSpecHandle;
+                    ExistingData->InstantEffectClass = InstantEffectClass;
+                }
+                ExistingData->bApplyPerStack = bApplyPerStack;
+            }
+        }
+        else
+        {
+            // Store the instant effect spec handle to apply on stack loss (only if it's valid)
+            if (InstantEffectSpecHandle.IsValid())
+            {
+                StackLossEffectMap.Add(Handle, {InstantEffectSpecHandle, EffectClass, InstantEffectClass, bApplyPerStack});
+            }
+            else
+            {
+                // Add with an invalid InstantEffectSpecHandle; allows future updates without rebinding
+                StackLossEffectMap.Add(Handle, {FGameplayEffectSpecHandle(), EffectClass, InstantEffectClass, bApplyPerStack});
+            }
+
+            // Bind to stack change event ONCE per active effect handle
+            FOnActiveGameplayEffectStackChange* StackChangeDelegate = OnGameplayEffectStackChangeDelegate(Handle);
+            if (StackChangeDelegate)
+            {
+                StackChangeDelegate->AddLambda([this](FActiveGameplayEffectHandle EffectHandle, int32 NewStackCount, int32 PreviousStackCount)
+                {
+                    OnStackCountChanged(EffectHandle, NewStackCount, PreviousStackCount);
+                });
+            }
+
+            // Bind to removal event ONCE to handle last stack removal
+            FOnActiveGameplayEffectRemoved_Info* RemovalDelegate = OnGameplayEffectRemoved_InfoDelegate(Handle);
+            
+            if (RemovalDelegate)
+            {
+                RemovalDelegate->AddLambda([this](const FGameplayEffectRemovalInfo& RemovalInfo)
+                {
+                    OnEffectRemoved(RemovalInfo.ActiveEffect->Handle);
+                });
+            }
         }
     }
 
@@ -53,18 +90,27 @@ FActiveGameplayEffectHandle UTurnBasedAbilitySystemComponent::BindGameplayEffect
 
 void UTurnBasedAbilitySystemComponent::OnStackCountChanged(FActiveGameplayEffectHandle Handle, int32 NewStackCount, int32 PreviousStackCount)
 {
+    
+    UE_LOG(LogTemp, Log, TEXT("OnStackCountChanged called: NewStackCount=%d, PreviousStackCount=%d"), NewStackCount, PreviousStackCount);
     // Check if stack decreased
     if (NewStackCount < PreviousStackCount)
     {
-        if (FGameplayEffectSpecHandle* SpecHandlePtr = StackLossEffectMap.Find(Handle))
+        if (FStackLossEffectData* EffectData = StackLossEffectMap.Find(Handle))
         {
-            const FGameplayEffectSpecHandle& InstantSpecHandle = *SpecHandlePtr;
+            const FGameplayEffectSpecHandle& InstantSpecHandle = EffectData->InstantEffectSpecHandle;
             if (InstantSpecHandle.IsValid() && InstantSpecHandle.Data.IsValid())
             {
-                // Apply instant effect for each stack lost
-                int32 StacksLost = PreviousStackCount - NewStackCount;
-                for (int32 i = 0; i < StacksLost; ++i)
+                if (EffectData->bApplyPerStack)
                 {
+                    // Apply once per current stack count after the decrease
+                    for (int32 i = 0; i < PreviousStackCount; ++i)
+                    {
+                        ApplyGameplayEffectSpecToSelf(*InstantSpecHandle.Data.Get());
+                    }
+                }
+                else
+                {
+                    // Apply once for any decrease
                     ApplyGameplayEffectSpecToSelf(*InstantSpecHandle.Data.Get());
                 }
             }
@@ -80,17 +126,22 @@ void UTurnBasedAbilitySystemComponent::OnStackCountChanged(FActiveGameplayEffect
 
 void UTurnBasedAbilitySystemComponent::OnEffectRemoved(FActiveGameplayEffectHandle Handle)
 {
-    if (FGameplayEffectSpecHandle* SpecHandlePtr = StackLossEffectMap.Find(Handle))
+    if (FStackLossEffectData* EffectData = StackLossEffectMap.Find(Handle))
     {
-        const FGameplayEffectSpecHandle& InstantSpecHandle = *SpecHandlePtr;
+        const FGameplayEffectSpecHandle& InstantSpecHandle = EffectData->InstantEffectSpecHandle;
+        TSubclassOf<UGameplayEffect> EffectClass = EffectData->EffectClass;
+        TSubclassOf<UGameplayEffect> InstantEffectClass = EffectData->InstantEffectClass;
+
+        // Apply instant effect one final time for the last stack
         if (InstantSpecHandle.IsValid() && InstantSpecHandle.Data.IsValid())
         {
-            // Apply instant effect one final time for the last stack
             ApplyGameplayEffectSpecToSelf(*InstantSpecHandle.Data.Get());
         }
+
+        // Broadcast the event when the final stack is removed with the cached effect classes
+        OnFinalStackRemoved.Broadcast(EffectClass, InstantEffectClass);
     }
     
     // Clean up the mapping
     StackLossEffectMap.Remove(Handle);
 }
-

@@ -65,9 +65,10 @@ public:
 	AEntityBase* CurrentTurnCombatant;
 
 	UPROPERTY(BlueprintReadWrite, category = "Combat")
-	TSubclassOf<UGameplayAbilityBase> AbilityToUse;
+	UGameplayAbilityBase* AbilityRef;
 
 	// functions
+	UFUNCTION(BlueprintCallable, Category="PlayerMovement")
 	void MoveCurrentCombatant(FIntVector2 TargetPos);
 
 	void DisplayPathForCurrentCombatant(FIntVector2 TargetPos);
@@ -81,14 +82,14 @@ public:
 	void DisplayAttackPattern(FIntVector2 TargetCoord);
 
 	UFUNCTION(BlueprintCallable)
-	void DisplayAttackInformation(TSubclassOf<UGameplayAbilityBase> Ability, FDiceFaceLevels DiceLevels, int Range, FGridData Pattern);
+	void DisplayAttackInformation(UGameplayAbilityBase* AbilityInstance);
 
 	void ExecuteAttackOnTarget();
 
 	UFUNCTION(BlueprintCallable)
 	void OnEntityDeath(AEntityBase* DeadEntity);
 
-	void EnemySetAttackInfo(TSubclassOf<UGameplayAbilityBase> Ability, FDiceFaceLevels DiceLevels, FGridData Pattern, FIntVector2 TargetPos, EPatternRotation Rotation);
+	void EnemySetAttackInfo(UGameplayAbilityBase* AbilityInstance, FIntVector2 TargetPos, EPatternRotation Rotation);
 
 	UFUNCTION(BlueprintCallable, BlueprintPure)
 	bool HavePlayersWon();
@@ -100,6 +101,9 @@ public:
 
 	UFUNCTION(blueprintCallable, Category="PlayerMovement")
 	void SwapEntitiesLocations(AEntityBase* Entity, AEntityBase* TargetEntity);
+
+	UFUNCTION(BlueprintCallable, Category="Movement")
+	void AbilityBasedMovement(AEntityBase* EntityToMove, FIntVector2 TargetCoord, float Speed, bool IsKnockback);
 	
 	////////////////////////////////////////////////// blueprint getters and setters:
 	UFUNCTION(BlueprintCallable)
@@ -120,6 +124,12 @@ public:
 
 	UFUNCTION(BlueprintCallable)
 	void BroadcastOnAttackClickedEvent();
+
+	UFUNCTION(BlueprintCallable)
+	bool ValidateFullGridPatternAtTarget(AEntityBase* TargetEntity, FGridData Pattern);
+
+	UFUNCTION(BlueprintCallable)
+	bool ValidateFullGridPatternAtCoord(FIntVector2 const TargetCoord, FGridData Pattern);
 
 protected:
 	UPROPERTY(EditAnywhere, BlueprintReadWrite, category = "Combat")
@@ -179,9 +189,6 @@ protected:
 	TArray<FPathInfo> PathForCombatantToFollow;
 
 	TArray<FIntVector2> AreaOfAttackEffect;
-
-	int AttackRange;
-	FGridData AttackPattern;
-	EPatternRotation AttackRotation;
 	
+	EPatternRotation AttackRotation;
 };

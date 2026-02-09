@@ -119,6 +119,17 @@ void ACharacterBase::ActivateAbilityWithTargets(TSubclassOf<UGameplayAbility> Ab
 	AbilitySystemComponent->TryActivateAbilityByClass(AbilityClass, false);
 }
 
+void ACharacterBase::ActivateAbilityTargetingSelf(TSubclassOf<UGameplayAbility> AbilityClass)
+{
+	const TArray<AActor*> TargetsActor {this};
+	if (!AbilityClass) return;
+
+	Targets = TargetsActor;
+	AbilitySystemComponent->TryActivateAbilityByClass(AbilityClass, false);
+}
+
+
+
 void ACharacterBase::InitialiseAbilities()
 {
 	// Iterate through all abilities in the array and give them to the character
