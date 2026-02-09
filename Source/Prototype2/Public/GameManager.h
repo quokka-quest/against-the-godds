@@ -104,6 +104,7 @@ public:
 	UFUNCTION(BlueprintCallable, Category = "Map")
 	bool isEncounterCompleted(FName EncounterName);
 
+	UPROPERTY(BlueprintReadWrite, Category="PlayerSave")
 	TMap<TSubclassOf<APlayerEntity>, FPersistentPlayerInfo> CharacterInfo;
 
 	UFUNCTION(BlueprintCallable, Category = "Map")
