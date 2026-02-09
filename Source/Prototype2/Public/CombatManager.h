@@ -108,6 +108,9 @@ public:
 	UFUNCTION(BlueprintCallable, Category="Movement")
 	void ChangeEntitysOccupancy(AEntityBase* Entity, bool ClearOccupancy);
 	
+	UFUNCTION(BlueprintCallable, Category="Movement")
+	bool ApplyKnockback(AEntityBase* Entity, FGridData KnockbackData);
+	
 	////////////////////////////////////////////////// blueprint getters and setters:
 	UFUNCTION(BlueprintCallable)
 	void SetAttackRotation(EPatternRotation Rotation);
