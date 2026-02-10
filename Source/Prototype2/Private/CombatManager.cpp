@@ -372,6 +372,12 @@ void ACombatManager::SetCellsOccupier(AEntityBase* Entity, FIntVector2 Coord, bo
 	}
 }
 
+void ACombatManager::ChangeEntitysOccupancy(AEntityBase* Entity, bool ClearOccupancy)
+{
+	if (ClearOccupancy) SetCellsOccupier(Entity, Entity->PositionCoord, false);
+	else SetCellsOccupier(Entity, Entity->PositionCoord, true);
+}
+
 void ACombatManager::ChangeEntityLocation(AEntityBase* Entity, FIntVector2 NewCoord)
 {
 	SetCellsOccupier(Entity, Entity->PositionCoord, false);
@@ -432,7 +438,7 @@ void ACombatManager::AbilityBasedMovement(AEntityBase* EntityToMove, FIntVector2
 		float StartRot = EntityToMove->DirectionYaws[PathForCombatantToFollow[i].StartingRot];
 		float EndRot = EntityToMove->DirectionYaws[PathForCombatantToFollow[i].RotToChangeTo];
 		bool NeedRot = PathForCombatantToFollow[i].StartingRot != PathForCombatantToFollow[i].RotToChangeTo;
-		if (NeedRot) EntityToMove->EnqueueRotation(StartRot, EndRot);
+		if (NeedRot && !IsKnockback) EntityToMove->EnqueueRotation(StartRot, EndRot);
 		
 		FVector StartPos = GridManager->GridCells[PathForCombatantToFollow[i].StartingCoord]->GetActorLocation();
 		FVector EndPos = GridManager->GridCells[PathForCombatantToFollow[i].CoordToMoveTo]->GetActorLocation();
@@ -463,6 +469,26 @@ void ACombatManager::AbilityBasedMovement(AEntityBase* EntityToMove, FIntVector2
 	GridManager->ChangeHighlightMesh(DefaultHighlightSize);
 }
 
+bool ACombatManager::ApplyKnockback(AEntityBase* Entity, FGridData KnockbackData) 
+{
+	TArray<FIntVector2> Offsets = KnockbackData.GetSelectedCellOffsets();
+	FIntVector2 StartCoord = Entity->PositionCoord;
+
+	for (FIntVector2 Offset : Offsets) 
+	{
+		FIntVector2 Coord = StartCoord + Offset;
+		if (Coord == StartCoord) continue;
+		if (!GridManager->GridCells.Contains(Coord)) continue;
+
+		TArray<FPathInfo> Path = GridManager->GetPathBetweenCoords(StartCoord, Coord, Entity->GetPathingData());
+		if (Path.IsEmpty()) { UE_LOG(LogTemp, Warning, TEXT("Path To Coord: %i, %i failed"), Coord.X, Coord.Y) continue; }
+
+		AbilityBasedMovement(Entity, Coord, 0.0f, true);
+		return true;
+	}
+
+	return false;
+}
 
 /////////////////////////////////////////////////////////////////////////// Blueprint friendly Getters and setters:
 

@@ -104,6 +104,12 @@ public:
 
 	UFUNCTION(BlueprintCallable, Category="Movement")
 	void AbilityBasedMovement(AEntityBase* EntityToMove, FIntVector2 TargetCoord, float Speed, bool IsKnockback);
+
+	UFUNCTION(BlueprintCallable, Category="Movement")
+	void ChangeEntitysOccupancy(AEntityBase* Entity, bool ClearOccupancy);
+	
+	UFUNCTION(BlueprintCallable, Category="Movement")
+	bool ApplyKnockback(AEntityBase* Entity, FGridData KnockbackData);
 	
 	////////////////////////////////////////////////// blueprint getters and setters:
 	UFUNCTION(BlueprintCallable)

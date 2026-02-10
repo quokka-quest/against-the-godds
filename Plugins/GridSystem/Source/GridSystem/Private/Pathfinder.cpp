@@ -161,7 +161,7 @@ void PathFinder::DiscoverCellForMovement(FIntVector2 CellCoord, FIntVector2 Prev
 	{
 		FIntVector2 Coord = CellCoord + Offset;
 		if (!GridCells.Contains(Coord)) return;
-		if (GridCells[Coord]->IsOccupied && GridCells[Coord]->OccupyingActor != PathingData.Actor) return;
+		if (GridCells[Coord]->IsOccupied && GridCells[Coord]->OccupyingActor != PathingData.Actor && AvoidOccupied) return;
 	}
 
 	CellMap.Add(CellCoord, CellInfo);

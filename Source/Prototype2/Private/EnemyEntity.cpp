@@ -5,12 +5,21 @@
 #include "CombatManager.h"
 #include "Kismet/GameplayStatics.h"
 
+void AEnemyEntity::SetTauntTarget(AEntityBase* EntityTarget, bool SetToEmpty)
+{
+	if (SetToEmpty) { PriorityTarget = nullptr; return; }
+	PriorityTarget = EntityTarget;
+}
+
+
 void AEnemyEntity::DeterminePlayerTarget()
 {
+	if (PriorityTarget) {PlayerTarget = PriorityTarget; return;}
+	
 	ACombatManager* CombatManager = Cast<ACombatManager>(UGameplayStatics::GetGameMode(GetWorld()));
 	
 	int ShortestDist = 100000;
-	APlayerEntity* ClosestPlayer = nullptr;
+	AEntityBase* ClosestPlayer = nullptr;
 	
 	for (AEntityBase* Entity : CombatManager->Combatants)
 	{
@@ -26,7 +35,7 @@ void AEnemyEntity::DeterminePlayerTarget()
 		if (totalDist >= ShortestDist) continue;
 
 		ShortestDist = totalDist;
-		ClosestPlayer = Player;
+		ClosestPlayer = Entity;
 	}
 
 	PlayerTarget = ClosestPlayer;
