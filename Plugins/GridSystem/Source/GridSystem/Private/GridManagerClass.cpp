@@ -203,7 +203,7 @@ TArray<FPathInfo> AGridManagerClass::GetPathToPointInRangeOfTarget(FIntVector2 S
 	return PathFinder(GridCells, PathingData).FindPathToPointInRangeOfTarget(Start, End, Range, Rules);
 }
 
-TArray<FPathInfo> AGridManagerClass::GetPathBetweenCoords(FIntVector2 Start, FIntVector2 End, FPathingData PathingData)
+TArray<FPathInfo> AGridManagerClass::GetPathBetweenCoords(FIntVector2 Start, FIntVector2 End, FPathingData PathingData, bool AvoidOccupied)
 {
-	return PathFinder(GridCells, PathingData).FindPath(Start, End);
+	return PathFinder(GridCells, PathingData).FindPath(Start, End, AvoidOccupied);
 }
