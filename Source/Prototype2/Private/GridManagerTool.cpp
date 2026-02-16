@@ -192,7 +192,9 @@ void AGridManagerTool::ToggleDirectionIndicators()
 			FTransform spawnTrans = FTransform(spawnRot, spawnPos, FVector(1));
 			AActor* Arrow = GetWorld()->SpawnActor(ArrowIndicator);
 			Arrow->SetActorTransform(spawnTrans);
+#if WITH_EDITOR
 			Arrow->SetFolderPath(FName("CellManager/Arrows"));
+#endif
 			DirectionIndicators.Add(Arrow);
 		}
 	}
@@ -220,7 +222,9 @@ void AGridManagerTool::ToggleAxisIndicator()
 	FTransform spawnTrans = FTransform(FRotator(), FVector(0,0,30.0f), FVector(1));
 	AActor* Arrow = GetWorld()->SpawnActor(AxisIndicator);
 	Arrow->SetActorTransform(spawnTrans);
+#if WITH_EDITOR
 	Arrow->SetFolderPath(FName("CellManager/Arrows"));
+#endif
 	AxisActorRef = Arrow;
 }
 

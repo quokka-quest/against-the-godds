@@ -6,7 +6,7 @@
 #include "GameFramework/Actor.h"
 #include "GridCellBase.generated.h"
 
-UCLASS()
+UCLASS(Abstract)
 class GRIDSYSTEM_API AGridCellBase : public AActor
 {
 	GENERATED_BODY()
