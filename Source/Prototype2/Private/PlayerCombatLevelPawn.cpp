@@ -220,4 +220,19 @@ void APlayerCombatLevelPawn::TurnOffPathDisplay()
 	isDisplayingPath = false;
 }
 
+FVector APlayerCombatLevelPawn::GetMouseGroundIntersection()
+{
+	FVector MouseGroundIntersection = FVector::ZeroVector;
+
+	// retrieve the mouse world position and direction
+	FVector WorldPos;
+	FVector WorldDir;
+	PlayerCon->DeprojectMousePositionToWorld(WorldPos, WorldDir);
+
+	// finds the intersection point with the plane z = 10
+	float T = (10.0f - WorldPos.Z) / WorldDir.Z;
+	MouseGroundIntersection = WorldPos + (T * WorldDir);
+	
+	return MouseGroundIntersection;
+}
 
