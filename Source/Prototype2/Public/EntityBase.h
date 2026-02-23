@@ -59,8 +59,8 @@ public:
 	UPROPERTY()
 	TMap<TEnumAsByte<EPatternRotation>, float> DirectionYaws;
 
-	UPROPERTY(EditAnywhere, BlueprintReadWrite, Category="PlayerInfo")
-	UImage* CharacterPortrait;
+	//UPROPERTY(EditAnywhere, BlueprintReadWrite, Category="PlayerInfo")
+	//UImage* CharacterPortrait;
 
 	void PrintDebugData();
 
