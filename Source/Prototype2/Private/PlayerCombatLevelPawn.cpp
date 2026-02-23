@@ -2,6 +2,7 @@
 
 
 #include "PlayerCombatLevelPawn.h"
+#include "Engine/Engine.h"
 #include "GameFramework/PlayerController.h"
 #include "Kismet/GameplayStatics.h"
 
@@ -50,6 +51,14 @@ void APlayerCombatLevelPawn::Tick(float DeltaTime)
 	
 	FHitResult Hit;
 	PlayerCon->GetHitResultUnderCursorByChannel(ETraceTypeQuery::TraceTypeQuery1, true, Hit);
+	
+	
+	if (Hit.GetActor() != nullptr)
+	{
+		//GEngine->AddOnScreenDebugMessage(-1, 5.0f, FColor::Yellow, (TEXT("We hit%s"), *Hit.GetActor()->GetName()));
+		UE_LOG(LogTemp, Warning, TEXT("We hit %s"), *Hit.GetActor()->GetName());
+	}
+	
 
     AGridCellParent* HoveredCell = Cast<AGridCellParent>(Hit.GetActor());
 
