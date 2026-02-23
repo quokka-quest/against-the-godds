@@ -47,6 +47,9 @@ protected:
 	UFUNCTION(BlueprintCallable)
 	void OnRotateAttack();
 
+	UFUNCTION(BlueprintCallable, BlueprintPure)
+	FVector GetMouseGroundIntersection();
+
 private:
 	UPROPERTY()
 	APlayerController* PlayerCon;
