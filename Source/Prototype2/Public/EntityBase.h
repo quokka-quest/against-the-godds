@@ -7,6 +7,8 @@
 #include "GlobalDataTypeHeader.h"
 #include "GameplayAbilityBase.h"
 #include "PersistentDataStruct.h"
+#include "Blueprint/UserWidget.h"
+#include "Components/Image.h"
 #include "EntityBase.generated.h"
 
 /**
@@ -56,6 +58,9 @@ public:
 
 	UPROPERTY()
 	TMap<TEnumAsByte<EPatternRotation>, float> DirectionYaws;
+
+	UPROPERTY(EditAnywhere, BlueprintReadWrite, Category="PlayerInfo")
+	UImage* CharacterPortrait;
 
 	void PrintDebugData();
 
