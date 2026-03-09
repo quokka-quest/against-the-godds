@@ -42,7 +42,7 @@ void UAttributeHealthSet::PostGameplayEffectExecute(const struct FGameplayEffect
 				OnDamageTaken.Broadcast(Instigator, Causer, Data.EffectSpec.CapturedSourceTags.GetSpecTags(), Data.EvaluatedData.Magnitude);
 			}
 
-			if (GetCurrentWard() <= 0)
+			if (GetCurrentProtection() <= 0)
 			{
 				// If the health attribute isn't 0, apply the damage
 				if (GetCurrentHealth() > 0)
@@ -59,7 +59,7 @@ void UAttributeHealthSet::PostGameplayEffectExecute(const struct FGameplayEffect
 			}
 			else
 			{
-				SetCurrentWard(GetCurrentWard() - 1);
+				SetCurrentProtection(GetCurrentProtection() - 1);
 			}
 		}
 	}
