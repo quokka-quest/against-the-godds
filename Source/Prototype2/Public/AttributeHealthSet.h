@@ -32,6 +32,10 @@ public:
 	UPROPERTY(BlueprintReadOnly, Category = "Attributes")
 	FGameplayAttributeData InDamage;
 	ATTRIBUTE_ACCESSORS_BASIC(UAttributeHealthSet, InDamage);
+	
+	UPROPERTY(BlueprintReadOnly, Category = "Attributes")
+	FGameplayAttributeData CurrentWard;
+	ATTRIBUTE_ACCESSORS_BASIC(UAttributeHealthSet, CurrentWard);
 
 	mutable FDamageTakenEvent OnDamageTaken;
 
