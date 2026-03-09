@@ -27,6 +27,9 @@ public:
 
 	UPROPERTY(EditAnywhere, BlueprintReadWrite, Category = "Dice")
 	float RollTorque = 1000.0f;
+	
+	UPROPERTY(EditAnywhere, BlueprintReadWrite, Category = "Dice")
+	float DownForce = 200.0f;
 
 	UPROPERTY(BlueprintAssignable, Category = "Dice")
 	FOnRollComplete OnRollComplete;
