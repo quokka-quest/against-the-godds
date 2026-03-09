@@ -96,13 +96,8 @@ void AEnemyEntity::DetermineMovement()
 		FVector EndPos = GridManager->GridCells[PathToTarget[i].CoordToMoveTo]->GetActorLocation();
 
 		// check for ability on hazard to trigger when walked on
-		TSubclassOf<UGameplayAbilityBase> CellAbility = nullptr;
-		if (Cast<AGridCellParent>(GridManager->GridCells[PathToTarget[i].CoordToMoveTo])->TemporaryCellEffect)
-		{
-			CellAbility = Cast<AGridCellParent>(GridManager->GridCells[PathToTarget[i].CoordToMoveTo])->TemporaryCellEffect;
-		}
-		
-		EnqueueMovement(StartPos, EndPos, CellAbility);
+		AGridCellParent* TargetCell = Cast<AGridCellParent>(GridManager->GridCells[PathToTarget[i].CoordToMoveTo]);
+		EnqueueMovement(StartPos, EndPos, TargetCell);
 	}
 
 	// removes this entity from the cell it started in

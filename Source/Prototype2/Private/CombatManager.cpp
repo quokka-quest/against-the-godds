@@ -217,15 +217,11 @@ void ACombatManager::MoveCurrentCombatant(FIntVector2 TargetPos)
 		FVector StartPos = GridManager->GridCells[PathForCombatantToFollow[i].StartingCoord]->GetActorLocation();
 		FVector EndPos = GridManager->GridCells[PathForCombatantToFollow[i].CoordToMoveTo]->GetActorLocation();
 
-		// check for ability on hazard to trigger when walked on
-		TSubclassOf<UGameplayAbilityBase> CellAbility = nullptr;
-		if (Cast<AGridCellParent>(GridManager->GridCells[PathForCombatantToFollow[i].CoordToMoveTo])->TemporaryCellEffect)
-		{
-			CellAbility = Cast<AGridCellParent>(GridManager->GridCells[PathForCombatantToFollow[i].CoordToMoveTo])->TemporaryCellEffect;
-		}
-
+		// get target cell
+		AGridCellParent* TargetCell = Cast<AGridCellParent>(GridManager->GridCells[PathForCombatantToFollow[i].CoordToMoveTo]);
+		
 		// enqueue movement animation
-		CurrentTurnCombatant->EnqueueMovement(StartPos, EndPos, CellAbility);
+		CurrentTurnCombatant->EnqueueMovement(StartPos, EndPos, TargetCell);
 		CurrentTurnCombatant->AvailableMovement -= GridManager->GridCells[PathForCombatantToFollow[i].CoordToMoveTo]->MovementCost;
 	}
 
@@ -443,15 +439,11 @@ void ACombatManager::AbilityBasedMovement(AEntityBase* EntityToMove, FIntVector2
 		FVector StartPos = GridManager->GridCells[PathForCombatantToFollow[i].StartingCoord]->GetActorLocation();
 		FVector EndPos = GridManager->GridCells[PathForCombatantToFollow[i].CoordToMoveTo]->GetActorLocation();
 
-		// check for ability on hazard to trigger when walked on
-		TSubclassOf<UGameplayAbilityBase> CellAbility = nullptr;
-		if (Cast<AGridCellParent>(GridManager->GridCells[PathForCombatantToFollow[i].CoordToMoveTo])->TemporaryCellEffect)
-		{
-			CellAbility = Cast<AGridCellParent>(GridManager->GridCells[PathForCombatantToFollow[i].CoordToMoveTo])->TemporaryCellEffect;
-		}
-
+		// get target cell
+		AGridCellParent* TargetCell = Cast<AGridCellParent>(GridManager->GridCells[PathForCombatantToFollow[i].CoordToMoveTo]);
+		
 		// enqueue movement animation
-		EntityToMove->EnqueueMovement(StartPos, EndPos, CellAbility);
+		EntityToMove->EnqueueMovement(StartPos, EndPos, TargetCell);
 	}
 
 	// remove from old cell and change facing direction

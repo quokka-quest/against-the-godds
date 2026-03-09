@@ -31,6 +31,8 @@ public:
 	UFUNCTION(BlueprintImplementableEvent, BlueprintCallable, Category = "CellProperties")
 	void ToggleNiagraForCellEffect(bool Enable);
 	UPROPERTY(BlueprintReadWrite, Category = "CellProperties")
+	bool HasEffect;
+	UPROPERTY(BlueprintReadWrite, Category = "CellProperties")
 	TSubclassOf<UGameplayAbilityBase> TemporaryCellEffect;
 	
 };
