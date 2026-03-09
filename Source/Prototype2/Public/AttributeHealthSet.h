@@ -36,6 +36,10 @@ public:
 	UPROPERTY(BlueprintReadOnly, Category = "Attributes")
 	FGameplayAttributeData CurrentProtection;
 	ATTRIBUTE_ACCESSORS_BASIC(UAttributeHealthSet, CurrentProtection);
+	
+	UPROPERTY(BlueprintReadOnly, Category = "Attributes")
+	FGameplayAttributeData CurrentWard;
+	ATTRIBUTE_ACCESSORS_BASIC(UAttributeHealthSet, CurrentWard);
 
 	mutable FDamageTakenEvent OnDamageTaken;
 
