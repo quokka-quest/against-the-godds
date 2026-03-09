@@ -7,6 +7,7 @@
 #include "GlobalDataTypeHeader.h"
 #include "GameplayAbilityBase.h"
 #include "PersistentDataStruct.h"
+#include "Engine/Texture2D.h"
 #include "EntityBase.generated.h"
 
 /**
@@ -30,6 +31,9 @@ public:
 	void EnqueueMovement(FVector StartPos, FVector EndPos, TSubclassOf<UGameplayAbilityBase> AbilityTrigggered);
 	UFUNCTION(BlueprintImplementableEvent, BlueprintCallable)
 	void EnqueueRotation(float StartYaw, float EndYaw);
+
+	UFUNCTION(BlueprintImplementableEvent, BlueprintCallable)
+	void ToggleHealthVisibility(bool Enable);
 
 	UPROPERTY(BlueprintReadWrite, Category="PlayerInfo")
 	FIntVector2 PositionCoord;
@@ -56,6 +60,9 @@ public:
 
 	UPROPERTY()
 	TMap<TEnumAsByte<EPatternRotation>, float> DirectionYaws;
+
+	UPROPERTY(EditAnywhere, BlueprintReadWrite, Category="PlayerInfo")
+	UTexture2D* CharacterPortrait;
 
 	void PrintDebugData();
 

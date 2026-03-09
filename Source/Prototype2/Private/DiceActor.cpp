@@ -99,12 +99,12 @@ void ADiceActor::RollDice()
         FVector RandomForce = FVector(
             FMath::RandRange(-RollForce, RollForce),
             FMath::RandRange(-RollForce, RollForce),
-            FMath::RandRange(RollForce * 0.5f, RollForce)
+            -DownForce
         );
         
         FVector RandomTorque = FVector(
             FMath::RandRange(-RollTorque, RollTorque),
-            FMath::RandRange(-RollTorque, RollTorque),
+            FMath::RandRange(-RollTorque, RollTorque),  
             FMath::RandRange(-RollTorque, RollTorque)
         );
         
