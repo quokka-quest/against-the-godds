@@ -42,17 +42,24 @@ void UAttributeHealthSet::PostGameplayEffectExecute(const struct FGameplayEffect
 				OnDamageTaken.Broadcast(Instigator, Causer, Data.EffectSpec.CapturedSourceTags.GetSpecTags(), Data.EvaluatedData.Magnitude);
 			}
 
-			// If the health attribute isn't 0, apply the damage
-			if (GetCurrentHealth() > 0)
+			if (GetCurrentProtection() <= 0)
 			{
-				const float NewHealth = GetCurrentHealth() - InDamageDone;
-				SetCurrentHealth(FMath::Clamp(NewHealth, 0.0f, GetMaxHealth()));
-			}
+				// If the health attribute isn't 0, apply the damage
+				if (GetCurrentHealth() > 0)
+				{
+					const float NewHealth = GetCurrentHealth() - InDamageDone;
+					SetCurrentHealth(FMath::Clamp(NewHealth, 0.0f, GetMaxHealth()));
+				}
 
-			// check for death
-			if (GetCurrentHealth() <= 0)
+				// check for death
+				if (GetCurrentHealth() <= 0)
+				{
+					Cast<AEntityBase>(GetOwningActor())->OnEntityDeath();
+				}
+			}
+			else
 			{
-				Cast<AEntityBase>(GetOwningActor())->OnEntityDeath();
+				SetCurrentProtection(GetCurrentProtection() - 1);
 			}
 		}
 	}
