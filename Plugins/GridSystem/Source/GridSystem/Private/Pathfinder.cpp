@@ -4,6 +4,39 @@
 #include "PathFinder.h"
 
 ///////////////////////////////////////////////////////////////////////////////////////////////////// Pathfinding Functions
+bool PathFinder::FindPathBetweenCells(TArray<FPathInfo>& OutArray, FIntVector2 Start, FIntVector2 End, int Range, TArray<TEnumAsByte<EPathingRules>>& Rules)
+{
+	// early exit to avoid errors when attempting to path from a cell to itself
+	OutArray.Empty();
+	if (Start == End)
+	{
+		FPathInfo path;
+		path.StartingCoord = Start;
+		path.CoordToMoveTo = Start;
+		path.StartingRot = PathingData.CurrentRotation;
+		path.RotToChangeTo = PathingData.CurrentRotation;
+		path.HazardPenaltyFromStart = 0;
+		OutArray.Add(path);
+		return true;
+	}
+	
+	// set global variables
+	StartCoord = Start;
+	EndCoord = End;
+	TotalMovement = (Rules.Contains(EPathingRules::RangeIsAvailableMovement))? Range : 100000;
+	AttackRange = (!Rules.Contains(EPathingRules::RangeIsAvailableMovement))? Range : 100000;
+	PathingRules = Rules;
+	
+	// clear maps
+	DiscoveredCells.Empty();
+	AnalysedCells.Empty();
+	CellMap.Empty();
+	
+	return false;
+}
+
+
+
 TArray<FPathInfo> PathFinder::FindPath(FIntVector2 Start, FIntVector2 End, bool AvoidOccupiedCells)
 {
 	StartCoord = Start;
@@ -48,6 +81,7 @@ TArray<FPathInfo> PathFinder::FindPath(FIntVector2 Start, FIntVector2 End, bool 
 		FirstMovement.CoordToMoveTo = ReversPathCoords[ReversPathCoords.Num()-2];
 		FirstMovement.StartingRot = PathingData.CurrentRotation;
 		FirstMovement.RotToChangeTo = GetDirectionBetweenTwoCells(FirstMovement.StartingCoord, FirstMovement.CoordToMoveTo);
+		FirstMovement.HazardPenaltyFromStart = 0;
 		Result.Add(FirstMovement);
 		int resultIndex = 0;
 		// complete the rest of the path
@@ -58,6 +92,7 @@ TArray<FPathInfo> PathFinder::FindPath(FIntVector2 Start, FIntVector2 End, bool 
 			NextMovement.CoordToMoveTo = ReversPathCoords[i-1];
 			NextMovement.StartingRot = Result[resultIndex].RotToChangeTo;
 			NextMovement.RotToChangeTo = GetDirectionBetweenTwoCells(NextMovement.StartingCoord, NextMovement.CoordToMoveTo);
+			NextMovement.HazardPenaltyFromStart = 0;
 			Result.Add(NextMovement);
 			resultIndex++;
 		}
@@ -134,6 +169,54 @@ TArray<FPathInfo> PathFinder::FindPathToPointInRangeOfTarget(FIntVector2 Start, 
 
 
 ///////////////////////////////////////////////////////////////////////////////////////////////////// Discover functions
+
+// Absolute discovery with new rule system
+// PARAMETERS
+// CellCoord: The coordinate being discovered
+// PreviousCell: the coordinate of the cell from which the path moved onto this one
+// Direction: The direction of travel onto the new cell
+void PathFinder::DiscoverCell(FIntVector2 CellCoord, FIntVector2 PreviousCell, TEnumAsByte<EPatternRotation> Direction)
+{
+	FCellInfo CellInfo;
+	CellInfo.Coord = CellCoord;
+	CellInfo.EntryCost = GridCells[CellCoord]->MovementCost;
+	CellInfo.MinCostToTarget = CalculateMinCostBetweenCells(CellCoord, EndCoord);
+	CellInfo.PrevCellCoord = PreviousCell;
+	CellInfo.NewRotation = Direction;
+	CellInfo.PrevRotation = (CellCoord == StartCoord)? Direction : CellMap[PreviousCell].NewRotation;
+	CellInfo.RequiresRotation = CellInfo.NewRotation != CellInfo.PrevRotation;
+
+	// if the cell map has contents then the previous coord can be checked since it will have been added already
+	// otherwise set it to 0 (makes the starting tile have an entry cost of 0)
+	int CostFromStart = (!CellMap.IsEmpty())? CellMap[PreviousCell].CostFromStart + CellInfo.EntryCost: 0;
+	CellInfo.CostFromStart = CostFromStart;
+
+	// do not discover if movement limit is exceeded
+	if (CostFromStart > TotalMovement) return;
+
+	// RULE: ExcludeOccupiedCells
+	// if the rule is active then do not discover cells that contain an object
+	// the starting cell is excluded from this rule applying
+	if (PathingRules.Contains(EPathingRules::ExcludeOccupiedCells) && CellCoord != StartCoord && GridCells[CellCoord]->IsOccupied && GridCells[CellCoord]->OccupyingActor != PathingData.Actor) return;
+
+	// RULE: ExcludeHazardCells
+	// if this rule is active then do not discover cells marked as hazards
+	// the starting cell is excluded from this rule applying
+	if (PathingRules.Contains(EPathingRules::ExcludeHazardCells) && CellCoord != StartCoord && GridCells[CellCoord]->IsHazard) return;
+	
+	// check if entity can fit in the new area it will move to
+	for (FIntVector2 Offset  : PathingData.ActorRotations[PathingData.CurrentRotation].GetSelectedCellOffsets())
+	{
+		FIntVector2 Coord = CellCoord + Offset;
+		if (!GridCells.Contains(Coord)) return;
+		if (GridCells[Coord]->IsOccupied && GridCells[Coord]->OccupyingActor != PathingData.Actor && AvoidOccupied) return;
+	}
+
+	CellMap.Add(CellCoord, CellInfo);
+	DiscoveredCells.Add(CellInfo);
+}
+
+
 // These functions Discover a cell, checking for movement/attack availability
 // the cell coord to be discovered and the cell that it's connected to are passed in
 // the 'Direction' parameter is the rotation that the entity will have upon entering the new cell

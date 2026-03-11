@@ -93,6 +93,7 @@ void AGridManagerClass::ReplaceGridCell(UWorld* World, FIntVector2 Coord)
 	bool CanWalkThroughNegativeX = GridCells[Coord]->BlockNegativeX;
 	bool CanWalkThroughPositiveY = GridCells[Coord]->BlockPositiveY;
 	bool CanWalkThroughNegativeY = GridCells[Coord]->BlockNegativeY;
+	bool IsHazard = GridCells[Coord]->IsHazard;
 	bool IsWalkable = GridCells[Coord]->IsWalkable;
 	int MovementCost = GridCells[Coord]->MovementCost;
 	bool IsAttackable = GridCells[Coord]->IsAttackable;
@@ -125,6 +126,7 @@ void AGridManagerClass::ReplaceGridCell(UWorld* World, FIntVector2 Coord)
 	NewCell->BlockNegativeX = CanWalkThroughNegativeX;
 	NewCell->BlockPositiveY = CanWalkThroughPositiveY;
 	NewCell->BlockNegativeY = CanWalkThroughNegativeY;
+	NewCell->IsHazard = IsHazard;
 	NewCell->IsWalkable = IsWalkable;
 	NewCell->MovementCost = MovementCost;
 	NewCell->IsAttackable = IsAttackable;

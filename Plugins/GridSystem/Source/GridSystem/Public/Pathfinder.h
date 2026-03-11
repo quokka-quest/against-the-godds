@@ -46,6 +46,9 @@ class PathFinder
 public:
 	PathFinder(TMap<FIntVector2, AGridCellBase*>& InGridCells, FPathingData& InPathingData):GridCells(InGridCells),PathingData(InPathingData){};
 
+	bool FindPathBetweenCells(TArray<FPathInfo>& OutArray, FIntVector2 Start, FIntVector2 End, int Range, TArray<TEnumAsByte<EPathingRules>>& Rules);
+	void DiscoverCell(FIntVector2 CellCoord, FIntVector2 PreviousCell, TEnumAsByte<EPatternRotation> Direction); // move to protected when done with changes
+	
 	TArray<FPathInfo> FindPath(FIntVector2 Start, FIntVector2 End, bool AvoidOccupiedCells = true);
 	TArray<FIntVector2> FindMoveableCellsInRange(FIntVector2 Start, int AvailableMovement,  bool AvoidOccupiedCells = true);
 	TArray<FIntVector2> FindAttackableCellsInRange(FIntVector2 Start, int Range, TArray<TEnumAsByte<EAttackRules>>& Rules);
@@ -55,6 +58,8 @@ protected:
 	TMap<FIntVector2, AGridCellBase*> GridCells;
 
 	TArray<TEnumAsByte<EAttackRules>> AttackRules;
+
+	TArray<TEnumAsByte<EPathingRules>> PathingRules;
 
 	FIntVector2 StartCoord = FIntVector2(0,0);
 	FIntVector2 EndCoord = FIntVector2(0,0);

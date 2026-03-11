@@ -130,6 +130,17 @@ struct FPathInfo
 	TEnumAsByte<EPatternRotation> StartingRot;
 	UPROPERTY()
 	TEnumAsByte<EPatternRotation> RotToChangeTo;
+	UPROPERTY()
+	int HazardPenaltyFromStart;
+};
+
+UENUM(BlueprintType)
+enum EPathingRules
+{
+	ExcludeOccupiedCells,
+	ExcludeHazardCells,
+	TryPathAroundHazards,
+	RangeIsAvailableMovement
 };
 
 UENUM(BlueprintType)
