@@ -39,7 +39,7 @@ bool PathFinder::FindPathBetweenCells(TArray<FPathInfo>& OutArray, FIntVector2 S
 	TArray<FNewCellInfo> Result;
 	if (!PerformAnalysis(Result)) return false;
 
-	for (int i = Result.Num() - 1; i > 0; i--)
+	for (int i = Result.Num() - 1; i >= 0; i--)
 	{
 		FPathInfo PathSegment = FPathInfo();
 		PathSegment.StartingCoord = Result[i].PrevCellCoord;
@@ -64,12 +64,12 @@ void PathFinder::DiscoverCell(FIntVector2 CellCoord, FIntVector2 PreviousCell, T
 	CellInfo.Coord = CellCoord;
 	CellInfo.PrevCellCoord = PreviousCell;
 	
-	CellInfo.MovementCost = GridCells[CellCoord]->MovementCost;
+	CellInfo.MovementCost = (CellCoord == StartCoord)? 0: GridCells[CellCoord]->MovementCost;
 	CellInfo.MovementCostFromStart = (CellCoord == StartCoord)? 0: NewCellMap[PreviousCell].MovementCostFromStart + CellInfo.MovementCost;
 	CellInfo.AbsDistFromTarget = CalculateMinCostBetweenCells(CellCoord, EndCoord);
 	CellInfo.AbsDistFromStart = CalculateMinCostBetweenCells(StartCoord, CellCoord);
 	CellInfo.PenaltyFromStart = (CellCoord == StartCoord)? 0 : NewCellMap[PreviousCell].PenaltyFromStart;
-	CellInfo.PenaltyFromStart += (GridCells[CellCoord]->IsHazard)? 1 : 0;
+	CellInfo.PenaltyFromStart += GetPenaltyOfCoord(CellCoord);
 	
 	CellInfo.NewRotation = Direction;
 	CellInfo.PrevRotation = (CellCoord == StartCoord)? Direction : NewCellMap[PreviousCell].NewRotation;
@@ -148,11 +148,10 @@ bool PathFinder::PerformAnalysis(TArray<FNewCellInfo>& OutArray)
 
 	// Get the path by reversing through all the 'PrevCellCoord' values until the start is reached
 	FIntVector2 PrevCoords = EndCoord;
-	OutArray.Add(NewCellMap[EndCoord]);
 	while (PrevCoords != StartCoord)
 	{
-		PrevCoords = NewCellMap[PrevCoords].PrevCellCoord;
 		OutArray.Add(NewCellMap[PrevCoords]);
+		PrevCoords = NewCellMap[PrevCoords].PrevCellCoord;
 	}
 	
 	return true;
@@ -163,7 +162,7 @@ bool PathFinder::PerformAnalysis(TArray<FNewCellInfo>& OutArray)
 FNewCellInfo PathFinder::GetNextCellToAnalyse()
 {
 	FNewCellInfo CheapestCell = FNewCellInfo();
-	int SmalledDist = 100000;
+	int ShortestDist = 100000;
 	int SmallestPenalty = 100000;
 
 	for (FIntVector2 Coord : NewDiscoveredCells)
@@ -175,15 +174,15 @@ FNewCellInfo PathFinder::GetNextCellToAnalyse()
 		if (CellInfo.PenaltyFromStart < SmallestPenalty)
 		{
 			SmallestPenalty = CellInfo.PenaltyFromStart;
-			SmalledDist = CellInfo.AbsDistFromTarget;
+			ShortestDist = CellInfo.AbsDistFromTarget;
 			CheapestCell = CellInfo;
 			continue;
 		}
 
 		// if the penalty is the same then just check the distance to the target is smaller
-		if (CellInfo.AbsDistFromTarget >= SmalledDist) continue;
+		if (CellInfo.AbsDistFromTarget >= ShortestDist) continue;
 		CheapestCell = CellInfo;
-		SmallestPenalty = CellInfo.AbsDistFromTarget;
+		ShortestDist = CellInfo.AbsDistFromTarget;
 	}
 
 	return CheapestCell;
@@ -215,6 +214,7 @@ TArray<FNeighbourInfo> PathFinder::GetValidNeighbours(FIntVector2 Coord)
 
 	for (FNeighbourInfo Neighbour : Neighbours)
 	{
+		// if the neighbour exists and can be moved to then add it to the valid array
 		if (GridCells.Contains(Neighbour.Coord) && IsCoordAValidNeighbour(Coord, Neighbour)) ValidNeighbours.Add(Neighbour);
 	}
 
@@ -230,6 +230,16 @@ bool PathFinder::IsCoordAValidNeighbour(FIntVector2 Coord, FNeighbourInfo& Neigh
 	if (Neighbour.Direction == R270) { return (!GridCells[Coord]->BlockNegativeX && !GridCells[Neighbour.Coord]->BlockPositiveX); }
 	if (Neighbour.Direction == R0) { return (!GridCells[Coord]->BlockPositiveY && !GridCells[Neighbour.Coord]->BlockNegativeY); }
 	return (!GridCells[Coord]->BlockNegativeY && !GridCells[Neighbour.Coord]->BlockPositiveY);
+}
+
+int PathFinder::GetPenaltyOfCoord(FIntVector2 Coord)
+{
+	int penalty = 0;
+	
+	// RULE: Try Path Around Hazards
+	if (PathingRules.Contains(EPathingRules::TryPathAroundHazards)) penalty += (GridCells[Coord]->IsHazard)? 1 : 0;
+
+	return penalty;
 }
 
 

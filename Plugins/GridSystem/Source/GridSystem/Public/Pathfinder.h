@@ -72,6 +72,7 @@ public:
 	FNewCellInfo GetNextCellToAnalyse();
 	TArray<FNeighbourInfo> GetValidNeighbours(FIntVector2 Coord);
 	bool IsCoordAValidNeighbour(FIntVector2 Coord, FNeighbourInfo& Neighbour);
+	int GetPenaltyOfCoord(FIntVector2 Coord);
 	TMap<FIntVector2, FNewCellInfo> NewCellMap;
 	TSet<FIntVector2> NewDiscoveredCells;
 	TSet<FIntVector2> NewAnalysedCells;

@@ -66,9 +66,9 @@ void AGridManagerTool::DisplayWalkableCells(FIntVector2 Start, int AvailableMove
 	OutlineActor->SetVisibility(false);
 }
 
-TArray<FPathInfo> AGridManagerTool::DisplayCellPath(FIntVector2 StartCoord, FIntVector2 EndCoord, FPathingData PathData, bool AvoidOccupied)
+TArray<FPathInfo> AGridManagerTool::DisplayCellPath(FIntVector2 StartCoord, FIntVector2 EndCoord, int AvailableMovement, FPathingData PathData)
 {
-	TArray<FPathInfo> Path = GetPathBetweenCoords(StartCoord, EndCoord, PathData, AvoidOccupied);
+	TArray<FPathInfo> Path = GetPathBetweenCoords(StartCoord, EndCoord, AvailableMovement, PathData);
 	TArray<FIntVector2> DisplayCells;
 	
 	TArray<FIntVector2> SizeOffsets = PathData.RotationSweep.GetSelectedCellOffsets();
@@ -133,7 +133,7 @@ TArray<FIntVector2> AGridManagerTool::DisplayAttackPattern(FIntVector2 TargetCoo
 	else
 	{
 		FIntVector2 StartCoord = Cast<AEntityBase>(PathData.Actor)->PositionCoord;
-		TArray<FPathInfo> Path = DisplayCellPath(TargetCoord, StartCoord, PathData, false);
+		TArray<FPathInfo> Path = DisplayCellPath(TargetCoord, StartCoord, 1000, PathData);
 
 		Cells.Add(TargetCoord);
 		Cells.Add(StartCoord);

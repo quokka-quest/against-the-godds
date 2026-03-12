@@ -50,7 +50,7 @@ public:
 	TArray<FPathInfo> GetPathToPointInRangeOfTarget(FIntVector2 Start, FIntVector2 End, int Range, FPathingData PathingData, TArray<TEnumAsByte<EAttackRules>>& Rules);
 
 	UFUNCTION(BlueprintCallable, Category="Grid System")
-	TArray<FPathInfo> GetPathBetweenCoords(FIntVector2 Start, FIntVector2 End, FPathingData PathingData, bool AvoidOccupied = true);
+	TArray<FPathInfo> GetPathBetweenCoords(FIntVector2 Start, FIntVector2 End, int AvailableMovement, FPathingData PathingData);
 
 protected:
 

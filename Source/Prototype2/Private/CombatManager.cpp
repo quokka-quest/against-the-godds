@@ -245,7 +245,7 @@ void ACombatManager::DisplayPathForCurrentCombatant(FIntVector2 TargetPos)
 {
 	FIntVector2 StartPos = CurrentTurnCombatant->PositionCoord;
 
-	TArray<FPathInfo> PathInfo = GridManager->DisplayCellPath(StartPos, TargetPos, CurrentTurnCombatant->GetPathingData());
+	TArray<FPathInfo> PathInfo = GridManager->DisplayCellPath(StartPos, TargetPos, CurrentTurnCombatant->AvailableMovement, CurrentTurnCombatant->GetPathingData());
 	PathForCombatantToFollow = PathInfo;
 }
 
@@ -426,7 +426,7 @@ bool ACombatManager::ValidateFullGridPatternAtCoord(FIntVector2 const TargetCoor
 
 void ACombatManager::AbilityBasedMovement(AEntityBase* EntityToMove, FIntVector2 TargetCoord, float Speed, bool IsKnockback)
 {
-	PathForCombatantToFollow = GridManager->GetPathBetweenCoords(EntityToMove->PositionCoord, TargetCoord, EntityToMove->GetPathingData());
+	PathForCombatantToFollow = GridManager->GetPathBetweenCoords(EntityToMove->PositionCoord, TargetCoord, 1000, EntityToMove->GetPathingData());
 	if (PathForCombatantToFollow.IsEmpty()) {UE_LOG(LogTemp, Error, TEXT("CombatManager.cpp->AbilityBasedMovement: path was empty")) return;}
 
 	for (int i = 0; i < PathForCombatantToFollow.Num(); i++)
@@ -472,7 +472,7 @@ bool ACombatManager::ApplyKnockback(AEntityBase* Entity, FGridData KnockbackData
 		if (Coord == StartCoord) continue;
 		if (!GridManager->GridCells.Contains(Coord)) continue;
 
-		TArray<FPathInfo> Path = GridManager->GetPathBetweenCoords(StartCoord, Coord, Entity->GetPathingData());
+		TArray<FPathInfo> Path = GridManager->GetPathBetweenCoords(StartCoord, Coord, 1000, Entity->GetPathingData());
 		if (Path.IsEmpty()) { UE_LOG(LogTemp, Warning, TEXT("Path To Coord: %i, %i failed"), Coord.X, Coord.Y) continue; }
 
 		AbilityBasedMovement(Entity, Coord, 0.0f, true);

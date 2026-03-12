@@ -205,7 +205,17 @@ TArray<FPathInfo> AGridManagerClass::GetPathToPointInRangeOfTarget(FIntVector2 S
 	return PathFinder(GridCells, PathingData).FindPathToPointInRangeOfTarget(Start, End, Range, Rules);
 }
 
-TArray<FPathInfo> AGridManagerClass::GetPathBetweenCoords(FIntVector2 Start, FIntVector2 End, FPathingData PathingData, bool AvoidOccupied)
+TArray<FPathInfo> AGridManagerClass::GetPathBetweenCoords(FIntVector2 Start, FIntVector2 End, int AvailableMovement, FPathingData PathingData)
 {
-	return PathFinder(GridCells, PathingData).FindPath(Start, End, AvoidOccupied);
+	TArray<FPathInfo> Result;
+	TArray<TEnumAsByte<EPathingRules>> Rules;
+	Rules.Add(EPathingRules::TryPathAroundHazards);
+	Rules.Add(EPathingRules::RangeIsAvailableMovement);
+	Rules.Add(EPathingRules::ExcludeOccupiedCells);
+	Rules.Add(EPathingRules::MustFitOnTarget);
+	if (PathFinder(GridCells, PathingData).FindPathBetweenCells(Result, Start, End, AvailableMovement, Rules)) return Result;
+
+	Result.Empty();
+	UE_LOG(LogTemp, Warning, TEXT("AGridManagerClass->GetPathBetweenCoords: failed to find path"));
+	return Result;
 }

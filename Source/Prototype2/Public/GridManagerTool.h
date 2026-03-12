@@ -29,7 +29,7 @@ public:
 	void DisplayWalkableCells(FIntVector2 Start, int AvailableMovement, FPathingData PathData);
 
 	UFUNCTION(BlueprintCallable)
-	TArray<FPathInfo> DisplayCellPath(FIntVector2 StartCoord, FIntVector2 EndCoord, FPathingData PathData, bool AvoidOccupied = true);
+	TArray<FPathInfo> DisplayCellPath(FIntVector2 StartCoord, FIntVector2 EndCoord, int AvailableMovement, FPathingData PathData);
 
 	UFUNCTION(BlueprintCallable)
 	void DisplayCellsInAttackRange(FIntVector2 Start, int Range, FPathingData PathData, TArray<TEnumAsByte<EAttackRules>>& Rules);
