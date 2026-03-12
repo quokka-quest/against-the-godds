@@ -24,6 +24,26 @@ struct FCellInfo
 	}
 };
 
+struct FNewCellInfo
+{
+	FIntVector2 Coord;
+	FIntVector2 PrevCellCoord;
+	
+	int MovementCost;
+	int MovementCostFromStart;
+	int AbsDistFromTarget;
+	int PenaltyFromStart;
+	int AbsDistFromStart;
+
+	TEnumAsByte<EPatternRotation> NewRotation;
+	TEnumAsByte<EPatternRotation> PrevRotation;
+
+	bool operator==(const FCellInfo& Other) const
+	{
+		return (Coord == Other.Coord);
+	}
+};
+
 struct FNeighbourInfo
 {
 	FIntVector2 Coord;
@@ -47,7 +67,14 @@ public:
 	PathFinder(TMap<FIntVector2, AGridCellBase*>& InGridCells, FPathingData& InPathingData):GridCells(InGridCells),PathingData(InPathingData){};
 
 	bool FindPathBetweenCells(TArray<FPathInfo>& OutArray, FIntVector2 Start, FIntVector2 End, int Range, TArray<TEnumAsByte<EPathingRules>>& Rules);
-	void DiscoverCell(FIntVector2 CellCoord, FIntVector2 PreviousCell, TEnumAsByte<EPatternRotation> Direction); // move to protected when done with changes
+	void DiscoverCell(FIntVector2 CellCoord, FIntVector2 PreviousCell, TEnumAsByte<EPatternRotation> Direction); //TODO: move to protected when done with changes
+	bool PerformAnalysis(TArray<FNewCellInfo>& OutArray); //TODO: move to protected when done with changes
+	FNewCellInfo GetNextCellToAnalyse();
+	TArray<FNeighbourInfo> GetValidNeighbours(FIntVector2 Coord);
+	bool IsCoordAValidNeighbour(FIntVector2 Coord, FNeighbourInfo& Neighbour);
+	TMap<FIntVector2, FNewCellInfo> NewCellMap;
+	TSet<FIntVector2> NewDiscoveredCells;
+	TSet<FIntVector2> NewAnalysedCells;
 	
 	TArray<FPathInfo> FindPath(FIntVector2 Start, FIntVector2 End, bool AvoidOccupiedCells = true);
 	TArray<FIntVector2> FindMoveableCellsInRange(FIntVector2 Start, int AvailableMovement,  bool AvoidOccupiedCells = true);

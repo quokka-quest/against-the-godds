@@ -140,7 +140,9 @@ enum EPathingRules
 	ExcludeOccupiedCells,
 	ExcludeHazardCells,
 	TryPathAroundHazards,
-	RangeIsAvailableMovement
+	RangeIsAvailableMovement,
+	MustFitOnTarget,
+	StraightLine,
 };
 
 UENUM(BlueprintType)
