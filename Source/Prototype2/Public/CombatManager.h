@@ -192,6 +192,9 @@ protected:
 	UFUNCTION(blueprintCallable)
 	void SetCellsOccupier(AEntityBase* Entity, FIntVector2 Coord, bool SetAsOccupied);
 
+	UFUNCTION()
+	void DisplayRangeOutline(FIntVector2 Origin, int Range, FPathingData PathData, TArray<TEnumAsByte<EPathingRules>>& Rules);
+	
 	TArray<FPathInfo> PathForCombatantToFollow;
 
 	TArray<FIntVector2> AreaOfAttackEffect;

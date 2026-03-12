@@ -57,8 +57,7 @@ void AEnemyEntity::DetermineMovement()
 
 	AGridManagerTool* GridManager = Cast<AGridManagerTool>(UGameplayStatics::GetActorOfClass(GetWorld(), AGridManagerTool::StaticClass()));
 
-	TArray<TEnumAsByte<EAttackRules>> Rules; // empty but needed to use the below function
-	TArray<FPathInfo> PathToTarget = GridManager->GetPathToPointInRangeOfTarget(PositionCoord, PlayerTarget->PositionCoord, MaxRange, GetPathingData(), Rules);
+	TArray<FPathInfo> PathToTarget = GridManager->GetPathToPointInRangeOfTarget(PositionCoord, PlayerTarget->PositionCoord, MaxRange, GetPathingData());
 
 	// this variable is used to track which index of the 'PathToTarget' array the movement of this entity should stop at
 	int TargetPosIndex = -1;
@@ -130,8 +129,8 @@ bool AEnemyEntity::IsTargetInAttackRange(int Range)
 {
 	AGridManagerTool* GridManager = Cast<AGridManagerTool>(UGameplayStatics::GetActorOfClass(GetWorld(), AGridManagerTool::StaticClass()));
 
-	TArray<TEnumAsByte<EAttackRules>> Rules; // empty but needed to use below function
-	TArray<FIntVector2> AttackableTiles = GridManager->GetCellsInAttackRange(PositionCoord, Range, GetPathingData(), Rules);
+	TArray<TEnumAsByte<EPathingRules>> Rules; // empty but needed to use below function
+	TArray<FIntVector2> AttackableTiles = GridManager->GetCellsInRange(PositionCoord, Range, GetPathingData(), Rules);
 	for (int i = 0; i < AttackableTiles.Num(); i++)
 	{
 		if (!GridManager->GridCells[AttackableTiles[i]]->IsOccupied) continue;

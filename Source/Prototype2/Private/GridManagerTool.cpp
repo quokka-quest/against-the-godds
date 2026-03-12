@@ -37,26 +37,35 @@ void AGridManagerTool::SetHighlightRotation(float Rotation)
 	HighlightOutlineActor->SetActorRotation(rot);
 }
 
-void AGridManagerTool::DisplayWalkableCells(FIntVector2 Start, int AvailableMovement, FPathingData PathData)
+// This function displays all the cells in a given range from the 'Start' coord
+// It uses the GridOutlineGenerator class to generate a mesh that outlines the area inside the range
+void AGridManagerTool::DisplayCellsInRange(FIntVector2 Start, int Range, FPathingData PathData, TArray<TEnumAsByte<EPathingRules>> Rules)
 {
-	if (AvailableMovement <= 0) return;
-	TArray<FIntVector2> WalkableCells = GetWalkableCells(Start, AvailableMovement, PathData);
-	if (WalkableCells.Num() == 0) return;
+	if (Range < 0) return; // early return for negative range
+	
+	TArray<FIntVector2> CellsInRange = GetCellsInRange(Start, Range, PathData, Rules);
+	if (CellsInRange.Num() == 0) return; // early return for 0 valid cells found
 
 	TArray<FIntVector2> DisplayCells;
 	TArray<FIntVector2> SizeOffsets = PathData.RotationSweep.GetSelectedCellOffsets();
-	for (int i = 0; i < WalkableCells.Num(); i++)
+	for (int i = 0; i < CellsInRange.Num(); i++)
 	{
-		// the Pathfinder handles all validity checks so every cell passed back to here should be valid to walk on
-		GridCells[WalkableCells[i]]->IsWalkable = true;
+		// TODO: see if these can just be removed. Could potentially make this function return a TSet of the cells and just check it contains a cell to validate it instead
+		GridCells[CellsInRange[i]]->IsWalkable = true;
+		GridCells[CellsInRange[i]]->IsAttackable = true;
 
-		for (FIntVector2 Offset : SizeOffsets)
+		if (Rules.Contains(EPathingRules::MustFitOnTarget))
 		{
-			FIntVector2 OffsetCoord = WalkableCells[i] + Offset;
-			if (!GridCells.Contains(OffsetCoord)) {UE_LOG(LogTemp, Error, TEXT("GridManagerTool.cpp->DisplayWalkableCells: tried to display a cell that doesnt exist")); continue;}
-			if (DisplayCells.Contains(OffsetCoord)) continue;
-			DisplayCells.Add(OffsetCoord);
+			if (!DoesPatternFitOnCell(CellsInRange[i], SizeOffsets, PathData)) continue;
+			
+			for (FIntVector2 Offset : SizeOffsets)
+			{
+				FIntVector2 OffsetCoord = CellsInRange[i] + Offset;
+				if (DisplayCells.Contains(OffsetCoord)) continue;
+				DisplayCells.Add(OffsetCoord);
+			}
 		}
+		else { DisplayCells.Add(CellsInRange[i]); }
 	}
 	
 	
@@ -98,42 +107,16 @@ TArray<FPathInfo> AGridManagerTool::DisplayCellPath(FIntVector2 StartCoord, FInt
 	return Path;
 }
 
-void AGridManagerTool::DisplayCellsInAttackRange(FIntVector2 Start, int Range, FPathingData PathData, TArray<TEnumAsByte<EAttackRules>>& Rules)
-{
-	if (Range < 0) return;
-	TArray<FIntVector2> AttackableCells = GetCellsInAttackRange(Start, Range, PathData, Rules);
-	if (AttackableCells.Num() == 0) return;
-
-	TArray<FIntVector2> SizeOffsets = PathData.RotationSweep.GetSelectedCellOffsets();
-	TArray<FIntVector2> DisplayCells;
-	for (int i = 0; i < AttackableCells.Num(); i++)
-	{
-		if (!Rules.Contains(EAttackRules::MustFitOnTargetCell)) {GridCells[AttackableCells[i]]->IsAttackable = true; DisplayCells.Add(AttackableCells[i]); continue;}
-
-		if (!DoesPatternFitOnCell(AttackableCells[i], SizeOffsets, PathData)) continue;
-		GridCells[AttackableCells[i]]->IsAttackable = true;
-		
-		for (FIntVector2 Offset : SizeOffsets)
-		{
-			FIntVector2 OffsetCoord = AttackableCells[i]+Offset;
-			DisplayCells.Add(OffsetCoord);
-		}
-	}
-
-	GridOutlineGenerator(AreaOutlineActor).GenerateOutlineFromCoordArray(DisplayCells, Start, GridCellSizeX, GridCellSizeY);
-	AreaOutlineActor->SetActorLocation(GridCells[Start]->GetActorLocation());
-	AreaOutlineActor->SetVisibility(true);
-	OutlineActor->SetVisibility(false);
-}
-
 TArray<FIntVector2> AGridManagerTool::DisplayAttackPattern(FIntVector2 TargetCoord, FGridData Pattern, EPatternRotation Rotation, FPathingData PathData, TArray<TEnumAsByte<EAttackRules>>& Rules)
 {
 	TArray<FIntVector2> Cells;
-	if (!Rules.Contains(EAttackRules::PatternIsPath)) Cells = GetCellsInAttackArea(TargetCoord, Pattern, Rotation, PathData);
+	if (!Rules.Contains(EAttackRules::DisplayAsPathToTarget)) Cells = GetCellsInAttackArea(TargetCoord, Pattern, Rotation, PathData);
 	else
 	{
 		FIntVector2 StartCoord = Cast<AEntityBase>(PathData.Actor)->PositionCoord;
-		TArray<FPathInfo> Path = DisplayCellPath(TargetCoord, StartCoord, 1000, PathData);
+		TArray<TEnumAsByte<EPathingRules>> PathRules;
+		PathRules.Add(EPathingRules::StraightLine);
+		TArray<FPathInfo> Path =  PathFindBetweenTwoCoords(TargetCoord, StartCoord, 1000, PathData, PathRules);
 
 		Cells.Add(TargetCoord);
 		Cells.Add(StartCoord);
@@ -228,13 +211,14 @@ void AGridManagerTool::ToggleAxisIndicator()
 	AxisActorRef = Arrow;
 }
 
+// This function checks if a pattern (Offsets) fits on the 'CellCoord'
+// returns true if the pattern fits, false otherwise
 bool AGridManagerTool::DoesPatternFitOnCell(FIntVector2 CellCoord, TArray<FIntVector2>& Offsets, FPathingData& PathData)
 {
 	for (FIntVector2 Offset : Offsets)
 	{
 		FIntVector2 Coord = CellCoord + Offset;
-		if (!GridCells.Contains(Coord)) return false;
-		if (GridCells[Coord]->IsOccupied && PathData.Actor != GridCells[Coord]->OccupyingActor) return false;
+		if (!GridCells.Contains(Coord)) {UE_LOG(LogTemp, Error, TEXT("ERROR: GridManagerTool.cpp->DoesPatternFitOnCell: path returned a cell that doesnt obey the 'must fit on target' rule")) return false;}
 	}
 
 	return true;

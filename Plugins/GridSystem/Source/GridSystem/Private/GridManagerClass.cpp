@@ -176,16 +176,14 @@ void AGridManagerClass::ResetWalkableAndAttackableOnAllCells()
 	}
 }
 
-TArray<FIntVector2> AGridManagerClass::GetWalkableCells(FIntVector2 StartCoord, int AvailableMovement, FPathingData PathingData)
+TArray<FIntVector2> AGridManagerClass::GetCellsInRange(FIntVector2 StartCoord, int AvailableMovement, FPathingData PathingData, TArray<TEnumAsByte<EPathingRules>> Rules)
 {
-	return PathFinder(GridCells, PathingData).FindMoveableCellsInRange(StartCoord, AvailableMovement);
+	return PathFinder(GridCells, PathingData, Rules).FindAllCellsInRange(StartCoord, AvailableMovement).Array();
 }
 
-TArray<FIntVector2> AGridManagerClass::GetCellsInAttackRange(FIntVector2 StartCoord, int Range, FPathingData PathingData, TArray<TEnumAsByte<EAttackRules>>& Rules)
-{
-	return PathFinder(GridCells, PathingData).FindAttackableCellsInRange(StartCoord, Range, Rules);
-}
-
+// TODO: change the name of this to 'GetCellsInPattern'
+// also change to return a boolean and take in an array by ref for the output.
+// will return true if the full pattern fit and false otherwise but still populate the out array with the available cells
 TArray<FIntVector2> AGridManagerClass::GetCellsInAttackArea(FIntVector2 Target, FGridData AttackPattern, EPatternRotation Rotation, FPathingData PathingData)
 {
 	TArray<FIntVector2> Offsets = AttackPattern.GetSelectedCellOffsets();
@@ -200,9 +198,13 @@ TArray<FIntVector2> AGridManagerClass::GetCellsInAttackArea(FIntVector2 Target, 
 	return Results;
 }
 
-TArray<FPathInfo> AGridManagerClass::GetPathToPointInRangeOfTarget(FIntVector2 Start, FIntVector2 End, int Range, FPathingData PathingData, TArray<TEnumAsByte<EAttackRules>>& Rules)
+// TODO: this function is redundant with the new rule pathing system. Need to rework enemy logic
+TArray<FPathInfo> AGridManagerClass::GetPathToPointInRangeOfTarget(FIntVector2 Start, FIntVector2 End, int Range, FPathingData PathingData)
 {
-	return PathFinder(GridCells, PathingData).FindPathToPointInRangeOfTarget(Start, End, Range, Rules);
+	TArray<FPathInfo> Path;
+	TArray<TEnumAsByte<EPathingRules>> Rule;
+	PathFinder(GridCells, PathingData, Rule).FindPathBetweenCells(Path, Start, End, Range);
+	return Path;
 }
 
 TArray<FPathInfo> AGridManagerClass::GetPathBetweenCoords(FIntVector2 Start, FIntVector2 End, int AvailableMovement, FPathingData PathingData)
@@ -213,7 +215,17 @@ TArray<FPathInfo> AGridManagerClass::GetPathBetweenCoords(FIntVector2 Start, FIn
 	Rules.Add(EPathingRules::RangeIsAvailableMovement);
 	Rules.Add(EPathingRules::ExcludeOccupiedCells);
 	Rules.Add(EPathingRules::MustFitOnTarget);
-	if (PathFinder(GridCells, PathingData).FindPathBetweenCells(Result, Start, End, AvailableMovement, Rules)) return Result;
+	if (PathFinder(GridCells, PathingData, Rules).FindPathBetweenCells(Result, Start, End, AvailableMovement)) return Result;
+
+	Result.Empty();
+	UE_LOG(LogTemp, Warning, TEXT("AGridManagerClass->GetPathBetweenCoords: failed to find path"));
+	return Result;
+}
+
+TArray<FPathInfo> AGridManagerClass::PathFindBetweenTwoCoords(FIntVector2 Start, FIntVector2 End, int Range, FPathingData PathingData, TArray<TEnumAsByte<EPathingRules>> Rules)
+{
+	TArray<FPathInfo> Result;
+	if (PathFinder(GridCells, PathingData, Rules).FindPathBetweenCells(Result, Start, End, Range)) return Result;
 
 	Result.Empty();
 	UE_LOG(LogTemp, Warning, TEXT("AGridManagerClass->GetPathBetweenCoords: failed to find path"));

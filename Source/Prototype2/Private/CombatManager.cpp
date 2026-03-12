@@ -249,21 +249,36 @@ void ACombatManager::DisplayPathForCurrentCombatant(FIntVector2 TargetPos)
 	PathForCombatantToFollow = PathInfo;
 }
 
-// displays the movement options for the current combatant
+// Defines the rules to be used for displaying the current entity's movement range then calls another function to display that range
 void ACombatManager::DisplayCurrentCombatantsMovement()
 {
-	GridManager->ResetWalkableAndAttackableOnAllCells();
-	GridManager->ResetHighlights();
-	GridManager->DisplayWalkableCells(CurrentTurnCombatant->PositionCoord, CurrentTurnCombatant->AvailableMovement, CurrentTurnCombatant->GetPathingData());
+	TArray<TEnumAsByte<EPathingRules>> Rules;
+	Rules.Add(EPathingRules::ExcludeOccupiedCells);
+	Rules.Add(EPathingRules::RangeIsAvailableMovement);
+	Rules.Add(EPathingRules::MustFitOnTarget);
+	
+	DisplayRangeOutline(CurrentTurnCombatant->PositionCoord, CurrentTurnCombatant->AvailableMovement, CurrentTurnCombatant->GetPathingData(), Rules);
 }
 
-// displays all the tiles that the player can target
+// Defines the rules to be used for displaying the attack's range then calls another function to display that range
 void ACombatManager::DisplayAttackRange(int Range)
+{
+	TArray<TEnumAsByte<EPathingRules>> Rules;
+	if (AbilityRef->TargetingRules.Contains(EAttackRules::UserMustFitOnTarget)) Rules.Add(EPathingRules::MustFitOnTarget);
+	if (AbilityRef->TargetingRules.Contains(EAttackRules::StraightLineOnly)) Rules.Add(EPathingRules::StraightLine);
+	
+	DisplayRangeOutline(CurrentTurnCombatant->PositionCoord, Range, CurrentTurnCombatant->GetPathingData(), Rules);
+}
+
+// calls a series of gridManager functions to display the outline of a given range
+// used by 'DisplayAttackRange' and 'DisplayCurrentCombatantsMovement'
+void ACombatManager::DisplayRangeOutline(FIntVector2 Origin, int Range, FPathingData PathData, TArray<TEnumAsByte<EPathingRules>>& Rules)
 {
 	GridManager->ResetWalkableAndAttackableOnAllCells();
 	GridManager->ResetHighlights();
-	GridManager->DisplayCellsInAttackRange(CurrentTurnCombatant->PositionCoord, Range, CurrentTurnCombatant->GetPathingData(), AbilityRef->TargetingRules);
+	GridManager->DisplayCellsInRange(Origin, Range, PathData, Rules);
 }
+
 
 // displays the attack area and stores the targeted tiles with element 0 being the targeted tile and the rest are the additional area
 void ACombatManager::DisplayAttackPattern(FIntVector2 TargetCoord)
@@ -531,6 +546,6 @@ void ACombatManager::BroadcastOnAttackClickedEvent()
 	APlayerEntity* PlayerRef = Cast<APlayerEntity>(CurrentTurnCombatant);
 	if (!PlayerRef) return;
 
-	if (AbilityRef->TargetingRules.Contains(EAttackRules::ObeyTraversalRules)) GridManager->ChangeHighlightMesh(PlayerRef->RotationSweep);
+	if (AbilityRef->TargetingRules.Contains(EAttackRules::UserMustFitOnTarget)) GridManager->ChangeHighlightMesh(PlayerRef->RotationSweep);
 	else { FGridData Default = FGridData(); GridManager->ChangeHighlightMesh(Default); }
 }

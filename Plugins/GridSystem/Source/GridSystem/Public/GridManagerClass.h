@@ -38,19 +38,20 @@ public:
 	void ResetWalkableAndAttackableOnAllCells();
 	
 	UFUNCTION(BlueprintCallable, Category="Grid System")
-	TArray<FIntVector2> GetWalkableCells(FIntVector2 StartCoord, int AvailableMovement, FPathingData PathingData);
-
-	UFUNCTION(BlueprintCallable, Category="Grid System")
-	TArray<FIntVector2> GetCellsInAttackRange(FIntVector2 StartCoord, int Range, FPathingData PathingData, TArray<TEnumAsByte<EAttackRules>>& Rules);
+	TArray<FIntVector2> GetCellsInRange(FIntVector2 StartCoord, int AvailableMovement, FPathingData PathingData, TArray<TEnumAsByte<EPathingRules>> Rules);
 
 	UFUNCTION(BlueprintCallable, Category="Grid System")
 	TArray<FIntVector2> GetCellsInAttackArea(FIntVector2 Target, FGridData AttackPattern, EPatternRotation Rotation, FPathingData PathingData);
 
 	UFUNCTION(BlueprintCallable, Category="Grid System")
-	TArray<FPathInfo> GetPathToPointInRangeOfTarget(FIntVector2 Start, FIntVector2 End, int Range, FPathingData PathingData, TArray<TEnumAsByte<EAttackRules>>& Rules);
+	TArray<FPathInfo> GetPathToPointInRangeOfTarget(FIntVector2 Start, FIntVector2 End, int Range, FPathingData PathingData);
 
 	UFUNCTION(BlueprintCallable, Category="Grid System")
 	TArray<FPathInfo> GetPathBetweenCoords(FIntVector2 Start, FIntVector2 End, int AvailableMovement, FPathingData PathingData);
+	
+	UFUNCTION(BlueprintCallable, Category="Grid System")
+	TArray<FPathInfo> PathFindBetweenTwoCoords(FIntVector2 Start, FIntVector2 End, int Range, FPathingData PathingData, TArray<TEnumAsByte<EPathingRules>> Rules);
+	
 
 protected:
 

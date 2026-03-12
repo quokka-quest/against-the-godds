@@ -6,24 +6,6 @@
 #include "GridData.h"
 #include "GridCellBase.h"
 
-struct FCellInfo
-{
-	FIntVector2 Coord;
-	int EntryCost;
-	int CostFromStart;
-	int MinCostToTarget;
-	FIntVector2 PrevCellCoord;
-
-	bool RequiresRotation;
-	TEnumAsByte<EPatternRotation> NewRotation;
-	TEnumAsByte<EPatternRotation> PrevRotation;
-
-	bool operator==(const FCellInfo& Other) const
-	{
-		return (Coord == Other.Coord);
-	}
-};
-
 struct FNewCellInfo
 {
 	FIntVector2 Coord;
@@ -38,7 +20,7 @@ struct FNewCellInfo
 	TEnumAsByte<EPatternRotation> NewRotation;
 	TEnumAsByte<EPatternRotation> PrevRotation;
 
-	bool operator==(const FCellInfo& Other) const
+	bool operator==(const FNewCellInfo& Other) const
 	{
 		return (Coord == Other.Coord);
 	}
@@ -64,75 +46,37 @@ struct FNeighbourInfo
 class PathFinder
 {
 public:
-	PathFinder(TMap<FIntVector2, AGridCellBase*>& InGridCells, FPathingData& InPathingData):GridCells(InGridCells),PathingData(InPathingData){};
+	PathFinder(TMap<FIntVector2, AGridCellBase*>& InGridCells, FPathingData& InPathingData, TArray<TEnumAsByte<EPathingRules>> InPathingRules):GridCells(InGridCells),PathingData(InPathingData),PathingRules(InPathingRules){};
 
-	bool FindPathBetweenCells(TArray<FPathInfo>& OutArray, FIntVector2 Start, FIntVector2 End, int Range, TArray<TEnumAsByte<EPathingRules>>& Rules);
-	void DiscoverCell(FIntVector2 CellCoord, FIntVector2 PreviousCell, TEnumAsByte<EPatternRotation> Direction); //TODO: move to protected when done with changes
-	bool PerformAnalysis(TArray<FNewCellInfo>& OutArray); //TODO: move to protected when done with changes
+	bool FindPathBetweenCells(TArray<FPathInfo>& OutArray, FIntVector2 Start, FIntVector2 End, int Range);
+	TSet<FIntVector2> FindAllCellsInRange(FIntVector2 Start, int Range);
+
+protected:
+	// constructor variables
+	TMap<FIntVector2, AGridCellBase*> GridCells; // map of all existing cells
+	TArray<TEnumAsByte<EPathingRules>> PathingRules; // rules to follow
+	FPathingData PathingData; // pathing data of actor the path is for
+
+	// maps and sets
+	TMap<FIntVector2, FNewCellInfo> CellMap;
+	TArray<FIntVector2> DiscoveredCells;
+	TSet<FIntVector2> AnalysedCells;
+
+	// global variables
+	FIntVector2 StartCoord = FIntVector2(0,0);
+	FIntVector2 EndCoord = FIntVector2(0,0);
+	int TotalMovement = 0;
+	int AttackRange = 0;
+	bool IsForRange = false;
+
+	// discover and analyse
+	void DiscoverCell(FIntVector2 CellCoord, FIntVector2 PreviousCell, TEnumAsByte<EPatternRotation> Direction);
+	bool PerformAnalysis(TArray<FNewCellInfo>& OutArray);
+
+	// helper functions
+	int CalculateMinCostBetweenCells(FIntVector2 Start, FIntVector2 End);
 	FNewCellInfo GetNextCellToAnalyse();
 	TArray<FNeighbourInfo> GetValidNeighbours(FIntVector2 Coord);
 	bool IsCoordAValidNeighbour(FIntVector2 Coord, FNeighbourInfo& Neighbour);
 	int GetPenaltyOfCoord(FIntVector2 Coord);
-	TMap<FIntVector2, FNewCellInfo> NewCellMap;
-	TSet<FIntVector2> NewDiscoveredCells;
-	TSet<FIntVector2> NewAnalysedCells;
-	
-	TArray<FPathInfo> FindPath(FIntVector2 Start, FIntVector2 End, bool AvoidOccupiedCells = true);
-	TArray<FIntVector2> FindMoveableCellsInRange(FIntVector2 Start, int AvailableMovement,  bool AvoidOccupiedCells = true);
-	TArray<FIntVector2> FindAttackableCellsInRange(FIntVector2 Start, int Range, TArray<TEnumAsByte<EAttackRules>>& Rules);
-	TArray<FPathInfo> FindPathToPointInRangeOfTarget(FIntVector2 Start, FIntVector2 End, int Range, TArray<TEnumAsByte<EAttackRules>>& Rules, bool AvoidOccupiedCells = true);
-
-protected:
-	TMap<FIntVector2, AGridCellBase*> GridCells;
-
-	TArray<TEnumAsByte<EAttackRules>> AttackRules;
-
-	TArray<TEnumAsByte<EPathingRules>> PathingRules;
-
-	FIntVector2 StartCoord = FIntVector2(0,0);
-	FIntVector2 EndCoord = FIntVector2(0,0);
-
-	TMap<FIntVector2, FCellInfo> CellMap;
-	TArray<FCellInfo> DiscoveredCells;
-	TArray<FCellInfo> AnalysedCells;
-
-	int TotalMovement = 0;
-	int AttackRange = 0;
-	bool AvoidOccupied = true;
-	FPathingData PathingData;
-
-	// Discover functions
-	void DiscoverCellForMovement(FIntVector2 CellCoord, FIntVector2 PreviousCell, TEnumAsByte<EPatternRotation> Direction);
-	void DiscoverCellForAttack(FIntVector2 CellCoord, FIntVector2 PreviousCell, TEnumAsByte<EPatternRotation> Direction);
-
-	// Analyse functions
-	bool AnalyseNextCellForPathing();
-	void AnalyseNextCellForMovement();
-	void AnalyseNextCellForAttack();
-
-	// helper functions
-
-	int CalculateMinCostBetweenCells(FIntVector2 Start, FIntVector2 End);
-
-	FCellInfo PullCheapestMoveCostCellFromDiscoveredCells();
-
-	void MoveCellFromDiscoveredToAnalysed(FCellInfo Cell);
-
-	bool IsCellAlreadyDiscovered(FIntVector2 CellCoord);
-
-	TArray<FNeighbourInfo> GetValidNeighboursForMovement(FIntVector2 CellCoord);
-
-	TArray<FNeighbourInfo> GetValidNeighboursForAttack(FIntVector2 CellCoord);
-
-	FCellInfo PullNextAnalysableCell();
-
-	TArray<FIntVector2> GetPerimeterCells(TArray<FIntVector2>& CellCoords);
-
-	bool GetCellInArrayClosestToTarget(TArray<FIntVector2>& Cells, FIntVector2 Target, FIntVector2& OutCoord);
-
-	bool CheckRotationSweep(FIntVector2 Coord);
-
-	EPatternRotation GetDirectionBetweenTwoCells(FIntVector2 FromCoord, FIntVector2 ToCoord);
-
-	bool CheckCoordIsValidNeighborForAttack(FIntVector2 Coord, FNeighbourInfo Neighbor);
 };

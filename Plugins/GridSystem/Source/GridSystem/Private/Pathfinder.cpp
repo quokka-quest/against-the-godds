@@ -3,8 +3,10 @@
 
 #include "PathFinder.h"
 
-///////////////////////////////////////////////////////////////////////////////////////////////////// Reworking functions
-bool PathFinder::FindPathBetweenCells(TArray<FPathInfo>& OutArray, FIntVector2 Start, FIntVector2 End, int Range, TArray<TEnumAsByte<EPathingRules>>& Rules)
+///////////////////////////////////////////////////////////////////////////////////////////////////// Pathing functions
+
+// finds a path between the start and the target
+bool PathFinder::FindPathBetweenCells(TArray<FPathInfo>& OutArray, FIntVector2 Start, FIntVector2 End, int Range)
 {
 	// early exit to avoid errors when attempting to path from a cell to itself
 	OutArray.Empty();
@@ -23,14 +25,14 @@ bool PathFinder::FindPathBetweenCells(TArray<FPathInfo>& OutArray, FIntVector2 S
 	// set global variables
 	StartCoord = Start;
 	EndCoord = End;
-	TotalMovement = (Rules.Contains(EPathingRules::RangeIsAvailableMovement))? Range : 100000;
-	AttackRange = (!Rules.Contains(EPathingRules::RangeIsAvailableMovement))? Range : 100000;
-	PathingRules = Rules;
+	IsForRange = false;
+	TotalMovement = (PathingRules.Contains(EPathingRules::RangeIsAvailableMovement))? Range : 100000;
+	AttackRange = (!PathingRules.Contains(EPathingRules::RangeIsAvailableMovement))? Range : 100000;
 	
 	// clear maps
-	NewDiscoveredCells.Empty();
-	NewAnalysedCells.Empty();
-	NewCellMap.Empty();
+	DiscoveredCells.Empty();
+	AnalysedCells.Empty();
+	CellMap.Empty();
 	
 	// discover the starting cell
 	DiscoverCell(Start, Start, PathingData.CurrentRotation);
@@ -53,7 +55,85 @@ bool PathFinder::FindPathBetweenCells(TArray<FPathInfo>& OutArray, FIntVector2 S
 	return true;
 }
 
-// Absolute discovery with new rule system
+// Finds every cell within the given range of the start
+TSet<FIntVector2> PathFinder::FindAllCellsInRange(FIntVector2 Start, int Range)
+{
+	// early exit to avoid errors when attempting to path from a cell to itself
+	if (Range == 0) { TSet<FIntVector2> Result; Result.Add(Start); return Result; }
+	
+	// set global variables
+	StartCoord = Start;
+	EndCoord = FIntVector2(10000, 10000); // set an impossible end to find so that all cells in the range are analysed
+	IsForRange = true;
+	TotalMovement = (PathingRules.Contains(EPathingRules::RangeIsAvailableMovement))? Range : 100000;
+	AttackRange = (!PathingRules.Contains(EPathingRules::RangeIsAvailableMovement))? Range : 100000;
+	
+	// clear maps
+	DiscoveredCells.Empty();
+	AnalysedCells.Empty();
+	CellMap.Empty();
+	
+	// discover the starting cell
+	DiscoverCell(Start, Start, PathingData.CurrentRotation);
+
+	// core A* analysis loop in this function
+	TArray<FNewCellInfo> Results;
+	PerformAnalysis(Results);
+
+	return AnalysedCells;
+}
+
+///////////////////////////////////////////////////////////////////////////////////////////////////// Discover and Analysis (core A* loop)
+
+// PARAMETERS
+// OutArray: the array that will be filled with the path when its found
+// RETURN
+// returns true if a path was found and false otherwise
+bool PathFinder::PerformAnalysis(TArray<FNewCellInfo>& OutArray)
+{
+	bool FoundPath = false;
+	while (DiscoveredCells.Num() > 0 && !FoundPath)
+	{
+		FNewCellInfo CellInfo = GetNextCellToAnalyse();
+		DiscoveredCells.Remove(CellInfo.Coord);
+		AnalysedCells.Add(CellInfo.Coord);
+
+		TArray<FNeighbourInfo> ValidNeighbours = GetValidNeighbours(CellInfo.Coord);
+		if (ValidNeighbours.Num() == 0) continue;
+	
+		for (FNeighbourInfo Neighbour : ValidNeighbours)
+		{
+			// if the neighbour cell has never been discovered then discover it and move on
+			if (!CellMap.Contains(Neighbour.Coord))
+			{
+				DiscoverCell(Neighbour.Coord, CellInfo.Coord, Neighbour.Direction);
+				if (Neighbour.Coord == EndCoord) { FoundPath = true; break; }
+				continue;
+			}
+
+			int CurrentMovementCostFromStart = CellMap[Neighbour.Coord].MovementCostFromStart;
+			int NewCostFromStart = CellInfo.MovementCostFromStart + CellMap[Neighbour.Coord].MovementCost;
+			if (NewCostFromStart >= CurrentMovementCostFromStart) continue;
+
+			CellMap.Remove(Neighbour.Coord);
+			DiscoverCell(Neighbour.Coord, CellInfo.Coord, Neighbour.Direction);
+			if (Neighbour.Coord == EndCoord) { FoundPath = true; break; }
+		}
+	}
+
+	if (!FoundPath) return false;
+
+	// Get the path by reversing through all the 'PrevCellCoord' values until the start is reached
+	FIntVector2 PrevCoords = EndCoord;
+	while (PrevCoords != StartCoord)
+	{
+		OutArray.Add(CellMap[PrevCoords]);
+		PrevCoords = CellMap[PrevCoords].PrevCellCoord;
+	}
+	
+	return true;
+}
+
 // PARAMETERS
 // CellCoord: The coordinate being discovered
 // PreviousCell: the coordinate of the cell from which the path moved onto this one
@@ -65,14 +145,14 @@ void PathFinder::DiscoverCell(FIntVector2 CellCoord, FIntVector2 PreviousCell, T
 	CellInfo.PrevCellCoord = PreviousCell;
 	
 	CellInfo.MovementCost = (CellCoord == StartCoord)? 0: GridCells[CellCoord]->MovementCost;
-	CellInfo.MovementCostFromStart = (CellCoord == StartCoord)? 0: NewCellMap[PreviousCell].MovementCostFromStart + CellInfo.MovementCost;
+	CellInfo.MovementCostFromStart = (CellCoord == StartCoord)? 0: CellMap[PreviousCell].MovementCostFromStart + CellInfo.MovementCost;
 	CellInfo.AbsDistFromTarget = CalculateMinCostBetweenCells(CellCoord, EndCoord);
 	CellInfo.AbsDistFromStart = CalculateMinCostBetweenCells(StartCoord, CellCoord);
-	CellInfo.PenaltyFromStart = (CellCoord == StartCoord)? 0 : NewCellMap[PreviousCell].PenaltyFromStart;
+	CellInfo.PenaltyFromStart = (CellCoord == StartCoord)? 0 : CellMap[PreviousCell].PenaltyFromStart;
 	CellInfo.PenaltyFromStart += GetPenaltyOfCoord(CellCoord);
 	
 	CellInfo.NewRotation = Direction;
-	CellInfo.PrevRotation = (CellCoord == StartCoord)? Direction : NewCellMap[PreviousCell].NewRotation;
+	CellInfo.PrevRotation = (CellCoord == StartCoord)? Direction : CellMap[PreviousCell].NewRotation;
 
 	// do not discover if movement limit is exceeded
 	if (CellInfo.MovementCostFromStart > TotalMovement) return;
@@ -99,63 +179,20 @@ void PathFinder::DiscoverCell(FIntVector2 CellCoord, FIntVector2 PreviousCell, T
 		{
 			FIntVector2 Coord = CellCoord + Offset;
 			if (!GridCells.Contains(Coord)) return;
-			if (GridCells[Coord]->IsOccupied && GridCells[Coord]->OccupyingActor != PathingData.Actor && AvoidOccupied) return;
+
+			// RULE: Exclude Occupied Cells
+			// if this rule is to be followed then check for occupancy
+			// excludes self occupancy
+			if (PathingRules.Contains(EPathingRules::ExcludeOccupiedCells) && GridCells[Coord]->IsOccupied && GridCells[Coord]->OccupyingActor != PathingData.Actor) return;
 		}
 	}
-
-	NewCellMap.Add(CellCoord, CellInfo);
-	NewDiscoveredCells.Add(CellInfo.Coord);
+	
+	CellMap.Add(CellCoord, CellInfo);
+	DiscoveredCells.Add(CellInfo.Coord);
 }
 
-// Absolute analysis with new rule system
-// PARAMETERS
-// OutArray: the array that will be filled with the path when its found
-// RETURN
-// returns true if a path was found and false otherwise
-bool PathFinder::PerformAnalysis(TArray<FNewCellInfo>& OutArray)
-{
-	bool FoundPath = false;
-	while (NewDiscoveredCells.Num() > 0 && !FoundPath)
-	{
-		FNewCellInfo CellInfo = GetNextCellToAnalyse();
-		NewDiscoveredCells.Remove(CellInfo.Coord);
-		NewAnalysedCells.Add(CellInfo.Coord);
 
-		TArray<FNeighbourInfo> ValidNeighbours = GetValidNeighbours(CellInfo.Coord);
-		if (ValidNeighbours.Num() == 0) return false;
-	
-		for (FNeighbourInfo Neighbour : ValidNeighbours)
-		{
-			// if the neighbour cell has never been discovered then discover it and move on
-			if (!NewCellMap.Contains(Neighbour.Coord))
-			{
-				DiscoverCell(Neighbour.Coord, CellInfo.Coord, Neighbour.Direction);
-				if (Neighbour.Coord == EndCoord) { FoundPath = true; break; }
-				continue;
-			}
-
-			int CurrentMovementCostFromStart = NewCellMap[Neighbour.Coord].MovementCostFromStart;
-			int NewCostFromStart = CellInfo.MovementCostFromStart + NewCellMap[Neighbour.Coord].MovementCost;
-			if (NewCostFromStart >= CurrentMovementCostFromStart) continue;
-
-			NewCellMap.Remove(Neighbour.Coord);
-			DiscoverCell(Neighbour.Coord, CellInfo.Coord, Neighbour.Direction);
-			if (Neighbour.Coord == EndCoord) { FoundPath = true; break; }
-		}
-	}
-
-	if (!FoundPath) return false;
-
-	// Get the path by reversing through all the 'PrevCellCoord' values until the start is reached
-	FIntVector2 PrevCoords = EndCoord;
-	while (PrevCoords != StartCoord)
-	{
-		OutArray.Add(NewCellMap[PrevCoords]);
-		PrevCoords = NewCellMap[PrevCoords].PrevCellCoord;
-	}
-	
-	return true;
-}
+///////////////////////////////////////////////////////////////////////////////////////////////////// Helper functions
 
 // this function selects the next cell to be analysed
 // priority: Lowest hazard penalty from the start, then shortest distance to the target
@@ -165,9 +202,11 @@ FNewCellInfo PathFinder::GetNextCellToAnalyse()
 	int ShortestDist = 100000;
 	int SmallestPenalty = 100000;
 
-	for (FIntVector2 Coord : NewDiscoveredCells)
+	if (IsForRange) return CellMap[DiscoveredCells[0]];
+
+	for (FIntVector2 Coord : DiscoveredCells)
 	{
-		FNewCellInfo CellInfo = NewCellMap[Coord];
+		FNewCellInfo CellInfo = CellMap[Coord];
 		if (CellInfo.PenaltyFromStart > SmallestPenalty) continue;
 
 		// a smaller penalty has absolute priority over a smaller distance to the target
@@ -188,6 +227,21 @@ FNewCellInfo PathFinder::GetNextCellToAnalyse()
 	return CheapestCell;
 }
 
+int PathFinder::CalculateMinCostBetweenCells(FIntVector2 Start, FIntVector2 End)
+{
+	return abs(Start.X - End.X) + abs(Start.Y - End.Y);
+}
+
+int PathFinder::GetPenaltyOfCoord(FIntVector2 Coord)
+{
+	int penalty = 0;
+	
+	// RULE: Try Path Around Hazards
+	if (PathingRules.Contains(EPathingRules::TryPathAroundHazards)) penalty += (GridCells[Coord]->IsHazard)? 1 : 0;
+
+	return penalty;
+}
+
 // This function returns a hashset containing all the neighbours valid for pathing
 // use by the analysis function to know which cells to 'discover'
 TArray<FNeighbourInfo> PathFinder::GetValidNeighbours(FIntVector2 Coord)
@@ -200,8 +254,8 @@ TArray<FNeighbourInfo> PathFinder::GetValidNeighbours(FIntVector2 Coord)
 	// except if it's the start coordinate, in which case add all of them because they all start their own unique straight line
 	if (PathingRules.Contains(EPathingRules::StraightLine) && Coord != StartCoord)
 	{
-		EPatternRotation dir = NewCellMap[Coord].NewRotation;
-		FIntVector2 Offset = FIntVector2((dir == R90)? 1 : (dir == R270)? -1 : 0, (dir == R0)? 1 : (dir == R180)? -1 : 0);
+		EPatternRotation dir = CellMap[Coord].NewRotation;
+		FIntVector2 Offset = (dir == R90)? FIntVector2(1, 0) : (dir == R0)? FIntVector2(0, 1) : (dir == R270)? FIntVector2(-1, 0) : FIntVector2(0, -1);
 		Neighbours.Add(FNeighbourInfo(Coord + Offset, dir));
 	}
 	else
@@ -230,435 +284,4 @@ bool PathFinder::IsCoordAValidNeighbour(FIntVector2 Coord, FNeighbourInfo& Neigh
 	if (Neighbour.Direction == R270) { return (!GridCells[Coord]->BlockNegativeX && !GridCells[Neighbour.Coord]->BlockPositiveX); }
 	if (Neighbour.Direction == R0) { return (!GridCells[Coord]->BlockPositiveY && !GridCells[Neighbour.Coord]->BlockNegativeY); }
 	return (!GridCells[Coord]->BlockNegativeY && !GridCells[Neighbour.Coord]->BlockPositiveY);
-}
-
-int PathFinder::GetPenaltyOfCoord(FIntVector2 Coord)
-{
-	int penalty = 0;
-	
-	// RULE: Try Path Around Hazards
-	if (PathingRules.Contains(EPathingRules::TryPathAroundHazards)) penalty += (GridCells[Coord]->IsHazard)? 1 : 0;
-
-	return penalty;
-}
-
-
-///////////////////////////////////////////////////////////////////////////////////////////////////// Pathfinding Functions
-TArray<FPathInfo> PathFinder::FindPath(FIntVector2 Start, FIntVector2 End, bool AvoidOccupiedCells)
-{
-	StartCoord = Start;
-	EndCoord = End;
-	TotalMovement = 1000;
-	AvoidOccupied = AvoidOccupiedCells;
-	DiscoveredCells.Empty();
-	AnalysedCells.Empty();
-	CellMap.Empty();
-
-	TArray<FIntVector2> ReversPathCoords;
-	TArray<FPathInfo> Result;
-
-	// discover the starting tile
-	DiscoverCellForMovement(Start, Start, PathingData.CurrentRotation);
-
-	int LoopCount = 0;
-	while (DiscoveredCells.Num() > 0)
-	{
-		// safety to prevent an infinite loop crash
-		LoopCount++;
-		if (LoopCount > 50000) {UE_LOG(LogTemp, Error, TEXT("Pathfinder->FindPath error in pathfinding: infinite loop detected")) return Result;}
-
-		// analyse the next tile and if the end cell has not been found then continue
-		bool FoundEndPoint = AnalyseNextCellForPathing();
-		if (!FoundEndPoint) continue;
-
-		// if a path has been found then populate the result array and return it
-
-		// retrieve the coordinates of the cells in the path (done from end to start)
-		ReversPathCoords.Add(EndCoord);
-		FIntVector2 PrevCoord = EndCoord;
-		while (PrevCoord != StartCoord)
-		{
-			PrevCoord = CellMap[PrevCoord].PrevCellCoord;
-			ReversPathCoords.Add(PrevCoord);
-		}
-
-		// establish the first movement
-		FPathInfo FirstMovement;
-		FirstMovement.StartingCoord = StartCoord;
-		FirstMovement.CoordToMoveTo = ReversPathCoords[ReversPathCoords.Num()-2];
-		FirstMovement.StartingRot = PathingData.CurrentRotation;
-		FirstMovement.RotToChangeTo = GetDirectionBetweenTwoCells(FirstMovement.StartingCoord, FirstMovement.CoordToMoveTo);
-		FirstMovement.HazardPenaltyFromStart = 0;
-		Result.Add(FirstMovement);
-		int resultIndex = 0;
-		// complete the rest of the path
-		for (int i = ReversPathCoords.Num()-2; i > 0; i--)
-		{
-			FPathInfo NextMovement;
-			NextMovement.StartingCoord = ReversPathCoords[i];
-			NextMovement.CoordToMoveTo = ReversPathCoords[i-1];
-			NextMovement.StartingRot = Result[resultIndex].RotToChangeTo;
-			NextMovement.RotToChangeTo = GetDirectionBetweenTwoCells(NextMovement.StartingCoord, NextMovement.CoordToMoveTo);
-			NextMovement.HazardPenaltyFromStart = 0;
-			Result.Add(NextMovement);
-			resultIndex++;
-		}
-		
-		return Result;
-	}
-
-	return Result;
-}
-
-TArray<FIntVector2> PathFinder::FindMoveableCellsInRange(FIntVector2 Start, int AvailableMovement, bool AvoidOccupiedCells)
-{
-	TotalMovement = AvailableMovement;
-	AvoidOccupied = AvoidOccupiedCells;
-	StartCoord = Start;
-	EndCoord = Start;
-	DiscoveredCells.Empty();
-	AnalysedCells.Empty();
-	CellMap.Empty();
-
-	TArray<FIntVector2> Result;
-
-	DiscoverCellForMovement(Start, Start, PathingData.CurrentRotation);
-
-	while (DiscoveredCells.Num() > 0)
-	{
-		AnalyseNextCellForMovement();
-	}
-
-	for (FCellInfo Cell : AnalysedCells)
-	{
-		Result.Add(Cell.Coord);
-	}
-	
-	return Result;
-}
-
-TArray<FIntVector2> PathFinder::FindAttackableCellsInRange(FIntVector2 Start, int Range, TArray<TEnumAsByte<EAttackRules>>& Rules)
-{
-	AttackRange = Range;
-	StartCoord = Start;
-	AttackRules = Rules;
-	DiscoveredCells.Empty();
-	AnalysedCells.Empty();
-	CellMap.Empty();
-
-	TArray<FIntVector2> Result;
-
-	DiscoverCellForAttack(Start, Start, PathingData.CurrentRotation);
-
-	while (DiscoveredCells.Num() > 0)
-	{
-		AnalyseNextCellForAttack();
-	}
-
-	for (FCellInfo Cell : AnalysedCells)
-	{
-		Result.Add(Cell.Coord);
-	}
-
-	return Result;
-}
-
-TArray<FPathInfo> PathFinder::FindPathToPointInRangeOfTarget(FIntVector2 Start, FIntVector2 End, int Range, TArray<TEnumAsByte<EAttackRules>>& Rules, bool AvoidOccupiedCells)
-{
-	TArray<FIntVector2> CellsInAttackRange = FindAttackableCellsInRange(End, Range, Rules);
-	TArray<FIntVector2> PerimeterCells = GetPerimeterCells(CellsInAttackRange);
-
-	FIntVector2 ClosestTile = FIntVector2(0);
-	if (!GetCellInArrayClosestToTarget(PerimeterCells, Start, ClosestTile)) return FindPath(Start, End);
-
-	return FindPath(Start, ClosestTile);
-}
-
-
-///////////////////////////////////////////////////////////////////////////////////////////////////// Discover functions
-
-// These functions Discover a cell, checking for movement/attack availability
-// the cell coord to be discovered and the cell that it's connected to are passed in
-// the 'Direction' parameter is the rotation that the entity will have upon entering the new cell
-void PathFinder::DiscoverCellForMovement(FIntVector2 CellCoord, FIntVector2 PreviousCell, TEnumAsByte<EPatternRotation> Direction)
-{
-	FCellInfo CellInfo;
-	CellInfo.Coord = CellCoord;
-	CellInfo.EntryCost = GridCells[CellCoord]->MovementCost;
-	CellInfo.MinCostToTarget = CalculateMinCostBetweenCells(CellCoord, EndCoord);
-	CellInfo.PrevCellCoord = PreviousCell;
-	CellInfo.NewRotation = Direction;
-	CellInfo.PrevRotation = (CellCoord == StartCoord)? Direction : CellMap[PreviousCell].NewRotation;
-	CellInfo.RequiresRotation = CellInfo.NewRotation != CellInfo.PrevRotation;
-
-	// if the cell map has contents then the previous coord can be checked since it will have been added already
-	// otherwise set it to 0 (makes the starting tile have an entry cost of 0)
-	int CostFromStart = (!CellMap.IsEmpty())? CellMap[PreviousCell].CostFromStart + CellInfo.EntryCost: 0;
-	CellInfo.CostFromStart = CostFromStart;
-
-	if (CostFromStart > TotalMovement) return;
-	if (CellCoord != StartCoord && CellCoord != EndCoord && AvoidOccupied && GridCells[CellCoord]->IsOccupied && GridCells[CellCoord]->OccupyingActor != PathingData.Actor) return;
-
-	// check if entity can fit in the new area it will move to
-	for (FIntVector2 Offset  : PathingData.ActorRotations[PathingData.CurrentRotation].GetSelectedCellOffsets())
-	{
-		FIntVector2 Coord = CellCoord + Offset;
-		if (!GridCells.Contains(Coord)) return;
-		if (GridCells[Coord]->IsOccupied && GridCells[Coord]->OccupyingActor != PathingData.Actor && AvoidOccupied) return;
-	}
-
-	CellMap.Add(CellCoord, CellInfo);
-	DiscoveredCells.Add(CellInfo);
-}
-
-void PathFinder::DiscoverCellForAttack(FIntVector2 CellCoord, FIntVector2 PreviousCell, TEnumAsByte<EPatternRotation> Direction)
-{
-	FCellInfo CellInfo;
-	CellInfo.Coord = CellCoord;
-	CellInfo.EntryCost = 1;
-	CellInfo.MinCostToTarget = 0;
-	CellInfo.PrevCellCoord = PreviousCell;
-	CellInfo.NewRotation = Direction;
-
-	int CostFromStart = (!CellMap.IsEmpty())? CellMap[PreviousCell].CostFromStart + CellInfo.EntryCost: 0;
-	CellInfo.CostFromStart = CostFromStart;
-
-	if (CostFromStart > AttackRange) return;
-
-	CellMap.Add(CellCoord, CellInfo);
-	DiscoveredCells.Add(CellInfo);
-}
-
-
-///////////////////////////////////////////////////////////////////////////////////////////////////// Analyse functions
-bool PathFinder::AnalyseNextCellForPathing()
-{
-	FCellInfo CellInfo = PullCheapestMoveCostCellFromDiscoveredCells();
-	MoveCellFromDiscoveredToAnalysed(CellInfo);
-
-	TArray<FNeighbourInfo> ValidNeighbours = GetValidNeighboursForMovement(CellInfo.Coord);
-	if (ValidNeighbours.Num() == 0) return false;
-	
-	for (FNeighbourInfo Neighbour : ValidNeighbours)
-	{
-		if (IsCellAlreadyDiscovered(Neighbour.Coord)) continue;
-
-		DiscoverCellForMovement(Neighbour.Coord, CellInfo.Coord, Neighbour.Direction);
-		if (Neighbour.Coord == EndCoord) return true;
-	}
-	
-	return false;
-}
-
-void PathFinder::AnalyseNextCellForMovement()
-{
-	FCellInfo CellInfo = PullNextAnalysableCell();
-	TArray<FNeighbourInfo> ValidNeighbours = GetValidNeighboursForMovement(CellInfo.Coord);
-
-	if (ValidNeighbours.Num() == 0) return;
-
-	bool IsRotationAllowed = CheckRotationSweep(CellInfo.Coord);
-
-	for (FNeighbourInfo Neighbour : ValidNeighbours)
-	{
-		if (IsCellAlreadyDiscovered(Neighbour.Coord)) continue;
-		if (!IsRotationAllowed && Neighbour.Direction != CellInfo.NewRotation) continue;
-
-		if (!CheckRotationSweep(Neighbour.Coord)) continue; // can not move onto a cell that can't be moved off of
-		
-		DiscoverCellForMovement(Neighbour.Coord, CellInfo.Coord, Neighbour.Direction);
-	}
-}
-
-void PathFinder::AnalyseNextCellForAttack()
-{
-	FCellInfo CellInfo = PullNextAnalysableCell();
-	TArray<FNeighbourInfo> ValidNeighbours = GetValidNeighboursForAttack(CellInfo.Coord);
-
-	if (ValidNeighbours.Num() == 0) return;
-
-	for (FNeighbourInfo Neighbour : ValidNeighbours)
-	{
-		if (IsCellAlreadyDiscovered(Neighbour.Coord)) continue;
-
-		if (AttackRules.Contains(EAttackRules::ObeyTraversalRules) && !CheckRotationSweep(Neighbour.Coord)) continue;
-
-		DiscoverCellForAttack(Neighbour.Coord, CellInfo.Coord, Neighbour.Direction);
-	}
-}
-
-
-///////////////////////////////////////////////////////////////////////////////////////////////////// Helper functions
-
-int PathFinder::CalculateMinCostBetweenCells(FIntVector2 Start, FIntVector2 End)
-{
-	return abs(Start.X - End.X) + abs(Start.Y - End.Y);
-}
-
-// get the cell in the discovered array that has the cheapest cost to the end target
-FCellInfo PathFinder::PullCheapestMoveCostCellFromDiscoveredCells()
-{
-	FCellInfo CheapestCell = FCellInfo();
-	int CheapestCost = 100000;
-
-	for (FCellInfo Cell : DiscoveredCells)
-	{
-		if (Cell.MinCostToTarget >= CheapestCost) continue;
-		CheapestCell = Cell;
-		CheapestCost = Cell.MinCostToTarget;
-	}
-
-	return CheapestCell;
-}
-
-void PathFinder::MoveCellFromDiscoveredToAnalysed(FCellInfo Cell)
-{
-	DiscoveredCells.Remove(Cell);
-	AnalysedCells.Add(Cell);
-}
-
-bool PathFinder::IsCellAlreadyDiscovered(FIntVector2 CellCoord)
-{
-	return CellMap.Contains(CellCoord);
-}
-
-// returns the valid neighbours for a given cell. Checks if a direction can be travelled through and if the coordinate exists
-TArray<FNeighbourInfo> PathFinder::GetValidNeighboursForMovement(FIntVector2 CellCoord)
-{
-	TArray<FNeighbourInfo> ValidNeighbours;
-
-	FNeighbourInfo PosXNeighbour = FNeighbourInfo(CellCoord + FIntVector2(1,0), R90);
-	FNeighbourInfo PosYNeighbour = FNeighbourInfo(CellCoord + FIntVector2(0,1), R0);
-	FNeighbourInfo NegXNeighbour = FNeighbourInfo(CellCoord + FIntVector2(-1,0), R270);
-	FNeighbourInfo NegYNeighbour = FNeighbourInfo(CellCoord + FIntVector2(0,-1), R180);
-	
-	if (GridCells.Contains(PosXNeighbour.Coord)
-		&& !GridCells[CellCoord]->BlockPositiveX
-		&& !GridCells[PosXNeighbour.Coord]->BlockNegativeX) ValidNeighbours.Add(PosXNeighbour);
-
-	if (GridCells.Contains(NegXNeighbour.Coord)
-		&& !GridCells[CellCoord]->BlockNegativeX
-		&& !GridCells[NegXNeighbour.Coord]->BlockPositiveX) ValidNeighbours.Add(NegXNeighbour);
-
-	if (GridCells.Contains(PosYNeighbour.Coord)
-		&& !GridCells[CellCoord]->BlockPositiveY
-		&& !GridCells[PosYNeighbour.Coord]->BlockNegativeY) ValidNeighbours.Add(PosYNeighbour);
-
-	if (GridCells.Contains(NegYNeighbour.Coord)
-		&& !GridCells[CellCoord]->BlockNegativeY
-		&& !GridCells[NegYNeighbour.Coord]->BlockPositiveY) ValidNeighbours.Add(NegYNeighbour);
-	
-	return ValidNeighbours;
-}
-
-TArray<FNeighbourInfo> PathFinder::GetValidNeighboursForAttack(FIntVector2 CellCoord)
-{
-	TArray<FNeighbourInfo> ValidNeighbours;
-
-	FNeighbourInfo PosXNeighbour = FNeighbourInfo(CellCoord + FIntVector2(1,0), R90);
-	FNeighbourInfo PosYNeighbour = FNeighbourInfo(CellCoord + FIntVector2(0,1), R0);
-	FNeighbourInfo NegXNeighbour = FNeighbourInfo(CellCoord + FIntVector2(-1,0), R270);
-	FNeighbourInfo NegYNeighbour = FNeighbourInfo(CellCoord + FIntVector2(0,-1), R180);
-
-	bool ObeyTraversal = AttackRules.Contains(EAttackRules::ObeyTraversalRules);
-	bool StraightLine = AttackRules.Contains(EAttackRules::StraightLineOnly);
-
-	if (GridCells.Contains(PosXNeighbour.Coord) && CheckCoordIsValidNeighborForAttack(CellCoord, PosXNeighbour)) ValidNeighbours.Add(PosXNeighbour);
-	if (GridCells.Contains(PosYNeighbour.Coord) && CheckCoordIsValidNeighborForAttack(CellCoord, PosYNeighbour)) ValidNeighbours.Add(PosYNeighbour);
-	if (GridCells.Contains(NegXNeighbour.Coord) && CheckCoordIsValidNeighborForAttack(CellCoord, NegXNeighbour)) ValidNeighbours.Add(NegXNeighbour);
-	if (GridCells.Contains(NegYNeighbour.Coord) && CheckCoordIsValidNeighborForAttack(CellCoord, NegYNeighbour)) ValidNeighbours.Add(NegYNeighbour);
-
-	return ValidNeighbours;
-}
-
-bool PathFinder::CheckCoordIsValidNeighborForAttack(FIntVector2 Coord, FNeighbourInfo Neighbor)
-{
-	if (Coord == StartCoord) return true; // return true if checking for the start coord
-	if (AttackRules.IsEmpty()) return true; // return true if there are no rules to follow (ToDo: need to implement line of sight checks)
-	if (AttackRules.Num() == 1 && AttackRules.Contains(EAttackRules::IgnoreLineOfSight)) return true; // see the 'ToDo' above
-
-	bool ObeyTraversal = AttackRules.Contains(EAttackRules::ObeyTraversalRules);
-	bool StraightLine = AttackRules.Contains(EAttackRules::StraightLineOnly);
-
-	bool IsStraight = (CellMap[Coord].NewRotation == Neighbor.Direction);
-	
-	bool ObeysTravel;
-	if (Neighbor.Direction == R90) {ObeysTravel = (!GridCells[Coord]->BlockPositiveX && !GridCells[Neighbor.Coord]->BlockNegativeX);}
-	else if (Neighbor.Direction == R270) {ObeysTravel = (!GridCells[Coord]->BlockNegativeX && !GridCells[Neighbor.Coord]->BlockPositiveX);}
-	else if (Neighbor.Direction == R0) {ObeysTravel = (!GridCells[Coord]->BlockPositiveY && !GridCells[Neighbor.Coord]->BlockNegativeY);}
-	else {ObeysTravel = (!GridCells[Coord]->BlockNegativeY && !GridCells[Neighbor.Coord]->BlockPositiveY);}
-
-	if (ObeyTraversal && StraightLine) { return (IsStraight && ObeysTravel); }
-	if (ObeyTraversal && ObeysTravel) { return true; }
-	if (StraightLine && IsStraight) { return true; }
-
-	return false;
-}
-
-
-FCellInfo PathFinder::PullNextAnalysableCell()
-{
-	FCellInfo Cell = DiscoveredCells[0];
-	MoveCellFromDiscoveredToAnalysed(Cell);
-	return Cell;
-}
-
-TArray<FIntVector2> PathFinder::GetPerimeterCells(TArray<FIntVector2>& CellCoords)
-{
-	TArray<FIntVector2> result;
-
-	for (int i = 0; i < CellCoords.Num(); i++)
-	{
-		int NumOfNeighbours = 0;
-		if (CellCoords.Contains(CellCoords[i] + FIntVector2(1,0))) NumOfNeighbours++;
-		if (CellCoords.Contains(CellCoords[i] + FIntVector2(-1,0))) NumOfNeighbours++;
-		if (CellCoords.Contains(CellCoords[i] + FIntVector2(0,1))) NumOfNeighbours++;
-		if (CellCoords.Contains(CellCoords[i] + FIntVector2(0,-1))) NumOfNeighbours++;
-		if (NumOfNeighbours < 4) result.Add(CellCoords[i]);
-	}
-	
-	return result;
-}
-
-bool PathFinder::GetCellInArrayClosestToTarget(TArray<FIntVector2>& Cells, FIntVector2 Target, FIntVector2& OutCoord)
-{
-	bool Result = false;
-	int ShortestDist = 10000;
-
-	for (int i = 0; i < Cells.Num(); i++)
-	{
-		int Dist = CalculateMinCostBetweenCells(Cells[i], Target);
-		if (Dist >= ShortestDist) continue;
-		if (GridCells[Cells[i]]->IsOccupied) continue;
-		if (!CheckRotationSweep(Cells[i])) continue;
-		ShortestDist = Dist;
-		OutCoord = Cells[i];
-		Result = true;
-	}
-	
-	return Result;
-}
-
-// used to check if rotation of the entity is possible (stops large entities being able to rotate through walls)
-bool PathFinder::CheckRotationSweep(FIntVector2 Coord)
-{
-	for (FIntVector2 Offset : PathingData.RotationSweep.GetSelectedCellOffsets())
-	{
-		if (!GridCells.Contains(Coord+Offset)) return false;
-		if (GridCells[Coord+Offset]->IsOccupied && GridCells[Coord+Offset]->OccupyingActor != PathingData.Actor) return false;
-	}
-	return true;
-}
-
-EPatternRotation PathFinder::GetDirectionBetweenTwoCells(FIntVector2 FromCoord, FIntVector2 ToCoord)
-{
-	EPatternRotation Result = R0;
-	FIntVector2 Offset = ToCoord - FromCoord;
-
-	if (Offset == FIntVector2(1,0)) Result = R90;
-	if (Offset == FIntVector2(0,1)) Result = R0;
-	if (Offset == FIntVector2(-1,0)) Result = R270;
-	if (Offset == FIntVector2(0,-1)) Result = R180;
-	
-	return Result;
 }

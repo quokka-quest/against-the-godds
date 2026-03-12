@@ -144,13 +144,3 @@ enum EPathingRules
 	MustFitOnTarget,
 	StraightLine,
 };
-
-UENUM(BlueprintType)
-enum EAttackRules
-{
-	ObeyTraversalRules,
-	IgnoreLineOfSight,
-	StraightLineOnly,
-	MustFitOnTargetCell,
-	PatternIsPath,
-};
