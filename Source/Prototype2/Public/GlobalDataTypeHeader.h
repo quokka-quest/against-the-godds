@@ -96,3 +96,16 @@ struct FDiceFaceLevels
 		return FaceArray[0];
 	}
 };
+
+USTRUCT(BlueprintType)
+struct FAbilityEffectInfo
+{
+	GENERATED_BODY()
+
+	UPROPERTY(EditAnywhere, BlueprintReadWrite)
+	bool DoesDamage;
+	UPROPERTY(EditAnywhere, BlueprintReadWrite)
+	bool AppliesBuff;
+	UPROPERTY(EditAnywhere, BlueprintReadWrite)
+	bool AppliesDebuff;
+};

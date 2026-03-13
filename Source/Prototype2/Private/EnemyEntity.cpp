@@ -3,7 +3,7 @@
 
 #include "EnemyEntity.h"
 #include "CombatManager.h"
-#include "IPropertyTable.h"
+#include "PlayerEntity.h"
 #include "Kismet/GameplayStatics.h"
 
 void AEnemyEntity::SetTauntTarget(AEntityBase* EntityTarget, bool SetToEmpty)
@@ -12,50 +12,83 @@ void AEnemyEntity::SetTauntTarget(AEntityBase* EntityTarget, bool SetToEmpty)
 	PriorityTarget = EntityTarget;
 }
 
-// TODO: change this to path to each player and determine if they are a viable target from their path length
-void AEnemyEntity::DeterminePlayerTarget()
+// This function is the execution sequence of the entire enemy decision-making logic
+void AEnemyEntity::TakeTurn()
 {
-	if (PriorityTarget) {PlayerTarget = PriorityTarget; return;}
+	FindTargetablePlayers();
+
+	// TODO: need to trigger these once on combat start since the info can't change during combat (minor optimisation)
+	AnalyseOwnAbilities();
+	AnalyseAllPlayerAbilities();
+
+	
+}
+
+//
+void AEnemyEntity::FindTargetablePlayers()
+{
+	TargetablePlayers.Empty();
+
+	// if taunted then only add the player that can be attacked
+	if (PriorityTarget) {TargetablePlayers.Add(PriorityTarget); return;}
 	
 	ACombatManager* CombatManager = Cast<ACombatManager>(UGameplayStatics::GetGameMode(GetWorld()));
-	
-	int ShortestDist = 100000;
-	AEntityBase* ClosestPlayer = nullptr;
-	
 	for (AEntityBase* Entity : CombatManager->Combatants)
 	{
 		APlayerEntity* Player = Cast<APlayerEntity>(Entity);
 		if (!Player) continue;
 		if (Player->HasEntityDied()) continue;
-
-		FIntVector2 PlayerPos = Player->PositionCoord;
-		int XDist = abs(PlayerPos.X - PositionCoord.X);
-		int YDist = abs(PlayerPos.Y - PositionCoord.Y);
-		int totalDist = XDist + YDist;
-
-		if (totalDist >= ShortestDist) continue;
-
-		ShortestDist = totalDist;
-		ClosestPlayer = Entity;
+		
+		TargetablePlayers.Add(Player);
 	}
-
-	PlayerTarget = ClosestPlayer;
 }
+
+void AEnemyEntity::AnalyseOwnAbilities()
+{
+	OwnAnalysedAbilities.Empty();
+	
+	for (UGameplayAbilityBase* Ability : GetAllAbilityInstances())
+	{
+		FAbilityInfo AbilityInfo;
+		AbilityInfo.Ability = Ability;
+		AbilityInfo.Range = Ability->Range;
+		AbilityInfo.MaxPotentialDamage = 1; // TODO: change this to actually find the max damage some how
+		AbilityInfo.SelfEffects = Ability->SelfEffects;
+		AbilityInfo.TargetEffects = Ability->TargetEffects;
+		OwnAnalysedAbilities.Add(AbilityInfo);
+	}
+}
+
+void AEnemyEntity::AnalyseAllPlayerAbilities()
+{
+	PlayerAbilityInfo.Empty();
+	
+	ACombatManager* CombatManager = Cast<ACombatManager>(UGameplayStatics::GetGameMode(GetWorld()));
+	for (AEntityBase* Entity : CombatManager->Combatants)
+	{
+		APlayerEntity* Player = Cast<APlayerEntity>(Entity);
+		if (!Player) continue;
+
+		FPlayerAbilityInfo AbilityInfo;
+		AbilityInfo.MaxRange = 0;
+		AbilityInfo.MaxPotentialDamage = 1; // TODO: need to replace this with an actual method for determining max damage
+		AbilityInfo.Effects = FAbilityEffectInfo();
+		AbilityInfo.Effects.AppliesBuff = false;
+		
+		for (UGameplayAbilityBase* Ability : Player->GetAllAbilityInstances())
+		{
+			if (Ability->Range > AbilityInfo.MaxRange) AbilityInfo.MaxRange = Ability->Range;
+			if (Ability->TargetEffects.DoesDamage) AbilityInfo.Effects.DoesDamage = true;
+			if (Ability->TargetEffects.AppliesDebuff) AbilityInfo.Effects.AppliesDebuff = true;
+		}
+
+		PlayerAbilityInfo.Add(Player, AbilityInfo);
+	}
+}
+
 
 void AEnemyEntity::DetermineMovement()
 {
-	// if the player target is invalid something has gone wrong so do not move
-	if (!PlayerTarget) return;
-
-	// find the longest attack range of this enemy
-	int MaxRange = 0;
-	for (UGameplayAbilityBase* Ability: GetAllAbilityInstances())
-	{
-		if (Ability->Range > MaxRange) MaxRange = Ability->Range;
-	}
-	// if the target is in the attack range there's no need to move
-	if (IsTargetInAttackRange(MaxRange)) return;
-
 	AGridManagerTool* GridManager = Cast<AGridManagerTool>(UGameplayStatics::GetActorOfClass(GetWorld(), AGridManagerTool::StaticClass()));
 	TMap<FIntVector2, int> CellScoreMap;
 	
@@ -72,16 +105,23 @@ void AEnemyEntity::DetermineMovement()
 	TArray<FIntVector2> CellChoices = GridManager->GetCellsInRange(PathInfo);
 
 	// Determine the score for all available cells
-	PathInfo.Rules.Add(EPathingRules::TryPathAroundHazards);
+	PathInfo.Rules.Add(EPathingRules::TryPathAroundHazards); // extra rule needed here to avoid lowering the score of cells that could be reached without passing through a hazard if pathed around
 	for (FIntVector2 CellChoice : CellChoices)
 	{
 		PathInfo.TargetCoord = CellChoice;
 		TArray<FPathInfo> Path;
-		if (!GridManager->PathFindBetweenTwoCoords(Path, PathInfo)) continue;
+		if (!GridManager->PathFindBetweenTwoCoords(Path, PathInfo)) continue; // early continue just in-case something went wrong
 
-		int Score = 0;
+		FPositionInfo PositionInfo = DetermineBestAbilityAtPosition(CellChoice);
+		// TODO: need to adjust score in the above struct for movement factors
 	}
 
+
+
+
+
+
+	
 	TArray<FPathInfo> PathToTarget;
 	// this variable is used to track which index of the 'PathToTarget' array the movement of this entity should stop at
 	int TargetPosIndex = -1;
@@ -132,36 +172,78 @@ void AEnemyEntity::DetermineMovement()
 	PositionCoord = PathToTarget[TargetPosIndex].CoordToMoveTo;
 }
 
-// TODO: improve attack selection
-bool AEnemyEntity::DetermineAttack()
+// This function determines the best ability to use from a given coordinate
+// it returns a struct that contains:
+// .Coord- the coordinate to move to
+// .Score- the weighting the chosen ability has for moving to the chosen coord
+// .BestAbility- the ability to use
+// .TargetOfAbility- the entity to target with the ability (could be self for a buff or a player for an attack/debuff)
+FPositionInfo AEnemyEntity::DetermineBestAbilityAtPosition(FIntVector2 Coord)
 {
-	ACombatManager* CombatManager = Cast<ACombatManager>(UGameplayStatics::GetActorOfClass(GetWorld(), ACombatManager::StaticClass()));
-	int DistToTarget = abs(PositionCoord.X - PlayerTarget->PositionCoord.X) + abs(PositionCoord.Y - PlayerTarget->PositionCoord.Y);
+	TArray<FPositionInfo> EachTargetable;
 
-	for (UGameplayAbilityBase* Ability: GetAllAbilityInstances())
+	// loop through each potential target
+	for (AEntityBase* Player : TargetablePlayers)
 	{
-		if (DistToTarget > Ability->Range) continue;
-		CombatManager->EnemySetAttackInfo(Ability, PlayerTarget->PositionCoord, EPatternRotation::R0);
-		CombatManager->ExecuteAttackOnTarget();
-		return true;
+		TArray<FPositionInfo> EachAbility;
+		int DistToTarget = GetDistanceBetweenTwoCoords(Coord, Player->PositionCoord);
+
+		// loop through each available ability to use and determine the best one against the target
+		for (FAbilityInfo Info : OwnAnalysedAbilities)
+		{
+			// TODO: need to fix the fact that this will filter out all self buffs 
+			if (Info.Range < DistToTarget) continue;
+
+			FPositionInfo PosInfo = FPositionInfo(Coord);
+			PosInfo.BestAbility = Info.Ability;
+			PosInfo.TargetOfAbility = Player;
+			PosInfo.HasTarget = true;
+
+			//TODO: add score bonuses here
+
+			EachAbility.Add(PosInfo);
+		}
+
+		FPositionInfo Temp = FPositionInfo(Coord);
+		if (!GetHighestScore(EachAbility, Temp)) continue; // if no valid ability was found then move onto the next target
+
+		// otherwise add the chosen ability to the 'EachTargetable' array
+		EachTargetable.Add(Temp);
 	}
 
-	return false;
+	FPositionInfo Temp2 = FPositionInfo(Coord);
+
+	// if no attack was identified as possible, then return the default FPositionInfo
+	if (EachTargetable.Num() == 0) return Temp2;
+	
+	GetHighestScore(EachTargetable, Temp2);
+	return Temp2;
 }
 
-bool AEnemyEntity::IsTargetInAttackRange(int Range)
+bool AEnemyEntity::GetHighestScore(TArray<FPositionInfo>& InfoSet, FPositionInfo& OutInfo)
 {
-	AGridManagerTool* GridManager = Cast<AGridManagerTool>(UGameplayStatics::GetActorOfClass(GetWorld(), AGridManagerTool::StaticClass()));
+	int HighestScore = -99999;
+	bool FoundValidScore = false;
+	FPositionInfo HighestScoreInfo = FPositionInfo();
 
-	TArray<TEnumAsByte<EPathingRules>> Rules; // empty but needed to use below function
-	TArray<FIntVector2> AttackableTiles;
-	for (int i = 0; i < AttackableTiles.Num(); i++)
+	for (FPositionInfo Info : InfoSet)
 	{
-		if (!GridManager->GridCells[AttackableTiles[i]]->IsOccupied) continue;
-		if (GridManager->GridCells[AttackableTiles[i]]->OccupyingActor == PlayerTarget) return true;
+		if (Info.Score <= HighestScore) continue;
+		FoundValidScore = true;
+		HighestScoreInfo = Info;
 	}
-	
-	return false;
+
+	if (!FoundValidScore) return false;
+
+	OutInfo = HighestScoreInfo;
+	return true;
+}
+
+
+// returns the distance between two coordinate (used to find the distance to a targetable player)
+int AEnemyEntity::GetDistanceBetweenTwoCoords(FIntVector2 Start, FIntVector2 End)
+{
+	return (FMath::Abs(Start.X - End.X) + FMath::Abs(Start.Y - End.Y));
 }
 
 void AEnemyEntity::ChangeOccupancy(FIntVector2 Coord, bool SetAsOccupier)
