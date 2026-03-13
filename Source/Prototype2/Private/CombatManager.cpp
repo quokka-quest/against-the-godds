@@ -243,10 +243,23 @@ void ACombatManager::MoveCurrentCombatant(FIntVector2 TargetPos)
 // displays the path to be taken by a combatant if they were to move to the target position
 void ACombatManager::DisplayPathForCurrentCombatant(FIntVector2 TargetPos)
 {
-	FIntVector2 StartPos = CurrentTurnCombatant->PositionCoord;
+	FPathfinderInfo PathingInfo = FPathfinderInfo();
+	PathingInfo.StartCoord = CurrentTurnCombatant->PositionCoord;
+	PathingInfo.TargetCoord = TargetPos;
+	PathingInfo.Range = CurrentTurnCombatant->AvailableMovement;
+	PathingInfo.PathingData = CurrentTurnCombatant->GetPathingData();
 
-	TArray<FPathInfo> PathInfo = GridManager->DisplayCellPath(StartPos, TargetPos, CurrentTurnCombatant->AvailableMovement, CurrentTurnCombatant->GetPathingData());
-	PathForCombatantToFollow = PathInfo;
+	// All rules to apply for player pathfinding
+	PathingInfo.Rules.Add(EPathingRules::ExcludeOccupiedCells);
+	PathingInfo.Rules.Add(EPathingRules::MustFitOnTarget);
+	PathingInfo.Rules.Add(EPathingRules::RangeIsAvailableMovement);
+	PathingInfo.Rules.Add(EPathingRules::TryPathAroundHazards);
+
+	// if the path is not valid then clear 'PathForCombatantToFollow' and return
+	if (!GridManager->PathFindBetweenTwoCoords(PathForCombatantToFollow, PathingInfo)) {PathForCombatantToFollow.Empty(); return;}
+
+	// otherwise, tell the grid manager to display the path for the current turn entity
+	GridManager->DisplayCellPath(PathForCombatantToFollow, CurrentTurnCombatant);
 }
 
 // Defines the rules to be used for displaying the current entity's movement range then calls another function to display that range
@@ -280,7 +293,7 @@ void ACombatManager::DisplayRangeOutline(FIntVector2 Origin, int Range, FPathing
 }
 
 
-// displays the attack area and stores the targeted tiles with element 0 being the targeted tile and the rest are the additional area
+// displays the attack pattern and stores the targeted cells with element 0 being the targeted cell and the rest are the additional area
 void ACombatManager::DisplayAttackPattern(FIntVector2 TargetCoord)
 {
 	AreaOfAttackEffect = GridManager->DisplayAttackPattern(TargetCoord, AbilityRef->Pattern, AttackRotation, CurrentTurnCombatant->GetPathingData(), AbilityRef->TargetingRules);
@@ -338,7 +351,7 @@ void ACombatManager::OnEntityDeath(AEntityBase* DeadEntity)
 void ACombatManager::EnemySetAttackInfo(UGameplayAbilityBase* AbilityInstance, FIntVector2 TargetPos, EPatternRotation Rotation)
 {
 	AbilityRef = AbilityInstance;
-	AreaOfAttackEffect = GridManager->GetCellsInAttackArea(TargetPos, AbilityInstance->Pattern, Rotation, FPathingData());
+	AreaOfAttackEffect = GridManager->GetPatternCellsFromTarget(TargetPos, AbilityInstance->Pattern, Rotation);
 }
 
 bool ACombatManager::HavePlayersWon()
@@ -441,8 +454,14 @@ bool ACombatManager::ValidateFullGridPatternAtCoord(FIntVector2 const TargetCoor
 
 void ACombatManager::AbilityBasedMovement(AEntityBase* EntityToMove, FIntVector2 TargetCoord, float Speed, bool IsKnockback)
 {
-	PathForCombatantToFollow = GridManager->GetPathBetweenCoords(EntityToMove->PositionCoord, TargetCoord, 1000, EntityToMove->GetPathingData());
-	if (PathForCombatantToFollow.IsEmpty()) {UE_LOG(LogTemp, Error, TEXT("CombatManager.cpp->AbilityBasedMovement: path was empty")) return;}
+	FPathfinderInfo PathingInfo = FPathfinderInfo();
+	PathingInfo.StartCoord = EntityToMove->PositionCoord;
+	PathingInfo.TargetCoord = TargetCoord;
+	PathingInfo.Range = 1000;
+	PathingInfo.PathingData = EntityToMove->GetPathingData();
+	
+	if (!GridManager->PathFindBetweenTwoCoords(PathForCombatantToFollow, PathingInfo))
+		{UE_LOG(LogTemp, Error, TEXT("CombatManager.cpp->AbilityBasedMovement: path was empty")) return;}
 
 	for (int i = 0; i < PathForCombatantToFollow.Num(); i++)
 	{
@@ -487,8 +506,15 @@ bool ACombatManager::ApplyKnockback(AEntityBase* Entity, FGridData KnockbackData
 		if (Coord == StartCoord) continue;
 		if (!GridManager->GridCells.Contains(Coord)) continue;
 
-		TArray<FPathInfo> Path = GridManager->GetPathBetweenCoords(StartCoord, Coord, 1000, Entity->GetPathingData());
-		if (Path.IsEmpty()) { UE_LOG(LogTemp, Warning, TEXT("Path To Coord: %i, %i failed"), Coord.X, Coord.Y) continue; }
+		FPathfinderInfo PathingInfo = FPathfinderInfo();
+		PathingInfo.StartCoord = Entity->PositionCoord;
+		PathingInfo.TargetCoord = Coord;
+		PathingInfo.Range = 1000;
+		PathingInfo.PathingData = Entity->GetPathingData();
+		
+		TArray<FPathInfo> Path;
+		if (GridManager->PathFindBetweenTwoCoords(Path, PathingInfo))
+			{ UE_LOG(LogTemp, Warning, TEXT("Path To Coord: %i, %i failed"), Coord.X, Coord.Y) continue; }
 
 		AbilityBasedMovement(Entity, Coord, 0.0f, true);
 		return true;

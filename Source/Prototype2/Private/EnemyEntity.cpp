@@ -3,6 +3,7 @@
 
 #include "EnemyEntity.h"
 #include "CombatManager.h"
+#include "IPropertyTable.h"
 #include "Kismet/GameplayStatics.h"
 
 void AEnemyEntity::SetTauntTarget(AEntityBase* EntityTarget, bool SetToEmpty)
@@ -11,7 +12,7 @@ void AEnemyEntity::SetTauntTarget(AEntityBase* EntityTarget, bool SetToEmpty)
 	PriorityTarget = EntityTarget;
 }
 
-
+// TODO: change this to path to each player and determine if they are a viable target from their path length
 void AEnemyEntity::DeterminePlayerTarget()
 {
 	if (PriorityTarget) {PlayerTarget = PriorityTarget; return;}
@@ -56,9 +57,32 @@ void AEnemyEntity::DetermineMovement()
 	if (IsTargetInAttackRange(MaxRange)) return;
 
 	AGridManagerTool* GridManager = Cast<AGridManagerTool>(UGameplayStatics::GetActorOfClass(GetWorld(), AGridManagerTool::StaticClass()));
+	TMap<FIntVector2, int> CellScoreMap;
+	
+	// Create the FPathFinderInfo struct to use for pathfinding
+	FPathfinderInfo PathInfo = FPathfinderInfo();
+	PathInfo.StartCoord = PositionCoord;
+	PathInfo.Range = AvailableMovement;
+	PathInfo.PathingData = GetPathingData();
+	PathInfo.Rules.Add(EPathingRules::MustFitOnTarget);
+	PathInfo.Rules.Add(EPathingRules::ExcludeOccupiedCells);;
+	PathInfo.Rules.Add(EPathingRules::RangeIsAvailableMovement);
 
-	TArray<FPathInfo> PathToTarget = GridManager->GetPathToPointInRangeOfTarget(PositionCoord, PlayerTarget->PositionCoord, MaxRange, GetPathingData());
+	// Get all the cells that can be moved to
+	TArray<FIntVector2> CellChoices = GridManager->GetCellsInRange(PathInfo);
 
+	// Determine the score for all available cells
+	PathInfo.Rules.Add(EPathingRules::TryPathAroundHazards);
+	for (FIntVector2 CellChoice : CellChoices)
+	{
+		PathInfo.TargetCoord = CellChoice;
+		TArray<FPathInfo> Path;
+		if (!GridManager->PathFindBetweenTwoCoords(Path, PathInfo)) continue;
+
+		int Score = 0;
+	}
+
+	TArray<FPathInfo> PathToTarget;
 	// this variable is used to track which index of the 'PathToTarget' array the movement of this entity should stop at
 	int TargetPosIndex = -1;
 	// the pathing function used above ignores the idea of movement cost so that is checked in this function
@@ -130,7 +154,7 @@ bool AEnemyEntity::IsTargetInAttackRange(int Range)
 	AGridManagerTool* GridManager = Cast<AGridManagerTool>(UGameplayStatics::GetActorOfClass(GetWorld(), AGridManagerTool::StaticClass()));
 
 	TArray<TEnumAsByte<EPathingRules>> Rules; // empty but needed to use below function
-	TArray<FIntVector2> AttackableTiles = GridManager->GetCellsInRange(PositionCoord, Range, GetPathingData(), Rules);
+	TArray<FIntVector2> AttackableTiles;
 	for (int i = 0; i < AttackableTiles.Num(); i++)
 	{
 		if (!GridManager->GridCells[AttackableTiles[i]]->IsOccupied) continue;

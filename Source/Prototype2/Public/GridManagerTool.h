@@ -29,7 +29,7 @@ public:
 	void DisplayCellsInRange(FIntVector2 Start, int Range, FPathingData PathData, TArray<TEnumAsByte<EPathingRules>> Rules);
 
 	UFUNCTION(BlueprintCallable)
-	TArray<FPathInfo> DisplayCellPath(FIntVector2 StartCoord, FIntVector2 EndCoord, int AvailableMovement, FPathingData PathData);
+	void DisplayCellPath(TArray<FPathInfo>& PathToDisplay, AEntityBase* Entity);
 
 	UFUNCTION(BlueprintCallable)
 	TArray<FIntVector2> DisplayAttackPattern(FIntVector2 TargetCoord, FGridData Pattern, EPatternRotation Rotation, FPathingData PathData, TArray<TEnumAsByte<EAttackRules>>& Rules);

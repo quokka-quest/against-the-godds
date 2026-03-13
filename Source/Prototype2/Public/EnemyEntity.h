@@ -37,4 +37,15 @@ protected:
 
 	UPROPERTY(BlueprintReadWrite, Category="EnemyLogic")
 	AEntityBase* PriorityTarget;
+
+	// NOTES:
+	// need to factor in success change (1/6, 3/6, etc)
+	// can calculate ability score as: EffectStrength * SuccessChange * ValueAgainstTarget
+	// Value against target determination: 
+	
+	// BEHAVIOUR PARAMETERS
+
+	// attack related
+	const int AttackOpportunityBonus = 1;
+	const int KillPotentialBonus = 2;
 };

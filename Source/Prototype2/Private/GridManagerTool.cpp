@@ -42,8 +42,14 @@ void AGridManagerTool::SetHighlightRotation(float Rotation)
 void AGridManagerTool::DisplayCellsInRange(FIntVector2 Start, int Range, FPathingData PathData, TArray<TEnumAsByte<EPathingRules>> Rules)
 {
 	if (Range < 0) return; // early return for negative range
+
+	FPathfinderInfo PathingInfo = FPathfinderInfo();
+	PathingInfo.StartCoord = Start;
+	PathingInfo.Range = Range;
+	PathingInfo.PathingData = PathData;
+	PathingInfo.Rules = Rules;
+	TArray<FIntVector2> CellsInRange = GetCellsInRange(PathingInfo);
 	
-	TArray<FIntVector2> CellsInRange = GetCellsInRange(Start, Range, PathData, Rules);
 	if (CellsInRange.Num() == 0) return; // early return for 0 valid cells found
 
 	TArray<FIntVector2> DisplayCells;
@@ -75,13 +81,12 @@ void AGridManagerTool::DisplayCellsInRange(FIntVector2 Start, int Range, FPathin
 	OutlineActor->SetVisibility(false);
 }
 
-TArray<FPathInfo> AGridManagerTool::DisplayCellPath(FIntVector2 StartCoord, FIntVector2 EndCoord, int AvailableMovement, FPathingData PathData)
+void AGridManagerTool::DisplayCellPath(TArray<FPathInfo>& PathToDisplay, AEntityBase* Entity)
 {
-	TArray<FPathInfo> Path = GetPathBetweenCoords(StartCoord, EndCoord, AvailableMovement, PathData);
 	TArray<FIntVector2> DisplayCells;
+	TArray<FIntVector2> SizeOffsets = Entity->RotationSweep.GetSelectedCellOffsets();
 	
-	TArray<FIntVector2> SizeOffsets = PathData.RotationSweep.GetSelectedCellOffsets();
-	for (FPathInfo Cell : Path)
+	for (FPathInfo Cell : PathToDisplay)
 	{
 		for (FIntVector2 Offset : SizeOffsets)
 		{
@@ -94,32 +99,35 @@ TArray<FPathInfo> AGridManagerTool::DisplayCellPath(FIntVector2 StartCoord, FInt
 	// add the start coord for display since 'GetPathBetweenCoords' does not contain the start coord
 	for (FIntVector2 Offset : SizeOffsets)
 	{
-		FIntVector2 OffsetCoord = StartCoord + Offset;
+		FIntVector2 OffsetCoord = Entity->PositionCoord + Offset;
 		if (!GridCells.Contains(OffsetCoord)) { UE_LOG(LogTemp, Error, TEXT("GridManagerTool.cpp->DisplayCellPath: tried to display a cell that doesnt exist")); continue; }
 		DisplayCells.Add(OffsetCoord);
 	}
 
-	GridOutlineGenerator(PathAndAttackOutlineActor).GenerateOutlineFromCoordArray(DisplayCells, StartCoord, GridCellSizeX, GridCellSizeY);
-	PathAndAttackOutlineActor->SetActorLocation(GridCells[StartCoord]->GetActorLocation());
+	GridOutlineGenerator(PathAndAttackOutlineActor).GenerateOutlineFromCoordArray(DisplayCells, Entity->PositionCoord, GridCellSizeX, GridCellSizeY);
+	PathAndAttackOutlineActor->SetActorLocation(GridCells[Entity->PositionCoord]->GetActorLocation());
 	PathAndAttackOutlineActor->SetVisibility(true);
 	AreaOutlineActor->SetVisibility(false);
-
-	return Path;
 }
 
 TArray<FIntVector2> AGridManagerTool::DisplayAttackPattern(FIntVector2 TargetCoord, FGridData Pattern, EPatternRotation Rotation, FPathingData PathData, TArray<TEnumAsByte<EAttackRules>>& Rules)
 {
 	TArray<FIntVector2> Cells;
-	if (!Rules.Contains(EAttackRules::DisplayAsPathToTarget)) Cells = GetCellsInAttackArea(TargetCoord, Pattern, Rotation, PathData);
+	if (!Rules.Contains(EAttackRules::DisplayAsPathToTarget)) Cells = GetPatternCellsFromTarget(TargetCoord, Pattern, Rotation);
 	else
 	{
-		FIntVector2 StartCoord = Cast<AEntityBase>(PathData.Actor)->PositionCoord;
-		TArray<TEnumAsByte<EPathingRules>> PathRules;
-		PathRules.Add(EPathingRules::StraightLine);
-		TArray<FPathInfo> Path =  PathFindBetweenTwoCoords(TargetCoord, StartCoord, 1000, PathData, PathRules);
+		FPathfinderInfo PathingInfo = FPathfinderInfo();
+		PathingInfo.StartCoord = TargetCoord; // target is the start position for this path since the outline actor will be placed on the target
+		PathingInfo.TargetCoord = Cast<AEntityBase>(PathData.Actor)->PositionCoord;
+		PathingInfo.Range = 1000;
+		PathingInfo.PathingData = PathData;
+		PathingInfo.Rules.Add(EPathingRules::StraightLine);
+		
+		TArray<FPathInfo> Path;
+		if (!PathFindBetweenTwoCoords(Path, PathingInfo)) return Cells;
 
-		Cells.Add(TargetCoord);
-		Cells.Add(StartCoord);
+		Cells.Add(PathingInfo.StartCoord);
+		Cells.Add(PathingInfo.TargetCoord);
 		for (FPathInfo& PathInfo : Path)
 		{
 			if (Cells.Contains(PathInfo.CoordToMoveTo)) continue;
