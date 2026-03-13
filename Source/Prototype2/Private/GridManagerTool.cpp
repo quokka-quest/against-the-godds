@@ -125,11 +125,6 @@ TArray<FIntVector2> AGridManagerTool::DisplayAttackPattern(FIntVector2 TargetCoo
 			if (Cells.Contains(PathInfo.CoordToMoveTo)) continue;
 			Cells.Add(PathInfo.CoordToMoveTo);
 		}
-		
-		PathAndAttackOutlineActor->SetActorLocation(GridCells[TargetCoord]->GetActorLocation());
-		PathAndAttackOutlineActor->SetVisibility(true);
-		AreaOutlineActor->SetVisibility(false);
-		return Cells;
 	}
 		
 	if (Cells.Num() == 0) return Cells;
