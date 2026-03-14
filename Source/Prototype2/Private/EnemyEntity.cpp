@@ -102,7 +102,7 @@ void AEnemyEntity::DetermineMovement()
 	PathInfo.Range = AvailableMovement;
 	PathInfo.PathingData = GetPathingData();
 	PathInfo.Rules.Add(EPathingRules::MustFitOnTarget);
-	PathInfo.Rules.Add(EPathingRules::ExcludeOccupiedCells);;
+	PathInfo.Rules.Add(EPathingRules::ExcludeOccupiedCells);
 	PathInfo.Rules.Add(EPathingRules::RangeIsAvailableMovement);
 
 	// Get all the cells that can be moved to
@@ -142,7 +142,8 @@ void AEnemyEntity::DetermineMovement()
 			UE_LOG(LogTemp, Warning, TEXT("Coord: %i, %i, Score: %i"), CellChoice.X, CellChoice.Y, PositionInfo.Score)
 			continue; // continue to avoid errors from below penalty/bonuses that are dependent on having a target
 		}
-
+		
+		UE_LOG(LogTemp, Warning, TEXT("Coord with target: %i, %i, Score: %i"), CellChoice.X, CellChoice.Y, PositionInfo.Score)
 		CellScoreMap.Add(CellChoice, PositionInfo.Score);
 		CellActionMap.Add(CellChoice, PositionInfo);
 	}
@@ -249,7 +250,7 @@ bool AEnemyEntity::GetHighestScore(TArray<FPositionInfo>& InfoSet, FPositionInfo
 // returns the distance between two coordinate (used to find the distance to a targetable player)
 int AEnemyEntity::GetDistanceBetweenTwoCoords(FIntVector2 Start, FIntVector2 End)
 {
-	return (FMath::Abs(Start.X - End.X) + FMath::Abs(Start.Y - End.Y));
+	return (abs(Start.X - End.X) + abs(Start.Y - End.Y));
 }
 
 // NOTE: available movement on enemies is factored into determining where to move to.
@@ -262,8 +263,9 @@ void AEnemyEntity::MoveToTarget()
 	// this for loop queues the needed movement and rotations
 	for (int i = 0; i <= LastIndex; i++)
 	{
-		bool NeedsRot = ActionToTake.Path[i].StartingRot != ActionToTake.Path[i].RotToChangeTo;
-		if (NeedsRot) EnqueueRotation(DirectionYaws[ActionToTake.Path[i].StartingRot], DirectionYaws[ActionToTake.Path[i].RotToChangeTo]);
+		// Enqueue a rotation if it's needed
+		if (ActionToTake.Path[i].StartingRot != ActionToTake.Path[i].RotToChangeTo)
+			EnqueueRotation(DirectionYaws[ActionToTake.Path[i].StartingRot], DirectionYaws[ActionToTake.Path[i].RotToChangeTo]);
 
 		// get the world positions to move from/to and the cell being moved onto
 		FVector StartPos = GridManager->GridCells[ActionToTake.Path[i].StartingCoord]->GetActorLocation();

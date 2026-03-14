@@ -115,8 +115,13 @@ bool PathFinder::PerformAnalysis(TArray<FNewCellInfo>& OutArray)
 			int NewCostFromStart = CellInfo.MovementCostFromStart + CellMap[Neighbour.Coord].MovementCost;
 			if (NewCostFromStart >= CurrentMovementCostFromStart) continue;
 
-			CellMap.Remove(Neighbour.Coord);
-			DiscoverCell(Neighbour.Coord, CellInfo.Coord, Neighbour.Direction);
+			FNewCellInfo OldCell = CellMap[Neighbour.Coord];
+			OldCell.PrevCellCoord = CellInfo.Coord;
+			OldCell.NewRotation = Neighbour.Direction;
+			OldCell.PrevRotation = CellInfo.NewRotation;
+			OldCell.PenaltyFromStart = CellInfo.PenaltyFromStart + GetPenaltyOfCoord(OldCell.Coord);
+			OldCell.MovementCostFromStart = CellInfo.MovementCostFromStart + OldCell.MovementCost;
+			CellMap[Neighbour.Coord] = OldCell;
 			if (Neighbour.Coord == EndCoord) { FoundPath = true; break; }
 		}
 	}
@@ -127,6 +132,7 @@ bool PathFinder::PerformAnalysis(TArray<FNewCellInfo>& OutArray)
 	FIntVector2 PrevCoords = EndCoord;
 	while (PrevCoords != StartCoord)
 	{
+		if (!CellMap.Contains(PrevCoords)) { UE_LOG(LogTemp, Error, TEXT("Pathfinder.cpp->PerformAnalysis: Cell in path that was not in cell map: %i, %i"), PrevCoords.X, PrevCoords.Y) return false; }
 		OutArray.Add(CellMap[PrevCoords]);
 		PrevCoords = CellMap[PrevCoords].PrevCellCoord;
 	}
@@ -159,7 +165,7 @@ void PathFinder::DiscoverCell(FIntVector2 CellCoord, FIntVector2 PreviousCell, T
 
 	// do not discover if the cell is out of range (range ignores movement cost)
 	if (CellInfo.AbsDistFromStart > AttackRange) return;
-
+	
 	// RULE: Exclude Occupied Cells
 	// if the rule is active then do not discover cells that contain an object
 	// the starting cell is excluded from this rule applying
