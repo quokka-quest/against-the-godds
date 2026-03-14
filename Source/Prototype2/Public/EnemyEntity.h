@@ -118,6 +118,12 @@ protected:
 
 	void MoveToTarget();
 
+	UFUNCTION(BlueprintCallable, Category="EnemyLogic")
+	bool UseChosenAbility();
+
+	UFUNCTION(BlueprintImplementableEvent, Category="EnemyLogic")
+	void EnqueueAttackUse();
+
 	// Map of positions and a struct containing info about the actions to take on them
 	FPositionInfo ActionToTake;
 

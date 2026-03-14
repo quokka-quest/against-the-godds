@@ -26,6 +26,7 @@ void AEnemyEntity::TakeTurn()
 	UE_LOG(LogTemp, Warning, TEXT("Current coord: %i, %i"), PositionCoord.X, PositionCoord.Y)
 	UE_LOG(LogTemp, Warning, TEXT("Highest Score coord: %i, %i, Score: %i"), ActionToTake.Coord.X, ActionToTake.Coord.Y, ActionToTake.Score)
 	MoveToTarget();
+	EnqueueAttackUse();
 }
 
 //
@@ -257,7 +258,7 @@ int AEnemyEntity::GetDistanceBetweenTwoCoords(FIntVector2 Start, FIntVector2 End
 // Since no second movement will be taken on their turn, it doesn't need to be tracked during the actual movement
 void AEnemyEntity::MoveToTarget()
 {
-	AGridManagerTool* GridManager = Cast<AGridManagerTool>(UGameplayStatics::GetActorOfClass(GetWorld(), AGridManagerTool::StaticClass()));
+	ACombatManager* CombatManager = Cast<ACombatManager>(UGameplayStatics::GetGameMode(GetWorld()));
 	int LastIndex = ActionToTake.Path.Num() - 1;
 	
 	// this for loop queues the needed movement and rotations
@@ -268,9 +269,9 @@ void AEnemyEntity::MoveToTarget()
 			EnqueueRotation(DirectionYaws[ActionToTake.Path[i].StartingRot], DirectionYaws[ActionToTake.Path[i].RotToChangeTo]);
 
 		// get the world positions to move from/to and the cell being moved onto
-		FVector StartPos = GridManager->GridCells[ActionToTake.Path[i].StartingCoord]->GetActorLocation();
-		FVector EndPos = GridManager->GridCells[ActionToTake.Path[i].CoordToMoveTo]->GetActorLocation();
-		AGridCellParent* TargetCell = Cast<AGridCellParent>(GridManager->GridCells[ActionToTake.Path[i].CoordToMoveTo]);
+		FVector StartPos = CombatManager->GetCell(ActionToTake.Path[i].StartingCoord)->GetActorLocation();
+		FVector EndPos = CombatManager->GetCell(ActionToTake.Path[i].CoordToMoveTo)->GetActorLocation();
+		AGridCellParent* TargetCell = Cast<AGridCellParent>(CombatManager->GetCell(ActionToTake.Path[i].CoordToMoveTo));
 
 		// Enqueue the movement
 		EnqueueMovement(StartPos, EndPos, TargetCell);
@@ -288,11 +289,21 @@ void AEnemyEntity::MoveToTarget()
 
 void AEnemyEntity::ChangeOccupancy(FIntVector2 Coord, bool SetAsOccupier)
 {
-	AGridManagerTool* GridManager = Cast<AGridManagerTool>(UGameplayStatics::GetActorOfClass(GetWorld(), AGridManagerTool::StaticClass()));
+	ACombatManager* CombatManager = Cast<ACombatManager>(UGameplayStatics::GetGameMode(GetWorld()));
 
 	for (FIntVector2 Offset : EntityRotations[FacingDirection].GetSelectedCellOffsets())
 	{
 		FIntVector2 CellCoord = Coord + Offset;
-		GridManager->GridCells[CellCoord]->SetOccupier((SetAsOccupier)? this : nullptr);
+		CombatManager->GetCell(CellCoord)->SetOccupier((SetAsOccupier)? this : nullptr);
 	}
+}
+
+// Returns true if an ability was used, false if one wasn't used
+bool AEnemyEntity::UseChosenAbility()
+{
+	if (!ActionToTake.HasTarget) return false;
+	
+	ACombatManager* CombatManager = Cast<ACombatManager>(UGameplayStatics::GetGameMode(GetWorld()));
+	CombatManager->EnemyAbilityUse(ActionToTake.BestAbility, ActionToTake.TargetOfAbility->PositionCoord);
+	return true;
 }
