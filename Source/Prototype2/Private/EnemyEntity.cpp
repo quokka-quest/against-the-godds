@@ -16,30 +16,37 @@ void AEnemyEntity::SetTauntTarget(AEntityBase* EntityTarget, bool SetToEmpty)
 void AEnemyEntity::TakeTurn()
 {
 	FindTargetablePlayers();
+	UE_LOG(LogTemp, Warning, TEXT("Num of targetable players: %i"), TargetablePlayers.Num())
 
 	// TODO: need to trigger these once on combat start since the info can't change during combat (minor optimisation)
 	AnalyseOwnAbilities();
 	AnalyseAllPlayerAbilities();
 
-	
+	DetermineMovement();
+	UE_LOG(LogTemp, Warning, TEXT("Current coord: %i, %i"), PositionCoord.X, PositionCoord.Y)
+	UE_LOG(LogTemp, Warning, TEXT("Highest Score coord: %i, %i, Score: %i"), ActionToTake.Coord.X, ActionToTake.Coord.Y, ActionToTake.Score)
+	MoveToTarget();
 }
 
 //
 void AEnemyEntity::FindTargetablePlayers()
 {
 	TargetablePlayers.Empty();
+	AllAlivePlayers.Empty();
 
 	// if taunted then only add the player that can be attacked
-	if (PriorityTarget) {TargetablePlayers.Add(PriorityTarget); return;}
-	
+	if (PriorityTarget) TargetablePlayers.Add(PriorityTarget);
+
+	// loop through all entities in the scene. Check if they are a player and alive
 	ACombatManager* CombatManager = Cast<ACombatManager>(UGameplayStatics::GetGameMode(GetWorld()));
 	for (AEntityBase* Entity : CombatManager->Combatants)
 	{
 		APlayerEntity* Player = Cast<APlayerEntity>(Entity);
-		if (!Player) continue;
-		if (Player->HasEntityDied()) continue;
+		if (!Player || Player->HasEntityDied()) continue; // if the entity is not a player or is dead then do not add it to either set
+		if (PriorityTarget) {AllAlivePlayers.Add(Player); continue;} // if there is a taunt active then just add the players to the 'alive player' set
 		
 		TargetablePlayers.Add(Player);
+		AllAlivePlayers.Add(Player);
 	}
 }
 
@@ -49,12 +56,7 @@ void AEnemyEntity::AnalyseOwnAbilities()
 	
 	for (UGameplayAbilityBase* Ability : GetAllAbilityInstances())
 	{
-		FAbilityInfo AbilityInfo;
-		AbilityInfo.Ability = Ability;
-		AbilityInfo.Range = Ability->Range;
-		AbilityInfo.MaxPotentialDamage = 1; // TODO: change this to actually find the max damage some how
-		AbilityInfo.SelfEffects = Ability->SelfEffects;
-		AbilityInfo.TargetEffects = Ability->TargetEffects;
+		FAbilityInfo AbilityInfo = FAbilityInfo(Ability); // TODO: the constructor for this struct extracts all of the abilities information
 		OwnAnalysedAbilities.Add(AbilityInfo);
 	}
 }
@@ -90,6 +92,8 @@ void AEnemyEntity::AnalyseAllPlayerAbilities()
 void AEnemyEntity::DetermineMovement()
 {
 	AGridManagerTool* GridManager = Cast<AGridManagerTool>(UGameplayStatics::GetActorOfClass(GetWorld(), AGridManagerTool::StaticClass()));
+
+	TMap<FIntVector2, FPositionInfo> CellActionMap;
 	TMap<FIntVector2, int> CellScoreMap;
 	
 	// Create the FPathFinderInfo struct to use for pathfinding
@@ -112,70 +116,56 @@ void AEnemyEntity::DetermineMovement()
 		TArray<FPathInfo> Path;
 		if (!GridManager->PathFindBetweenTwoCoords(Path, PathInfo)) continue; // early continue just in-case something went wrong
 
+		// Run a function to determine the best action to take at the given position
 		FPositionInfo PositionInfo = DetermineBestAbilityAtPosition(CellChoice);
-		// TODO: need to adjust score in the above struct for movement factors
+		PositionInfo.Path = Path;
+
+		// APPLY BONUS/PENALTY
+		
+		// Hazard Penalty:
+		int TotalHazardsInPath = Path[Path.Num()-1].HazardPenaltyFromStart;
+		PositionInfo.Score -= TotalHazardsInPath * 10;
+
+		// Player proximity bonus
+		for (AEntityBase* Player : AllAlivePlayers)
+		{
+			int DistToPlayers = GetDistanceBetweenTwoCoords(CellChoice, Player->PositionCoord);
+			PositionInfo.Score += (20-DistToPlayers);
+		}
+
+		// if no ability can be used penalty
+		if (!PositionInfo.HasTarget)
+		{
+			PositionInfo.Score -= 1;
+			CellScoreMap.Add(CellChoice, PositionInfo.Score);
+			CellActionMap.Add(CellChoice, PositionInfo);
+			UE_LOG(LogTemp, Warning, TEXT("Coord: %i, %i, Score: %i"), CellChoice.X, CellChoice.Y, PositionInfo.Score)
+			continue; // continue to avoid errors from below penalty/bonuses that are dependent on having a target
+		}
+
+		CellScoreMap.Add(CellChoice, PositionInfo.Score);
+		CellActionMap.Add(CellChoice, PositionInfo);
 	}
 
-
-
-
-
-
-	
-	TArray<FPathInfo> PathToTarget;
-	// this variable is used to track which index of the 'PathToTarget' array the movement of this entity should stop at
-	int TargetPosIndex = -1;
-	// the pathing function used above ignores the idea of movement cost so that is checked in this function
-	int MoveCost = 0;
-
-	// this for loop establishes how far along the given path this entity can move. The for loop below does the actual movement
-	// this is where any and all movement logic for enemy entities should be
-	// the above pathfinding function can ignore occupied
-	for (int i = 0; i < PathToTarget.Num(); i++)
+	// find the action with the highest score
+	FIntVector2 BestChoice = FIntVector2(0,0);
+	int HighestScore = -99999;
+	for (auto& Choice : CellScoreMap)
 	{
-		// check if the available movement will allow for this tile to be moved to
-		int AddMoveCost = GridManager->GridCells[PathToTarget[i].CoordToMoveTo]->MovementCost;
-		if (MoveCost + AddMoveCost > MaxMovement) break;
+		if (Choice.Value <= HighestScore) continue;
 
-		// if it can then the current tile is set as the new target
-		MoveCost += AddMoveCost;
-		TargetPosIndex = i; // the target position index changes to be the next cell to move onto
+		HighestScore = Choice.Value;
+		BestChoice = Choice.Key;
 	}
 
-	if (TargetPosIndex < 0) return;
-
-	// apply the movement cost
-	AvailableMovement -= MoveCost;
-
-	// this for loop queues the needed movement and rotations
-	for (int i = 0; i <= TargetPosIndex; i++)
-	{
-		bool rot = PathToTarget[i].StartingRot != PathToTarget[i].RotToChangeTo;
-		float StartRot = DirectionYaws[PathToTarget[i].StartingRot];
-		float EndRot = DirectionYaws[PathToTarget[i].RotToChangeTo];
-		if (rot) EnqueueRotation(StartRot, EndRot);
-
-		FVector StartPos = GridManager->GridCells[PathToTarget[i].StartingCoord]->GetActorLocation();
-		FVector EndPos = GridManager->GridCells[PathToTarget[i].CoordToMoveTo]->GetActorLocation();
-
-		// check for ability on hazard to trigger when walked on
-		AGridCellParent* TargetCell = Cast<AGridCellParent>(GridManager->GridCells[PathToTarget[i].CoordToMoveTo]);
-		EnqueueMovement(StartPos, EndPos, TargetCell);
-	}
-
-	// removes this entity from the cell it started in
-	ChangeOccupancy(PositionCoord, false);
-	FacingDirection = PathToTarget[TargetPosIndex].RotToChangeTo;
-
-	// set occupancy on the cell that was moved onto
-	ChangeOccupancy(PathToTarget[TargetPosIndex].CoordToMoveTo, true);
-	PositionCoord = PathToTarget[TargetPosIndex].CoordToMoveTo;
+	ActionToTake = CellActionMap[BestChoice];
 }
 
 // This function determines the best ability to use from a given coordinate
 // it returns a struct that contains:
 // .Coord- the coordinate to move to
 // .Score- the weighting the chosen ability has for moving to the chosen coord
+// .HasTarget- a bool that is true if an ability to use was identified (some enemies may only have a single attack which would not have a target if it's far away from the players)
 // .BestAbility- the ability to use
 // .TargetOfAbility- the entity to target with the ability (could be self for a buff or a player for an attack/debuff)
 FPositionInfo AEnemyEntity::DetermineBestAbilityAtPosition(FIntVector2 Coord)
@@ -191,15 +181,29 @@ FPositionInfo AEnemyEntity::DetermineBestAbilityAtPosition(FIntVector2 Coord)
 		// loop through each available ability to use and determine the best one against the target
 		for (FAbilityInfo Info : OwnAnalysedAbilities)
 		{
-			// TODO: need to fix the fact that this will filter out all self buffs 
-			if (Info.Range < DistToTarget) continue;
-
 			FPositionInfo PosInfo = FPositionInfo(Coord);
 			PosInfo.BestAbility = Info.Ability;
+			
+			if (!Info.TargetsSelf && !Info.TargetsOpponent) { UE_LOG(LogTemp, Warning, TEXT("AEnemyEntity->DetermineBestAbilityAtPosition: analysed ability has no target")) continue; }
+
+			// if it's a self targeting ability, evaluate its score
+			if (Info.TargetsSelf)
+			{
+				PosInfo.TargetOfAbility = this;
+				PosInfo.HasTarget = true;
+
+				// TODO: Add self target score bonuses here
+				
+				continue;
+			}
+
+			// opponent targeting abilities evaluation
+			if (Info.Range < DistToTarget) continue; // early continue if the target player is out of range
+
 			PosInfo.TargetOfAbility = Player;
 			PosInfo.HasTarget = true;
 
-			//TODO: add score bonuses here
+			// TODO: add attack score bonuses here
 
 			EachAbility.Add(PosInfo);
 		}
@@ -210,12 +214,14 @@ FPositionInfo AEnemyEntity::DetermineBestAbilityAtPosition(FIntVector2 Coord)
 		// otherwise add the chosen ability to the 'EachTargetable' array
 		EachTargetable.Add(Temp);
 	}
-
+	
+	// the default FPositionInfo sets 'HasTarget' to false which can later be checked to see if an ability should be used
 	FPositionInfo Temp2 = FPositionInfo(Coord);
-
+	
 	// if no attack was identified as possible, then return the default FPositionInfo
 	if (EachTargetable.Num() == 0) return Temp2;
-	
+
+	// otherwise return the option with the highest score
 	GetHighestScore(EachTargetable, Temp2);
 	return Temp2;
 }
@@ -245,6 +251,38 @@ int AEnemyEntity::GetDistanceBetweenTwoCoords(FIntVector2 Start, FIntVector2 End
 {
 	return (FMath::Abs(Start.X - End.X) + FMath::Abs(Start.Y - End.Y));
 }
+
+// NOTE: available movement on enemies is factored into determining where to move to.
+// Since no second movement will be taken on their turn, it doesn't need to be tracked during the actual movement
+void AEnemyEntity::MoveToTarget()
+{
+	AGridManagerTool* GridManager = Cast<AGridManagerTool>(UGameplayStatics::GetActorOfClass(GetWorld(), AGridManagerTool::StaticClass()));
+	int LastIndex = ActionToTake.Path.Num() - 1;
+	
+	// this for loop queues the needed movement and rotations
+	for (int i = 0; i <= LastIndex; i++)
+	{
+		bool NeedsRot = ActionToTake.Path[i].StartingRot != ActionToTake.Path[i].RotToChangeTo;
+		if (NeedsRot) EnqueueRotation(DirectionYaws[ActionToTake.Path[i].StartingRot], DirectionYaws[ActionToTake.Path[i].RotToChangeTo]);
+
+		// get the world positions to move from/to and the cell being moved onto
+		FVector StartPos = GridManager->GridCells[ActionToTake.Path[i].StartingCoord]->GetActorLocation();
+		FVector EndPos = GridManager->GridCells[ActionToTake.Path[i].CoordToMoveTo]->GetActorLocation();
+		AGridCellParent* TargetCell = Cast<AGridCellParent>(GridManager->GridCells[ActionToTake.Path[i].CoordToMoveTo]);
+
+		// Enqueue the movement
+		EnqueueMovement(StartPos, EndPos, TargetCell);
+	}
+
+	// removes this entity from the cell it started in
+	ChangeOccupancy(PositionCoord, false);
+	FacingDirection = ActionToTake.Path[LastIndex].RotToChangeTo;
+
+	// set occupancy on the cell that was moved onto
+	ChangeOccupancy(ActionToTake.Path[LastIndex].CoordToMoveTo, true);
+	PositionCoord = ActionToTake.Path[LastIndex].CoordToMoveTo;
+}
+
 
 void AEnemyEntity::ChangeOccupancy(FIntVector2 Coord, bool SetAsOccupier)
 {
