@@ -5,6 +5,7 @@
 #include "CoreMinimal.h"
 #include "Abilities/GameplayAbility.h"
 #include "GridData.h"
+#include "GlobalDataTypeHeader.h"
 #include "GameplayAbilityBase.generated.h"
 
 /**

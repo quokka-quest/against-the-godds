@@ -9,6 +9,8 @@ UAttributeHealthSet::UAttributeHealthSet()
 {
 	InitMaxHealth(100);
 	InitCurrentHealth(100);
+	InitCurrentProtection(0);
+	InitCurrentWard(0);
 }
 
 void UAttributeHealthSet::ClampAttributeOnChange(const FGameplayAttribute& Attribute, float& NewValue) const
@@ -17,7 +19,11 @@ void UAttributeHealthSet::ClampAttributeOnChange(const FGameplayAttribute& Attri
 	{
 		NewValue = FMath::Clamp(NewValue, 0.0f, GetMaxHealth());
 	}
-	else if (Attribute == GetCurrentWardAttribute() || Attribute == GetCurrentProtectionAttribute())
+	else if (Attribute == GetCurrentWardAttribute())
+	{
+		NewValue = FMath::Max(0.0f, NewValue);
+	}
+	else if (Attribute == GetCurrentProtectionAttribute())
 	{
 		NewValue = FMath::Max(0.0f, NewValue);
 	}

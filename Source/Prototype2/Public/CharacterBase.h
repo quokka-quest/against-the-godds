@@ -100,6 +100,12 @@ protected:
 
 	UFUNCTION(BlueprintCallable, Category = "GAS")
 	float GetMaxHealth() const;
+	
+	UFUNCTION(BlueprintCallable, Category = "GAS")
+	float GetCurrentProtection() const;
+	
+	UFUNCTION(BlueprintCallable, Category = "GAS")
+	float GetCurrentWard() const;
 
 	UFUNCTION(BlueprintCallable, Category = "GAS")
 	void ActivateStartOfTurnEffects();

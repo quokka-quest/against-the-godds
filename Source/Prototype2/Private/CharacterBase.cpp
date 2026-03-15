@@ -180,6 +180,16 @@ float ACharacterBase::GetMaxHealth() const
 	return(HealthSet->GetMaxHealth());
 }
 
+float ACharacterBase::GetCurrentProtection() const
+{
+	return(HealthSet->GetCurrentProtection());
+}
+
+float ACharacterBase::GetCurrentWard() const
+{
+	return(HealthSet->GetCurrentWard());
+}
+
 void ACharacterBase::ActivateStartOfTurnEffects()
 {
 	for (FActiveGameplayEffectHandle Effect : AbilitySystemComponent->GetActiveEffectsWithAllTags(StartFilterTags))
