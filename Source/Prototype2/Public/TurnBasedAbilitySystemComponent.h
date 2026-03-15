@@ -39,6 +39,8 @@ private:
 		TSubclassOf<UGameplayEffect> EffectClass;
 		TSubclassOf<UGameplayEffect> InstantEffectClass;
 		bool bApplyPerStack = true;
+		bool bFinalStackLossHandled = false;
+		int32 LastKnownStackCount = 1;
 	};
 
 	// Maps active effect handles to instant effects that should be applied on stack loss
