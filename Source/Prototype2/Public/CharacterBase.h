@@ -20,7 +20,10 @@ class PROTOTYPE2_API ACharacterBase : public APawn, public IAbilitySystemInterfa
 
 private:
 	FGameplayTagContainer StartFilterTags;
+	FGameplayTagContainer EndFilterTags;
 	FGameplayTagContainer StatusFilterTags;
+	FGameplayTag RemoveAllStartOfTurnStacksTag;
+	FGameplayTag RemoveAllEndOfTurnStacksTag;
 
 public:
 	// Sets default values for this pawn's properties
@@ -109,5 +112,8 @@ protected:
 
 	UFUNCTION(BlueprintCallable, Category = "GAS")
 	void ActivateStartOfTurnEffects();
+
+	UFUNCTION(BlueprintCallable, Category = "GAS")
+	void ActivateEndOfTurnEffects();
 	
 };

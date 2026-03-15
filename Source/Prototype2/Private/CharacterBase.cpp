@@ -18,7 +18,10 @@ ACharacterBase::ACharacterBase()
 	HealthSet = CreateDefaultSubobject<UAttributeHealthSet>(TEXT("HealthSet"));
 	DamageModifiersSet = CreateDefaultSubobject<UAttributeDamageModifiersSet>(TEXT("DamageModifiersSet"));
 	StartFilterTags.AddTag(FGameplayTag::RequestGameplayTag(FName("Effect.StartOfTurn")));
+	EndFilterTags.AddTag(FGameplayTag::RequestGameplayTag(FName("Effect.EndOfTurn")));
 	StatusFilterTags.AddTag(FGameplayTag::RequestGameplayTag(FName("Status")));
+	RemoveAllStartOfTurnStacksTag = FGameplayTag::RequestGameplayTag(FName("Effect.StartOfTurn.RemoveAllStacks"));
+	RemoveAllEndOfTurnStacksTag = FGameplayTag::RequestGameplayTag(FName("Effect.EndOfTurn.RemoveAllStacks"));
 }
 
 // Called when the game starts or when spawned
@@ -194,8 +197,43 @@ void ACharacterBase::ActivateStartOfTurnEffects()
 {
 	for (FActiveGameplayEffectHandle Effect : AbilitySystemComponent->GetActiveEffectsWithAllTags(StartFilterTags))
 	{
-		// Remove a stack
-		AbilitySystemComponent->RemoveActiveGameplayEffect(Effect, 1);
+		int32 StacksToRemove = 1;
+
+		if (const FActiveGameplayEffect* ActiveEffect = AbilitySystemComponent->GetActiveGameplayEffect(Effect))
+		{
+			FGameplayTagContainer AssetTags;
+			ActiveEffect->Spec.GetAllAssetTags(AssetTags);
+
+			if (AssetTags.HasTagExact(RemoveAllStartOfTurnStacksTag))
+			{
+				// -1 means remove all stacks for this active gameplay effect.
+				StacksToRemove = -1;
+			}
+		}
+
+		AbilitySystemComponent->RemoveActiveGameplayEffect(Effect, StacksToRemove);
+	}
+}
+
+void ACharacterBase::ActivateEndOfTurnEffects()
+{
+	for (FActiveGameplayEffectHandle Effect : AbilitySystemComponent->GetActiveEffectsWithAllTags(EndFilterTags))
+	{
+		int32 StacksToRemove = 1;
+
+		if (const FActiveGameplayEffect* ActiveEffect = AbilitySystemComponent->GetActiveGameplayEffect(Effect))
+		{
+			FGameplayTagContainer AssetTags;
+			ActiveEffect->Spec.GetAllAssetTags(AssetTags);
+
+			if (AssetTags.HasTagExact(RemoveAllEndOfTurnStacksTag))
+			{
+				// -1 means remove all stacks for this active gameplay effect.
+				StacksToRemove = -1;
+			}
+		}
+
+		AbilitySystemComponent->RemoveActiveGameplayEffect(Effect, StacksToRemove);
 	}
 }
 
