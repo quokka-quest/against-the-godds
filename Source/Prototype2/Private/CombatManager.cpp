@@ -3,10 +3,10 @@
 
 #include "CombatManager.h"
 
-#include "DiceActor.h"
 #include "PlayerCombatLevelPawn.h"
-#include "PlayerEntity.h"
 #include "GameManager.h"
+#include "GlobalDataTypeHeader.h"
+#include "GameplayAbilityBase.h"
 #include "Kismet/GameplayStatics.h"
 
 
@@ -70,10 +70,10 @@ void ACombatManager::SpawnEnemies()
 
 AEntityBase* ACombatManager::SpawnEntity(TSubclassOf<AEntityBase> Entity, FIntVector2 SpawnCoord)
 {
-	EPatternRotation spawnRot = Cast<AGridCellParent>(GridManager->GridCells[SpawnCoord])->SpawnedEntityRotation;
+	EPatternRotation spawnRot = Cast<AGridCellParent>(GetCell(SpawnCoord))->SpawnedEntityRotation;
 	float ZRot = (spawnRot == R0)? 90: (spawnRot == R90)? 0: (spawnRot == R180)? -90: 180;
 	FRotator Rot = FRotator(0, ZRot, 0);
-	FVector Pos = GridManager->GridCells[SpawnCoord]->GetActorLocation();
+	FVector Pos = GetCell(SpawnCoord)->GetActorLocation();
 	FTransform Form = FTransform(Rot, Pos);
 
 	AEntityBase* EntityRef = GetWorld()->SpawnActor<AEntityBase>(Entity, Form);
@@ -214,15 +214,15 @@ void ACombatManager::MoveCurrentCombatant(FIntVector2 TargetPos)
 		bool NeedRot = PathForCombatantToFollow[i].StartingRot != PathForCombatantToFollow[i].RotToChangeTo;
 		if (NeedRot) CurrentTurnCombatant->EnqueueRotation(StartRot, EndRot);
 		
-		FVector StartPos = GridManager->GridCells[PathForCombatantToFollow[i].StartingCoord]->GetActorLocation();
-		FVector EndPos = GridManager->GridCells[PathForCombatantToFollow[i].CoordToMoveTo]->GetActorLocation();
+		FVector StartPos = GetCell(PathForCombatantToFollow[i].StartingCoord)->GetActorLocation();
+		FVector EndPos = GetCell(PathForCombatantToFollow[i].CoordToMoveTo)->GetActorLocation();
 
 		// get target cell
-		AGridCellParent* TargetCell = Cast<AGridCellParent>(GridManager->GridCells[PathForCombatantToFollow[i].CoordToMoveTo]);
+		AGridCellParent* TargetCell = Cast<AGridCellParent>(GetCell(PathForCombatantToFollow[i].CoordToMoveTo));
 		
 		// enqueue movement animation
 		CurrentTurnCombatant->EnqueueMovement(StartPos, EndPos, TargetCell);
-		CurrentTurnCombatant->AvailableMovement -= GridManager->GridCells[PathForCombatantToFollow[i].CoordToMoveTo]->MovementCost;
+		CurrentTurnCombatant->AvailableMovement -= GetCell(PathForCombatantToFollow[i].CoordToMoveTo)->MovementCost;
 	}
 
 	// remove from old cell and change facing direction
@@ -243,29 +243,57 @@ void ACombatManager::MoveCurrentCombatant(FIntVector2 TargetPos)
 // displays the path to be taken by a combatant if they were to move to the target position
 void ACombatManager::DisplayPathForCurrentCombatant(FIntVector2 TargetPos)
 {
-	FIntVector2 StartPos = CurrentTurnCombatant->PositionCoord;
+	FPathfinderInfo PathingInfo = FPathfinderInfo();
+	PathingInfo.StartCoord = CurrentTurnCombatant->PositionCoord;
+	PathingInfo.TargetCoord = TargetPos;
+	PathingInfo.Range = CurrentTurnCombatant->AvailableMovement;
+	PathingInfo.PathingData = CurrentTurnCombatant->GetPathingData();
 
-	TArray<FPathInfo> PathInfo = GridManager->DisplayCellPath(StartPos, TargetPos, CurrentTurnCombatant->GetPathingData());
-	PathForCombatantToFollow = PathInfo;
+	// All rules to apply for player pathfinding
+	PathingInfo.Rules.Add(EPathingRules::ExcludeOccupiedCells);
+	PathingInfo.Rules.Add(EPathingRules::MustFitOnTarget);
+	PathingInfo.Rules.Add(EPathingRules::RangeIsAvailableMovement);
+	PathingInfo.Rules.Add(EPathingRules::TryPathAroundHazards);
+
+	// if the path is not valid then clear 'PathForCombatantToFollow' and return
+	if (!GridManager->PathFindBetweenTwoCoords(PathForCombatantToFollow, PathingInfo)) {PathForCombatantToFollow.Empty(); return;}
+
+	// otherwise, tell the grid manager to display the path for the current turn entity
+	GridManager->DisplayCellPath(PathForCombatantToFollow, CurrentTurnCombatant);
 }
 
-// displays the movement options for the current combatant
+// Defines the rules to be used for displaying the current entity's movement range then calls another function to display that range
 void ACombatManager::DisplayCurrentCombatantsMovement()
 {
-	GridManager->ResetWalkableAndAttackableOnAllCells();
-	GridManager->ResetHighlights();
-	GridManager->DisplayWalkableCells(CurrentTurnCombatant->PositionCoord, CurrentTurnCombatant->AvailableMovement, CurrentTurnCombatant->GetPathingData());
+	TArray<TEnumAsByte<EPathingRules>> Rules;
+	Rules.Add(EPathingRules::ExcludeOccupiedCells);
+	Rules.Add(EPathingRules::RangeIsAvailableMovement);
+	Rules.Add(EPathingRules::MustFitOnTarget);
+	
+	DisplayRangeOutline(CurrentTurnCombatant->PositionCoord, CurrentTurnCombatant->AvailableMovement, CurrentTurnCombatant->GetPathingData(), Rules);
 }
 
-// displays all the tiles that the player can target
+// Defines the rules to be used for displaying the attack's range then calls another function to display that range
 void ACombatManager::DisplayAttackRange(int Range)
+{
+	TArray<TEnumAsByte<EPathingRules>> Rules;
+	if (AbilityRef->TargetingRules.Contains(EAttackRules::UserMustFitOnTarget)) Rules.Add(EPathingRules::MustFitOnTarget);
+	if (AbilityRef->TargetingRules.Contains(EAttackRules::StraightLineOnly)) Rules.Add(EPathingRules::StraightLine);
+	
+	DisplayRangeOutline(CurrentTurnCombatant->PositionCoord, Range, CurrentTurnCombatant->GetPathingData(), Rules);
+}
+
+// calls a series of gridManager functions to display the outline of a given range
+// used by 'DisplayAttackRange' and 'DisplayCurrentCombatantsMovement'
+void ACombatManager::DisplayRangeOutline(FIntVector2 Origin, int Range, FPathingData PathData, TArray<TEnumAsByte<EPathingRules>>& Rules)
 {
 	GridManager->ResetWalkableAndAttackableOnAllCells();
 	GridManager->ResetHighlights();
-	GridManager->DisplayCellsInAttackRange(CurrentTurnCombatant->PositionCoord, Range, CurrentTurnCombatant->GetPathingData(), AbilityRef->TargetingRules);
+	GridManager->DisplayCellsInRange(Origin, Range, PathData, Rules);
 }
 
-// displays the attack area and stores the targeted tiles with element 0 being the targeted tile and the rest are the additional area
+
+// displays the attack pattern and stores the targeted cells with element 0 being the targeted cell and the rest are the additional area
 void ACombatManager::DisplayAttackPattern(FIntVector2 TargetCoord)
 {
 	AreaOfAttackEffect = GridManager->DisplayAttackPattern(TargetCoord, AbilityRef->Pattern, AttackRotation, CurrentTurnCombatant->GetPathingData(), AbilityRef->TargetingRules);
@@ -284,20 +312,19 @@ void ACombatManager::ExecuteAttackOnTarget()
 	TArray<AActor*> TargetActors;
 	for (int i = 0; i < AreaOfAttackEffect.Num(); i++)
 	{
-		if (!GridManager->GridCells.Contains(AreaOfAttackEffect[i])) continue; // continue if cell coordinate is invalid
+		if (!DoesCoordExist(AreaOfAttackEffect[i])) continue; // continue if cell coordinate is invalid
 
 		// if the ability is targeting the cells then add the cell to the target array and continue
 		if (AbilityRef->TargetType == ETargetType::TT_Tile)
 		{
-			AActor* TileActor = Cast<AActor>(GridManager->GridCells[AreaOfAttackEffect[i]]);
-			TargetActors.Add(TileActor);
+			TargetActors.Add(GetCell(AreaOfAttackEffect[i]));
 			continue;
 		}
 		
-		if (!GridManager->GridCells[AreaOfAttackEffect[i]]->IsOccupied) continue; // continue if cell is not occupied
-		if (!GridManager->GridCells[AreaOfAttackEffect[i]]->OccupyingActor) { UE_LOG(LogTemp, Warning, TEXT("CombatManager->ExecuteAttackOnTarget() found an occupied cell with a null occupant")) continue;} // continue if cell is occupied but the entity is null
+		if (!GetCell(AreaOfAttackEffect[i])->IsOccupied) continue; // continue if cell is not occupied
+		if (!GetCell(AreaOfAttackEffect[i])->OccupyingActor) { UE_LOG(LogTemp, Warning, TEXT("CombatManager->ExecuteAttackOnTarget() found an occupied cell with a null occupant")) continue;} // continue if cell is occupied but the entity is null
 		
-		TargetActors.Add(Cast<AActor>(GridManager->GridCells[AreaOfAttackEffect[i]]->OccupyingActor));
+		TargetActors.Add(Cast<AActor>(GetCell(AreaOfAttackEffect[i])->OccupyingActor));
 	}
 
 	CurrentTurnCombatant->AvailableAttacks--;
@@ -323,7 +350,7 @@ void ACombatManager::OnEntityDeath(AEntityBase* DeadEntity)
 void ACombatManager::EnemySetAttackInfo(UGameplayAbilityBase* AbilityInstance, FIntVector2 TargetPos, EPatternRotation Rotation)
 {
 	AbilityRef = AbilityInstance;
-	AreaOfAttackEffect = GridManager->GetCellsInAttackArea(TargetPos, AbilityInstance->Pattern, Rotation, FPathingData());
+	AreaOfAttackEffect = GridManager->GetPatternCellsFromTarget(TargetPos, AbilityInstance->Pattern, Rotation);
 }
 
 bool ACombatManager::HavePlayersWon()
@@ -364,7 +391,7 @@ void ACombatManager::SetCellsOccupier(AEntityBase* Entity, FIntVector2 Coord, bo
 	for (FIntVector2 Offset: Entity->EntityRotations[Entity->FacingDirection].GetSelectedCellOffsets())
 	{
 		FIntVector2 CellCoord = Coord + Offset;
-		GridManager->GridCells[CellCoord]->SetOccupier((SetAsOccupied)? Entity: nullptr);
+		GetCell(CellCoord)->SetOccupier((SetAsOccupied)? Entity: nullptr);
 	}
 }
 
@@ -403,8 +430,8 @@ bool ACombatManager::ValidateFullGridPatternAtTarget(AEntityBase* TargetEntity, 
 	for (FIntVector2 Offset: Offsets)
 	{
 		FIntVector2 CellCoord = TargetCoord + Offset;
-		if (!GridManager->GridCells.Contains(CellCoord)) return false;
-		if (GridManager->GridCells[CellCoord]->IsOccupied && GridManager->GridCells[CellCoord]->OccupyingActor != TargetEntity) return false;
+		if (!DoesCoordExist(CellCoord)) return false;
+		if (GetCell(CellCoord)->IsOccupied && GetCell(CellCoord)->OccupyingActor != TargetEntity) return false;
 	}
 	
 	return true;
@@ -417,8 +444,8 @@ bool ACombatManager::ValidateFullGridPatternAtCoord(FIntVector2 const TargetCoor
 	for (FIntVector2 Offset: Offsets)
 	{
 		FIntVector2 CellCoord = TargetCoord + Offset;
-		if (!GridManager->GridCells.Contains(CellCoord)) return false;
-		if (GridManager->GridCells[CellCoord]->IsOccupied) return false;
+		if (!DoesCoordExist(CellCoord)) return false;
+		if (GetCell(CellCoord)->IsOccupied) return false;
 	}
 	
 	return true;
@@ -426,8 +453,14 @@ bool ACombatManager::ValidateFullGridPatternAtCoord(FIntVector2 const TargetCoor
 
 void ACombatManager::AbilityBasedMovement(AEntityBase* EntityToMove, FIntVector2 TargetCoord, float Speed, bool IsKnockback)
 {
-	PathForCombatantToFollow = GridManager->GetPathBetweenCoords(EntityToMove->PositionCoord, TargetCoord, EntityToMove->GetPathingData());
-	if (PathForCombatantToFollow.IsEmpty()) {UE_LOG(LogTemp, Error, TEXT("CombatManager.cpp->AbilityBasedMovement: path was empty")) return;}
+	FPathfinderInfo PathingInfo = FPathfinderInfo();
+	PathingInfo.StartCoord = EntityToMove->PositionCoord;
+	PathingInfo.TargetCoord = TargetCoord;
+	PathingInfo.Range = 1000;
+	PathingInfo.PathingData = EntityToMove->GetPathingData();
+	
+	if (!GridManager->PathFindBetweenTwoCoords(PathForCombatantToFollow, PathingInfo))
+		{UE_LOG(LogTemp, Error, TEXT("CombatManager.cpp->AbilityBasedMovement: path was empty")) return;}
 
 	for (int i = 0; i < PathForCombatantToFollow.Num(); i++)
 	{
@@ -436,11 +469,11 @@ void ACombatManager::AbilityBasedMovement(AEntityBase* EntityToMove, FIntVector2
 		bool NeedRot = PathForCombatantToFollow[i].StartingRot != PathForCombatantToFollow[i].RotToChangeTo;
 		if (NeedRot && !IsKnockback) EntityToMove->EnqueueRotation(StartRot, EndRot);
 		
-		FVector StartPos = GridManager->GridCells[PathForCombatantToFollow[i].StartingCoord]->GetActorLocation();
-		FVector EndPos = GridManager->GridCells[PathForCombatantToFollow[i].CoordToMoveTo]->GetActorLocation();
+		FVector StartPos = GetCell(PathForCombatantToFollow[i].StartingCoord)->GetActorLocation();
+		FVector EndPos = GetCell(PathForCombatantToFollow[i].CoordToMoveTo)->GetActorLocation();
 
 		// get target cell
-		AGridCellParent* TargetCell = Cast<AGridCellParent>(GridManager->GridCells[PathForCombatantToFollow[i].CoordToMoveTo]);
+		AGridCellParent* TargetCell = Cast<AGridCellParent>(GetCell(PathForCombatantToFollow[i].CoordToMoveTo));
 		
 		// enqueue movement animation
 		EntityToMove->EnqueueMovement(StartPos, EndPos, TargetCell);
@@ -470,16 +503,69 @@ bool ACombatManager::ApplyKnockback(AEntityBase* Entity, FGridData KnockbackData
 	{
 		FIntVector2 Coord = StartCoord + Offset;
 		if (Coord == StartCoord) continue;
-		if (!GridManager->GridCells.Contains(Coord)) continue;
+		if (!DoesCoordExist(Coord)) continue;
 
-		TArray<FPathInfo> Path = GridManager->GetPathBetweenCoords(StartCoord, Coord, Entity->GetPathingData());
-		if (Path.IsEmpty()) { UE_LOG(LogTemp, Warning, TEXT("Path To Coord: %i, %i failed"), Coord.X, Coord.Y) continue; }
+		FPathfinderInfo PathingInfo = FPathfinderInfo();
+		PathingInfo.StartCoord = Entity->PositionCoord;
+		PathingInfo.TargetCoord = Coord;
+		PathingInfo.Range = 1000;
+		PathingInfo.PathingData = Entity->GetPathingData();
+		
+		TArray<FPathInfo> Path;
+		if (GridManager->PathFindBetweenTwoCoords(Path, PathingInfo))
+			{ UE_LOG(LogTemp, Warning, TEXT("Path To Coord: %i, %i failed"), Coord.X, Coord.Y) continue; }
 
 		AbilityBasedMovement(Entity, Coord, 0.0f, true);
 		return true;
 	}
 
 	return false;
+}
+
+void ACombatManager::EnemyAbilityUse(UGameplayAbilityBase* Ability, FIntVector2 TargetCoord)
+{
+	AreaOfAttackEffect = GridManager->GetPatternCellsFromTarget(TargetCoord, Ability->Pattern, R0);
+	AbilityRef = Ability;
+	
+	TArray<AActor*> TargetActors;
+	for (int i = 0; i < AreaOfAttackEffect.Num(); i++)
+	{
+		if (!DoesCoordExist(AreaOfAttackEffect[i])) continue; // continue if cell coordinate is invalid
+
+		// if the ability is targeting the cells then add the cell to the target array and continue
+		if (AbilityRef->TargetType == ETargetType::TT_Tile)
+		{
+			TargetActors.Add(GetCell(AreaOfAttackEffect[i]));
+			continue;
+		}
+		
+		if (!GetCell(AreaOfAttackEffect[i])->IsOccupied) continue; // continue if cell is not occupied
+		if (!GetCell(AreaOfAttackEffect[i])->OccupyingActor) { UE_LOG(LogTemp, Warning, TEXT("CombatManager->ExecuteAttackOnTarget() found an occupied cell with a null occupant")) continue;} // continue if cell is occupied but the entity is null
+		
+		TargetActors.Add(GetCell(AreaOfAttackEffect[i])->OccupyingActor);
+	}
+
+	CurrentTurnCombatant->AvailableAttacks--;
+	CurrentTurnCombatant->ActivateAbilityWithTargets(AbilityRef->GetClass(), TargetActors);
+
+	FGridData defaultHighlight = FGridData();
+	GridManager->ResetHighlights();
+	GridManager->ChangeHighlightMesh(defaultHighlight);
+	SetAttackRotation(R0);
+	
+	OnAttackExecuted.Broadcast();
+}
+
+
+/////////////////////////////////////////////////////////////////////////// Grid Information access
+bool ACombatManager::DoesCoordExist(FIntVector2 Coord)
+{
+	return GridManager->GridCells.Contains(Coord);
+}
+
+AGridCellBase* ACombatManager::GetCell(FIntVector2 Coord)
+{
+	return GridManager->GridCells[Coord];
 }
 
 /////////////////////////////////////////////////////////////////////////// Blueprint friendly Getters and setters:
@@ -531,6 +617,6 @@ void ACombatManager::BroadcastOnAttackClickedEvent()
 	APlayerEntity* PlayerRef = Cast<APlayerEntity>(CurrentTurnCombatant);
 	if (!PlayerRef) return;
 
-	if (AbilityRef->TargetingRules.Contains(EAttackRules::ObeyTraversalRules)) GridManager->ChangeHighlightMesh(PlayerRef->RotationSweep);
+	if (AbilityRef->TargetingRules.Contains(EAttackRules::UserMustFitOnTarget)) GridManager->ChangeHighlightMesh(PlayerRef->RotationSweep);
 	else { FGridData Default = FGridData(); GridManager->ChangeHighlightMesh(Default); }
 }

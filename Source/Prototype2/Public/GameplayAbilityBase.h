@@ -49,5 +49,11 @@ public:
 
 	UPROPERTY(EditAnywhere, BlueprintReadWrite, Category = "Ability")
 	TArray<TEnumAsByte<EAttackRules>> TargetingRules;
+
+	UPROPERTY(EditAnywhere, BlueprintReadWrite, Category = "AbilityInfo")
+	FAbilityEffectInfo SelfEffects;
+	UPROPERTY(EditAnywhere, BlueprintReadWrite, Category = "AbilityInfo")
+	FAbilityEffectInfo TargetEffects;
+	
 	
 };

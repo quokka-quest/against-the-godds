@@ -31,6 +31,8 @@ public:
 	bool BlockPositiveY;
 	UPROPERTY(EditAnywhere, BlueprintReadWrite, Category="CellInfo")
 	bool BlockNegativeY;
+	UPROPERTY(EditAnywhere, BlueprintReadWrite, Category="CellInfo")
+	bool IsHazard;
 
 	UPROPERTY(EditAnywhere, BlueprintReadWrite, Category="CellInfo")
 	int MovementCost;
