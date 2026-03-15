@@ -114,6 +114,9 @@ protected:
 	UPROPERTY()
 	TSet<AEntityBase*> AllAlivePlayers;
 
+	UPROPERTY(BlueprintReadWrite, EditAnywhere, Category="EnemyLogic")
+	bool IsBoss;
+
 	bool GetHighestScore(TArray<FPositionInfo>& InfoSet, FPositionInfo& OutInfo);
 
 	void MoveToTarget();

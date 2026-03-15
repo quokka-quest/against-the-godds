@@ -137,7 +137,7 @@ void AEnemyEntity::DetermineMovement()
 		// if no ability can be used penalty
 		if (!PositionInfo.HasTarget)
 		{
-			PositionInfo.Score -= 1;
+			PositionInfo.Score -= 20;
 			CellScoreMap.Add(CellChoice, PositionInfo.Score);
 			CellActionMap.Add(CellChoice, PositionInfo);
 			UE_LOG(LogTemp, Warning, TEXT("Coord: %i, %i, Score: %i"), CellChoice.X, CellChoice.Y, PositionInfo.Score)
