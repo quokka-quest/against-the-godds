@@ -24,6 +24,12 @@ struct PROTOTYPE2_API FStackLossEffectData
 	
 	UPROPERTY(EditAnywhere)
 	bool bApplyPerStack = true;
+
+	UPROPERTY(EditAnywhere)
+	bool bFinalStackLossHandled = false;
+
+	UPROPERTY(EditAnywhere)
+	int32 LastKnownStackCount = 1;
 };
 
 /**
@@ -50,7 +56,7 @@ protected:
 	// Callback for when a stack count changes
 	void OnStackCountChanged(FActiveGameplayEffectHandle Handle, int32 NewStackCount, int32 PreviousStackCount);
 	void OnEffectRemoved(FActiveGameplayEffectHandle Handle);
-	
+
 	// Maps active effect handles to instant effects that should be applied on stack loss
 	UPROPERTY(BlueprintReadWrite, EditAnywhere, Category = "TurnBasedAbilitySystemComponent")
 	TMap<FActiveGameplayEffectHandle, FStackLossEffectData> StackLossEffectMap;

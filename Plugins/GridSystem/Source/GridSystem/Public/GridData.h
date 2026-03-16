@@ -130,14 +130,43 @@ struct FPathInfo
 	TEnumAsByte<EPatternRotation> StartingRot;
 	UPROPERTY()
 	TEnumAsByte<EPatternRotation> RotToChangeTo;
+	UPROPERTY()
+	int HazardPenaltyFromStart;
 };
 
 UENUM(BlueprintType)
-enum EAttackRules
+enum EPathingRules
 {
-	ObeyTraversalRules,
-	IgnoreLineOfSight,
-	StraightLineOnly,
-	MustFitOnTargetCell,
-	PatternIsPath,
+	ExcludeOccupiedCells,
+	ExcludeHazardCells,
+	TryPathAroundHazards,
+	RangeIsAvailableMovement,
+	MustFitOnTarget,
+	StraightLine,
+};
+
+USTRUCT(BlueprintType)
+struct FPathfinderInfo
+{
+	GENERATED_BODY()
+
+	UPROPERTY()
+	FIntVector2 StartCoord;
+	UPROPERTY()
+	FIntVector2 TargetCoord;
+	UPROPERTY()
+	int Range;
+	UPROPERTY()
+	FPathingData PathingData;
+	UPROPERTY()
+	TArray<TEnumAsByte<EPathingRules>> Rules;
+
+	FPathfinderInfo()
+	{
+		StartCoord = FIntVector2(0,0);
+		TargetCoord = FIntVector2(0,0);
+		Range = 0;
+		PathingData = FPathingData();
+		Rules = TArray<TEnumAsByte<EPathingRules>>();
+	}
 };
