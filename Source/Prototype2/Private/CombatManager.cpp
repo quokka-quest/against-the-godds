@@ -207,6 +207,8 @@ void ACombatManager::IncrementTurnIndex()
 // checks for valid locations are done before this function is called so they aren't needed here
 void ACombatManager::MoveCurrentCombatant(FIntVector2 TargetPos)
 {
+	if (PathForCombatantToFollow.IsEmpty()) return;
+
 	for (int i = 0; i < PathForCombatantToFollow.Num(); i++)
 	{
 		float StartRot = CurrentTurnCombatant->DirectionYaws[PathForCombatantToFollow[i].StartingRot];

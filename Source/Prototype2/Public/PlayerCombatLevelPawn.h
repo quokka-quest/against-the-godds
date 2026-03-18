@@ -94,4 +94,7 @@ private:
 	void TurnOffAttackDisplay();
 	void TurnOffPathDisplay();
 
+	UFUNCTION()
+	FIntVector2 GetCurrentCombatantGridPos();
+
 };

@@ -200,6 +200,7 @@ TArray<FIntVector2> AGridManagerClass::GetPatternCellsFromTarget(FIntVector2 Tar
 
 bool AGridManagerClass::PathFindBetweenTwoCoords(TArray<FPathInfo>& OutArray, FPathfinderInfo& PathingInfo)
 {
+	if (PathingInfo.StartCoord == PathingInfo.TargetCoord) return false; // do not path from a coord to itself
 	if (PathFinder(GridCells, PathingInfo.PathingData, PathingInfo.Rules).FindPathBetweenCells(OutArray, PathingInfo.StartCoord, PathingInfo.TargetCoord, PathingInfo.Range)) return true;
 
 	OutArray.Empty();

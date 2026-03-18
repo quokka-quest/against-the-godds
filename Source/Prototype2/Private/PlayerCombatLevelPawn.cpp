@@ -93,13 +93,16 @@ void APlayerCombatLevelPawn::OnTileClick()
 	// click logic for when the selected cell is not the cell being clicked on
 	if (SelectedCell != HighlightedCell)
 	{
-		if (!isDisplayingPath && !IsDisplayingAttack) SelectedCell = HighlightedCell;
-
-		if (TileSelectionType == ETileSelectionType::Movement && isDisplayingPath) { TurnOffPathDisplay(); return; }
-		if (TileSelectionType == ETileSelectionType::Attack && IsDisplayingAttack) { TurnOffAttackDisplay(); return; }
-		
-		if (TileSelectionType == ETileSelectionType::Movement) DisplayPathToTile();
-		if (TileSelectionType == ETileSelectionType::Attack) DisplayAttackTargetArea();
+		if (TileSelectionType == ETileSelectionType::Movement)
+		{
+			if (isDisplayingPath) TurnOffPathDisplay();
+			else if (GetCurrentCombatantGridPos() != HighlightedCell->CellCoordinate) { SelectedCell = HighlightedCell; DisplayPathToTile(); }
+		}
+		else if (TileSelectionType == ETileSelectionType::Attack) 
+		{
+			if (IsDisplayingAttack) TurnOffAttackDisplay();
+			else { SelectedCell = HighlightedCell; DisplayAttackTargetArea(); }
+		}
 		
 		return;
 	}
@@ -237,3 +240,7 @@ FVector APlayerCombatLevelPawn::GetMouseGroundIntersection()
 	return MouseGroundIntersection;
 }
 
+FIntVector2 APlayerCombatLevelPawn::GetCurrentCombatantGridPos() 
+{
+	return CombatManager->CurrentTurnCombatant->PositionCoord;
+}
