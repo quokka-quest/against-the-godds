@@ -34,5 +34,7 @@ public:
 	bool HasEffect;
 	UPROPERTY(BlueprintReadWrite, Category = "CellProperties")
 	TSubclassOf<UGameplayAbilityBase> TemporaryCellEffect;
+	UPROPERTY(BlueprintReadWrite, Category = "CellProperties")
+	int NumOfRepeats;
 	
 };
