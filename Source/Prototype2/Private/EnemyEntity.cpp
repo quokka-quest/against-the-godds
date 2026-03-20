@@ -16,15 +16,11 @@ void AEnemyEntity::SetTauntTarget(AEntityBase* EntityTarget, bool SetToEmpty)
 void AEnemyEntity::TakeTurn()
 {
 	FindTargetablePlayers();
-	UE_LOG(LogTemp, Warning, TEXT("Num of targetable players: %i"), TargetablePlayers.Num())
-
-	// TODO: need to trigger these once on combat start since the info can't change during combat (minor optimisation)
+	
 	AnalyseOwnAbilities();
 	AnalyseAllPlayerAbilities();
 
 	DetermineMovement();
-	UE_LOG(LogTemp, Warning, TEXT("Current coord: %i, %i"), PositionCoord.X, PositionCoord.Y)
-	UE_LOG(LogTemp, Warning, TEXT("Highest Score coord: %i, %i, Score: %i"), ActionToTake.Coord.X, ActionToTake.Coord.Y, ActionToTake.Score)
 	MoveToTarget();
 	EnqueueAttackUse();
 }
