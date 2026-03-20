@@ -570,6 +570,11 @@ AGridCellBase* ACombatManager::GetCell(FIntVector2 Coord)
 	return GridManager->GridCells[Coord];
 }
 
+float ACombatManager::GetGridWidth() 
+{
+	return (float)GridManager->GridData.Columns;
+}
+
 /////////////////////////////////////////////////////////////////////////// Blueprint friendly Getters and setters:
 
 EPatternRotation ACombatManager::GetAttackRotation()
