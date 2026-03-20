@@ -115,6 +115,9 @@ public:
 
 	UFUNCTION(BlueprintCallable, Category="GridInfo")
 	AGridCellBase* GetCell(FIntVector2 Coord);
+
+	UFUNCTION(BlueprintCallable, BlueprintPure, Category="GridInfo")
+	float GetGridWidth();
 	
 	////////////////////////////////////////////////// blueprint getters and setters
 	UFUNCTION(BlueprintCallable)
