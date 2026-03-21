@@ -4,7 +4,7 @@
 	"VersionName": "1.0",
 	"FriendlyName": "MenuUI",
 	"Description": "Common Menu UI",
-	"Category": "Other",
+	"Category": "UI",
 	"CreatedBy": "Lee-Roy Dobson",
 	"CreatedByURL": "",
 	"DocsURL": "",
@@ -13,5 +13,11 @@
 	"CanContainContent": true,
 	"IsBetaVersion": false,
 	"IsExperimentalVersion": false,
-	"Installed": false
+	"Installed": false,
+	"Plugins": [
+		{
+			"Name": "CommonUI",
+			"Enabled": true
+		}
+	]
 }
