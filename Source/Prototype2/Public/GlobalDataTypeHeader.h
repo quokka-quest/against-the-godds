@@ -46,6 +46,14 @@ enum ETileSelectionType
 };
 
 UENUM(BlueprintType)
+enum EAttackRules
+{
+	DisplayAsPathToTarget,
+	UserMustFitOnTarget,
+	StraightLineOnly
+};
+
+UENUM(BlueprintType)
 enum class ETargetType : uint8
 {
 	TT_Character UMETA(DisplayName = "Character"),
@@ -87,4 +95,17 @@ struct FDiceFaceLevels
 		
 		return FaceArray[0];
 	}
+};
+
+USTRUCT(BlueprintType)
+struct FAbilityEffectInfo
+{
+	GENERATED_BODY()
+
+	UPROPERTY(EditAnywhere, BlueprintReadWrite)
+	bool DoesDamage;
+	UPROPERTY(EditAnywhere, BlueprintReadWrite)
+	bool AppliesBuff;
+	UPROPERTY(EditAnywhere, BlueprintReadWrite)
+	bool AppliesDebuff;
 };

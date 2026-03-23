@@ -3,6 +3,7 @@
 
 #include "EnemyEntity.h"
 #include "CombatManager.h"
+#include "PlayerEntity.h"
 #include "Kismet/GameplayStatics.h"
 
 void AEnemyEntity::SetTauntTarget(AEntityBase* EntityTarget, bool SetToEmpty)
@@ -11,148 +12,294 @@ void AEnemyEntity::SetTauntTarget(AEntityBase* EntityTarget, bool SetToEmpty)
 	PriorityTarget = EntityTarget;
 }
 
-
-void AEnemyEntity::DeterminePlayerTarget()
+// This function is the execution sequence of the entire enemy decision-making logic
+void AEnemyEntity::TakeTurn()
 {
-	if (PriorityTarget) {PlayerTarget = PriorityTarget; return;}
+	FindTargetablePlayers();
+	
+	AnalyseOwnAbilities();
+	AnalyseAllPlayerAbilities();
+
+	DetermineMovement();
+	MoveToTarget();
+	EnqueueAttackUse();
+}
+
+//
+void AEnemyEntity::FindTargetablePlayers()
+{
+	TargetablePlayers.Empty();
+	AllAlivePlayers.Empty();
+
+	// if taunted then only add the player that can be attacked
+	if (PriorityTarget) TargetablePlayers.Add(PriorityTarget);
+
+	// loop through all entities in the scene. Check if they are a player and alive
+	ACombatManager* CombatManager = Cast<ACombatManager>(UGameplayStatics::GetGameMode(GetWorld()));
+	for (AEntityBase* Entity : CombatManager->Combatants)
+	{
+		APlayerEntity* Player = Cast<APlayerEntity>(Entity);
+		if (!Player || Player->HasEntityDied()) continue; // if the entity is not a player or is dead then do not add it to either set
+		if (PriorityTarget) {AllAlivePlayers.Add(Player); continue;} // if there is a taunt active then just add the players to the 'alive player' set
+		
+		TargetablePlayers.Add(Player);
+		AllAlivePlayers.Add(Player);
+	}
+}
+
+void AEnemyEntity::AnalyseOwnAbilities()
+{
+	OwnAnalysedAbilities.Empty();
+	
+	for (UGameplayAbilityBase* Ability : GetAllAbilityInstances())
+	{
+		FAbilityInfo AbilityInfo = FAbilityInfo(Ability); // TODO: the constructor for this struct extracts all of the abilities information
+		OwnAnalysedAbilities.Add(AbilityInfo);
+	}
+}
+
+void AEnemyEntity::AnalyseAllPlayerAbilities()
+{
+	PlayerAbilityInfo.Empty();
 	
 	ACombatManager* CombatManager = Cast<ACombatManager>(UGameplayStatics::GetGameMode(GetWorld()));
-	
-	int ShortestDist = 100000;
-	AEntityBase* ClosestPlayer = nullptr;
-	
 	for (AEntityBase* Entity : CombatManager->Combatants)
 	{
 		APlayerEntity* Player = Cast<APlayerEntity>(Entity);
 		if (!Player) continue;
-		if (Player->HasEntityDied()) continue;
 
-		FIntVector2 PlayerPos = Player->PositionCoord;
-		int XDist = abs(PlayerPos.X - PositionCoord.X);
-		int YDist = abs(PlayerPos.Y - PositionCoord.Y);
-		int totalDist = XDist + YDist;
+		FPlayerAbilityInfo AbilityInfo;
+		AbilityInfo.MaxRange = 0;
+		AbilityInfo.MaxPotentialDamage = 1; // TODO: need to replace this with an actual method for determining max damage
+		AbilityInfo.Effects = FAbilityEffectInfo();
+		AbilityInfo.Effects.AppliesBuff = false;
+		
+		for (UGameplayAbilityBase* Ability : Player->GetAllAbilityInstances())
+		{
+			if (Ability->Range > AbilityInfo.MaxRange) AbilityInfo.MaxRange = Ability->Range;
+			if (Ability->TargetEffects.DoesDamage) AbilityInfo.Effects.DoesDamage = true;
+			if (Ability->TargetEffects.AppliesDebuff) AbilityInfo.Effects.AppliesDebuff = true;
+		}
 
-		if (totalDist >= ShortestDist) continue;
-
-		ShortestDist = totalDist;
-		ClosestPlayer = Entity;
+		PlayerAbilityInfo.Add(Player, AbilityInfo);
 	}
-
-	PlayerTarget = ClosestPlayer;
 }
+
 
 void AEnemyEntity::DetermineMovement()
 {
-	// if the player target is invalid something has gone wrong so do not move
-	if (!PlayerTarget) return;
-
-	// find the longest attack range of this enemy
-	int MaxRange = 0;
-	for (UGameplayAbilityBase* Ability: GetAllAbilityInstances())
-	{
-		if (Ability->Range > MaxRange) MaxRange = Ability->Range;
-	}
-	// if the target is in the attack range there's no need to move
-	if (IsTargetInAttackRange(MaxRange)) return;
-
 	AGridManagerTool* GridManager = Cast<AGridManagerTool>(UGameplayStatics::GetActorOfClass(GetWorld(), AGridManagerTool::StaticClass()));
 
-	TArray<TEnumAsByte<EAttackRules>> Rules; // empty but needed to use the below function
-	TArray<FPathInfo> PathToTarget = GridManager->GetPathToPointInRangeOfTarget(PositionCoord, PlayerTarget->PositionCoord, MaxRange, GetPathingData(), Rules);
+	TMap<FIntVector2, FPositionInfo> CellActionMap;
+	TMap<FIntVector2, int> CellScoreMap;
+	
+	// Create the FPathFinderInfo struct to use for pathfinding
+	FPathfinderInfo PathInfo = FPathfinderInfo();
+	PathInfo.StartCoord = PositionCoord;
+	PathInfo.Range = AvailableMovement;
+	PathInfo.PathingData = GetPathingData();
+	PathInfo.Rules.Add(EPathingRules::MustFitOnTarget);
+	PathInfo.Rules.Add(EPathingRules::ExcludeOccupiedCells);
+	PathInfo.Rules.Add(EPathingRules::RangeIsAvailableMovement);
 
-	// this variable is used to track which index of the 'PathToTarget' array the movement of this entity should stop at
-	int TargetPosIndex = -1;
-	// the pathing function used above ignores the idea of movement cost so that is checked in this function
-	int MoveCost = 0;
+	// Get all the cells that can be moved to
+	TArray<FIntVector2> CellChoices = GridManager->GetCellsInRange(PathInfo);
 
-	// this for loop establishes how far along the given path this entity can move. The for loop below does the actual movement
-	// this is where any and all movement logic for enemy entities should be
-	// the above pathfinding function can ignore occupied
-	for (int i = 0; i < PathToTarget.Num(); i++)
+	// Determine the score for all available cells
+	PathInfo.Rules.Add(EPathingRules::TryPathAroundHazards); // extra rule needed here to avoid lowering the score of cells that could be reached without passing through a hazard if pathed around
+	for (FIntVector2 CellChoice : CellChoices)
 	{
-		// check if the available movement will allow for this tile to be moved to
-		int AddMoveCost = GridManager->GridCells[PathToTarget[i].CoordToMoveTo]->MovementCost;
-		if (MoveCost + AddMoveCost > MaxMovement) break;
+		PathInfo.TargetCoord = CellChoice;
+		TArray<FPathInfo> Path;
+		if (!GridManager->PathFindBetweenTwoCoords(Path, PathInfo)) continue; // early continue just in-case something went wrong
 
-		// if it can then the current tile is set as the new target
-		MoveCost += AddMoveCost;
-		TargetPosIndex = i; // the target position index changes to be the next cell to move onto
-	}
+		// Run a function to determine the best action to take at the given position
+		FPositionInfo PositionInfo = DetermineBestAbilityAtPosition(CellChoice);
+		PositionInfo.Path = Path;
 
-	if (TargetPosIndex < 0) return;
+		// APPLY BONUS/PENALTY
+		
+		// Hazard Penalty:
+		int TotalHazardsInPath = Path[Path.Num()-1].HazardPenaltyFromStart;
+		PositionInfo.Score -= TotalHazardsInPath * 10;
 
-	// apply the movement cost
-	AvailableMovement -= MoveCost;
-
-	// this for loop queues the needed movement and rotations
-	for (int i = 0; i <= TargetPosIndex; i++)
-	{
-		bool rot = PathToTarget[i].StartingRot != PathToTarget[i].RotToChangeTo;
-		float StartRot = DirectionYaws[PathToTarget[i].StartingRot];
-		float EndRot = DirectionYaws[PathToTarget[i].RotToChangeTo];
-		if (rot) EnqueueRotation(StartRot, EndRot);
-
-		FVector StartPos = GridManager->GridCells[PathToTarget[i].StartingCoord]->GetActorLocation();
-		FVector EndPos = GridManager->GridCells[PathToTarget[i].CoordToMoveTo]->GetActorLocation();
-
-		// check for ability on hazard to trigger when walked on
-		TSubclassOf<UGameplayAbilityBase> CellAbility = nullptr;
-		if (Cast<AGridCellParent>(GridManager->GridCells[PathToTarget[i].CoordToMoveTo])->TemporaryCellEffect)
+		// Player proximity bonus
+		for (AEntityBase* Player : AllAlivePlayers)
 		{
-			CellAbility = Cast<AGridCellParent>(GridManager->GridCells[PathToTarget[i].CoordToMoveTo])->TemporaryCellEffect;
+			int DistToPlayers = GetDistanceBetweenTwoCoords(CellChoice, Player->PositionCoord);
+			PositionInfo.Score += (20-DistToPlayers);
+		}
+
+		// if no ability can be used penalty
+		if (!PositionInfo.HasTarget)
+		{
+			PositionInfo.Score -= 20;
+			CellScoreMap.Add(CellChoice, PositionInfo.Score);
+			CellActionMap.Add(CellChoice, PositionInfo);
+			UE_LOG(LogTemp, Warning, TEXT("Coord: %i, %i, Score: %i"), CellChoice.X, CellChoice.Y, PositionInfo.Score)
+			continue; // continue to avoid errors from below penalty/bonuses that are dependent on having a target
 		}
 		
-		EnqueueMovement(StartPos, EndPos, CellAbility);
+		UE_LOG(LogTemp, Warning, TEXT("Coord with target: %i, %i, Score: %i"), CellChoice.X, CellChoice.Y, PositionInfo.Score)
+		CellScoreMap.Add(CellChoice, PositionInfo.Score);
+		CellActionMap.Add(CellChoice, PositionInfo);
+	}
+
+	// find the action with the highest score
+	FIntVector2 BestChoice = FIntVector2(0,0);
+	int HighestScore = -99999;
+	for (auto& Choice : CellScoreMap)
+	{
+		if (Choice.Value <= HighestScore) continue;
+
+		HighestScore = Choice.Value;
+		BestChoice = Choice.Key;
+	}
+
+	ActionToTake = CellActionMap[BestChoice];
+}
+
+// This function determines the best ability to use from a given coordinate
+// it returns a struct that contains:
+// .Coord- the coordinate to move to
+// .Score- the weighting the chosen ability has for moving to the chosen coord
+// .HasTarget- a bool that is true if an ability to use was identified (some enemies may only have a single attack which would not have a target if it's far away from the players)
+// .BestAbility- the ability to use
+// .TargetOfAbility- the entity to target with the ability (could be self for a buff or a player for an attack/debuff)
+FPositionInfo AEnemyEntity::DetermineBestAbilityAtPosition(FIntVector2 Coord)
+{
+	TArray<FPositionInfo> EachTargetable;
+
+	// loop through each potential target
+	for (AEntityBase* Player : TargetablePlayers)
+	{
+		TArray<FPositionInfo> EachAbility;
+		int DistToTarget = GetDistanceBetweenTwoCoords(Coord, Player->PositionCoord);
+
+		// loop through each available ability to use and determine the best one against the target
+		for (FAbilityInfo Info : OwnAnalysedAbilities)
+		{
+			FPositionInfo PosInfo = FPositionInfo(Coord);
+			PosInfo.BestAbility = Info.Ability;
+			
+			if (!Info.TargetsSelf && !Info.TargetsOpponent) { UE_LOG(LogTemp, Warning, TEXT("AEnemyEntity->DetermineBestAbilityAtPosition: analysed ability has no target")) continue; }
+
+			// if it's a self targeting ability, evaluate its score
+			if (Info.TargetsSelf)
+			{
+				PosInfo.TargetOfAbility = this;
+				PosInfo.HasTarget = true;
+
+				// TODO: Add self target score bonuses here
+				
+				continue;
+			}
+
+			// opponent targeting abilities evaluation
+			if (Info.Range < DistToTarget) continue; // early continue if the target player is out of range
+
+			PosInfo.TargetOfAbility = Player;
+			PosInfo.HasTarget = true;
+
+			// TODO: add attack score bonuses here
+
+			EachAbility.Add(PosInfo);
+		}
+
+		FPositionInfo Temp = FPositionInfo(Coord);
+		if (!GetHighestScore(EachAbility, Temp)) continue; // if no valid ability was found then move onto the next target
+
+		// otherwise add the chosen ability to the 'EachTargetable' array
+		EachTargetable.Add(Temp);
+	}
+	
+	// the default FPositionInfo sets 'HasTarget' to false which can later be checked to see if an ability should be used
+	FPositionInfo Temp2 = FPositionInfo(Coord);
+	
+	// if no attack was identified as possible, then return the default FPositionInfo
+	if (EachTargetable.Num() == 0) return Temp2;
+
+	// otherwise return the option with the highest score
+	GetHighestScore(EachTargetable, Temp2);
+	return Temp2;
+}
+
+bool AEnemyEntity::GetHighestScore(TArray<FPositionInfo>& InfoSet, FPositionInfo& OutInfo)
+{
+	int HighestScore = -99999;
+	bool FoundValidScore = false;
+	FPositionInfo HighestScoreInfo = FPositionInfo();
+
+	for (FPositionInfo Info : InfoSet)
+	{
+		if (Info.Score <= HighestScore) continue;
+		FoundValidScore = true;
+		HighestScoreInfo = Info;
+	}
+
+	if (!FoundValidScore) return false;
+
+	OutInfo = HighestScoreInfo;
+	return true;
+}
+
+
+// returns the distance between two coordinate (used to find the distance to a targetable player)
+int AEnemyEntity::GetDistanceBetweenTwoCoords(FIntVector2 Start, FIntVector2 End)
+{
+	return (abs(Start.X - End.X) + abs(Start.Y - End.Y));
+}
+
+// NOTE: available movement on enemies is factored into determining where to move to.
+// Since no second movement will be taken on their turn, it doesn't need to be tracked during the actual movement
+void AEnemyEntity::MoveToTarget()
+{
+	ACombatManager* CombatManager = Cast<ACombatManager>(UGameplayStatics::GetGameMode(GetWorld()));
+	int LastIndex = ActionToTake.Path.Num() - 1;
+	
+	// this for loop queues the needed movement and rotations
+	for (int i = 0; i <= LastIndex; i++)
+	{
+		// Enqueue a rotation if it's needed
+		if (ActionToTake.Path[i].StartingRot != ActionToTake.Path[i].RotToChangeTo)
+			EnqueueRotation(DirectionYaws[ActionToTake.Path[i].StartingRot], DirectionYaws[ActionToTake.Path[i].RotToChangeTo]);
+
+		// get the world positions to move from/to and the cell being moved onto
+		FVector StartPos = CombatManager->GetCell(ActionToTake.Path[i].StartingCoord)->GetActorLocation();
+		FVector EndPos = CombatManager->GetCell(ActionToTake.Path[i].CoordToMoveTo)->GetActorLocation();
+		AGridCellParent* TargetCell = Cast<AGridCellParent>(CombatManager->GetCell(ActionToTake.Path[i].CoordToMoveTo));
+
+		// Enqueue the movement
+		EnqueueMovement(StartPos, EndPos, TargetCell);
 	}
 
 	// removes this entity from the cell it started in
 	ChangeOccupancy(PositionCoord, false);
-	FacingDirection = PathToTarget[TargetPosIndex].RotToChangeTo;
+	FacingDirection = ActionToTake.Path[LastIndex].RotToChangeTo;
 
 	// set occupancy on the cell that was moved onto
-	ChangeOccupancy(PathToTarget[TargetPosIndex].CoordToMoveTo, true);
-	PositionCoord = PathToTarget[TargetPosIndex].CoordToMoveTo;
+	ChangeOccupancy(ActionToTake.Path[LastIndex].CoordToMoveTo, true);
+	PositionCoord = ActionToTake.Path[LastIndex].CoordToMoveTo;
 }
 
-// TODO: improve attack selection
-bool AEnemyEntity::DetermineAttack()
-{
-	ACombatManager* CombatManager = Cast<ACombatManager>(UGameplayStatics::GetActorOfClass(GetWorld(), ACombatManager::StaticClass()));
-	int DistToTarget = abs(PositionCoord.X - PlayerTarget->PositionCoord.X) + abs(PositionCoord.Y - PlayerTarget->PositionCoord.Y);
-
-	for (UGameplayAbilityBase* Ability: GetAllAbilityInstances())
-	{
-		if (DistToTarget > Ability->Range) continue;
-		CombatManager->EnemySetAttackInfo(Ability, PlayerTarget->PositionCoord, EPatternRotation::R0);
-		CombatManager->ExecuteAttackOnTarget();
-		return true;
-	}
-
-	return false;
-}
-
-bool AEnemyEntity::IsTargetInAttackRange(int Range)
-{
-	AGridManagerTool* GridManager = Cast<AGridManagerTool>(UGameplayStatics::GetActorOfClass(GetWorld(), AGridManagerTool::StaticClass()));
-
-	TArray<TEnumAsByte<EAttackRules>> Rules; // empty but needed to use below function
-	TArray<FIntVector2> AttackableTiles = GridManager->GetCellsInAttackRange(PositionCoord, Range, GetPathingData(), Rules);
-	for (int i = 0; i < AttackableTiles.Num(); i++)
-	{
-		if (!GridManager->GridCells[AttackableTiles[i]]->IsOccupied) continue;
-		if (GridManager->GridCells[AttackableTiles[i]]->OccupyingActor == PlayerTarget) return true;
-	}
-	
-	return false;
-}
 
 void AEnemyEntity::ChangeOccupancy(FIntVector2 Coord, bool SetAsOccupier)
 {
-	AGridManagerTool* GridManager = Cast<AGridManagerTool>(UGameplayStatics::GetActorOfClass(GetWorld(), AGridManagerTool::StaticClass()));
+	ACombatManager* CombatManager = Cast<ACombatManager>(UGameplayStatics::GetGameMode(GetWorld()));
 
 	for (FIntVector2 Offset : EntityRotations[FacingDirection].GetSelectedCellOffsets())
 	{
 		FIntVector2 CellCoord = Coord + Offset;
-		GridManager->GridCells[CellCoord]->SetOccupier((SetAsOccupier)? this : nullptr);
+		CombatManager->GetCell(CellCoord)->SetOccupier((SetAsOccupier)? this : nullptr);
 	}
+}
+
+// Returns true if an ability was used, false if one wasn't used
+bool AEnemyEntity::UseChosenAbility()
+{
+	if (!ActionToTake.HasTarget) return false;
+	
+	ACombatManager* CombatManager = Cast<ACombatManager>(UGameplayStatics::GetGameMode(GetWorld()));
+	CombatManager->EnemyAbilityUse(ActionToTake.BestAbility, ActionToTake.TargetOfAbility->PositionCoord);
+	return true;
 }

@@ -7,8 +7,6 @@
 #include "GridManagerTool.h"
 #include "GridCellParent.h"
 #include "PlayerEntity.h"
-#include "GlobalDataTypeHeader.h"
-#include "GameplayAbilityBase.h"
 #include "CombatManager.generated.h"
 
 /**
@@ -110,8 +108,18 @@ public:
 	
 	UFUNCTION(BlueprintCallable, Category="Movement")
 	bool ApplyKnockback(AEntityBase* Entity, FGridData KnockbackData);
+
+	////////////////////////////////////////////////// Grid Information access
+	UFUNCTION(BlueprintCallable, Category="GridInfo")
+	bool DoesCoordExist(FIntVector2 Coord);
+
+	UFUNCTION(BlueprintCallable, Category="GridInfo")
+	AGridCellBase* GetCell(FIntVector2 Coord);
+
+	UFUNCTION(BlueprintCallable, BlueprintPure, Category="GridInfo")
+	float GetGridWidth();
 	
-	////////////////////////////////////////////////// blueprint getters and setters:
+	////////////////////////////////////////////////// blueprint getters and setters
 	UFUNCTION(BlueprintCallable)
 	void SetAttackRotation(EPatternRotation Rotation);
 
@@ -123,6 +131,9 @@ public:
 
 	UFUNCTION(blueprintCallable, BlueprintPure)
 	FName GetTurnQueueName();
+
+	UFUNCTION()
+	void EnemyAbilityUse(UGameplayAbilityBase* Ability, FIntVector2 TargetCoord);
 
 	////////////////////////////////////////////////// blueprint delegate broadcasts
 	UFUNCTION(BlueprintCallable)
@@ -192,6 +203,9 @@ protected:
 	UFUNCTION(blueprintCallable)
 	void SetCellsOccupier(AEntityBase* Entity, FIntVector2 Coord, bool SetAsOccupied);
 
+	UFUNCTION()
+	void DisplayRangeOutline(FIntVector2 Origin, int Range, FPathingData PathData, TArray<TEnumAsByte<EPathingRules>>& Rules);
+	
 	TArray<FPathInfo> PathForCombatantToFollow;
 
 	TArray<FIntVector2> AreaOfAttackEffect;

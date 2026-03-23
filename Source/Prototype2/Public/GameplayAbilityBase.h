@@ -5,6 +5,7 @@
 #include "CoreMinimal.h"
 #include "Abilities/GameplayAbility.h"
 #include "GridData.h"
+#include "GlobalDataTypeHeader.h"
 #include "GameplayAbilityBase.generated.h"
 
 /**
@@ -48,5 +49,11 @@ public:
 
 	UPROPERTY(EditAnywhere, BlueprintReadWrite, Category = "Ability")
 	TArray<TEnumAsByte<EAttackRules>> TargetingRules;
+
+	UPROPERTY(EditAnywhere, BlueprintReadWrite, Category = "AbilityInfo")
+	FAbilityEffectInfo SelfEffects;
+	UPROPERTY(EditAnywhere, BlueprintReadWrite, Category = "AbilityInfo")
+	FAbilityEffectInfo TargetEffects;
+	
 	
 };

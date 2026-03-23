@@ -28,9 +28,11 @@ public:
 	UPROPERTY(EditAnywhere, BlueprintReadWrite, Category = "CellProperties")
 	TEnumAsByte<EPatternRotation> SpawnedEntityRotation;
 
-	UFUNCTION(BlueprintImplementableEvent, BlueprintCallable, Category = "CellProperties")
-	void ToggleNiagraForCellEffect(bool Enable);
+	UPROPERTY(BlueprintReadWrite, Category = "CellProperties")
+	bool HasEffect;
 	UPROPERTY(BlueprintReadWrite, Category = "CellProperties")
 	TSubclassOf<UGameplayAbilityBase> TemporaryCellEffect;
+	UPROPERTY(BlueprintReadWrite, Category = "CellProperties")
+	int NumOfRepeats;
 	
 };

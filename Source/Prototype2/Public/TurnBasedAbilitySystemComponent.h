@@ -8,6 +8,30 @@
 
 DECLARE_DYNAMIC_MULTICAST_DELEGATE_TwoParams(FOnFinalStackRemovedDelegate, TSubclassOf<UGameplayEffect>, EffectClass, TSubclassOf<UGameplayEffect>, InstantEffectClass);
 
+USTRUCT(BlueprintType)
+struct PROTOTYPE2_API FStackLossEffectData
+{
+	GENERATED_BODY()
+
+	UPROPERTY(EditAnywhere)
+	FGameplayEffectSpecHandle InstantEffectSpecHandle;
+	
+	UPROPERTY(EditAnywhere)
+	TSubclassOf<UGameplayEffect> EffectClass;
+	
+	UPROPERTY(EditAnywhere)
+	TSubclassOf<UGameplayEffect> InstantEffectClass;
+	
+	UPROPERTY(EditAnywhere)
+	bool bApplyPerStack = true;
+
+	UPROPERTY(EditAnywhere)
+	bool bFinalStackLossHandled = false;
+
+	UPROPERTY(EditAnywhere)
+	int32 LastKnownStackCount = 1;
+};
+
 /**
  * 
  */
@@ -26,21 +50,17 @@ public:
 	UFUNCTION(BlueprintCallable, Category = "TurnBasedAbilitySystemComponent")
 	FActiveGameplayEffectHandle BindGameplayEffectToOnStackLoss(const FGameplayEffectSpecHandle& EffectSpecHandle, const FGameplayEffectSpecHandle& InstantEffectSpecHandle, bool bApplyPerStack = true);
 
+private:
+	
 protected:
 	// Callback for when a stack count changes
 	void OnStackCountChanged(FActiveGameplayEffectHandle Handle, int32 NewStackCount, int32 PreviousStackCount);
 	void OnEffectRemoved(FActiveGameplayEffectHandle Handle);
-	
-
-private:
-	struct FStackLossEffectData
-	{
-		FGameplayEffectSpecHandle InstantEffectSpecHandle;
-		TSubclassOf<UGameplayEffect> EffectClass;
-		TSubclassOf<UGameplayEffect> InstantEffectClass;
-		bool bApplyPerStack = true;
-	};
 
 	// Maps active effect handles to instant effects that should be applied on stack loss
+	UPROPERTY(BlueprintReadWrite, EditAnywhere, Category = "TurnBasedAbilitySystemComponent")
 	TMap<FActiveGameplayEffectHandle, FStackLossEffectData> StackLossEffectMap;
+	
+	
+	
 };

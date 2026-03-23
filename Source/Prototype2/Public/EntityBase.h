@@ -28,7 +28,7 @@ public:
 	void OnTurnEnd();
 
 	UFUNCTION(BlueprintImplementableEvent, BlueprintCallable)
-	void EnqueueMovement(FVector StartPos, FVector EndPos, TSubclassOf<UGameplayAbilityBase> AbilityTrigggered);
+	void EnqueueMovement(FVector StartPos, FVector EndPos, AGridCellParent* CellMovedTo);
 	UFUNCTION(BlueprintImplementableEvent, BlueprintCallable)
 	void EnqueueRotation(float StartYaw, float EndYaw);
 

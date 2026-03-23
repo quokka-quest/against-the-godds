@@ -9,6 +9,8 @@ UAttributeHealthSet::UAttributeHealthSet()
 {
 	InitMaxHealth(100);
 	InitCurrentHealth(100);
+	InitCurrentProtection(0);
+	InitCurrentWard(0);
 }
 
 void UAttributeHealthSet::ClampAttributeOnChange(const FGameplayAttribute& Attribute, float& NewValue) const
@@ -17,6 +19,14 @@ void UAttributeHealthSet::ClampAttributeOnChange(const FGameplayAttribute& Attri
 	{
 		NewValue = FMath::Clamp(NewValue, 0.0f, GetMaxHealth());
 	}
+	else if (Attribute == GetCurrentWardAttribute())
+	{
+		NewValue = FMath::Max(0.0f, NewValue);
+	}
+	else if (Attribute == GetCurrentProtectionAttribute())
+	{
+		NewValue = FMath::Max(0.0f, NewValue);
+	}
 }
 
 void UAttributeHealthSet::PostGameplayEffectExecute(const struct FGameplayEffectModCallbackData& Data)
@@ -24,12 +34,11 @@ void UAttributeHealthSet::PostGameplayEffectExecute(const struct FGameplayEffect
 	// If we are doing damage
 	if (Data.EvaluatedData.Attribute == GetInDamageAttribute())
 	{
-		// Retrieve the damage done and then set it back to zero
-		float InDamageDone = GetInDamage(); // Not making it a const incase we add a shield/armour system
+		float RemainingDamage = GetInDamage();
 		SetInDamage(0);
 
 		// Check if we are doing any damage first
-		if (InDamageDone > 0)
+		if (RemainingDamage > 0)
 		{
 			// if the delegate is bound
 			if (OnDamageTaken.IsBound())
@@ -42,17 +51,34 @@ void UAttributeHealthSet::PostGameplayEffectExecute(const struct FGameplayEffect
 				OnDamageTaken.Broadcast(Instigator, Causer, Data.EffectSpec.CapturedSourceTags.GetSpecTags(), Data.EvaluatedData.Magnitude);
 			}
 
-			// If the health attribute isn't 0, apply the damage
-			if (GetCurrentHealth() > 0)
+			if (GetCurrentProtection() <= 0)
 			{
-				const float NewHealth = GetCurrentHealth() - InDamageDone;
-				SetCurrentHealth(FMath::Clamp(NewHealth, 0.0f, GetMaxHealth()));
-			}
+				if (GetCurrentWard() > 0 && RemainingDamage > 0)
+				{
+					const float WardAbsorbed = FMath::Min(GetCurrentWard(), RemainingDamage);
+					SetCurrentWard(GetCurrentWard() - WardAbsorbed);
+					RemainingDamage -= WardAbsorbed;
+				}
 
-			// check for death
-			if (GetCurrentHealth() <= 0)
+				// Any damage left after ward hits health.
+				if (GetCurrentHealth() > 0 && RemainingDamage > 0)
+				{
+					const float NewHealth = GetCurrentHealth() - RemainingDamage;
+					SetCurrentHealth(FMath::Clamp(NewHealth, 0.0f, GetMaxHealth()));
+				}
+
+				// check for death
+				if (GetCurrentHealth() <= 0)
+				{
+					if (AEntityBase* Entity = Cast<AEntityBase>(GetOwningActor()))
+					{
+						Entity->OnEntityDeath();
+					}
+				}
+			}
+			else
 			{
-				Cast<AEntityBase>(GetOwningActor())->OnEntityDeath();
+				SetCurrentProtection(GetCurrentProtection() - 1);
 			}
 		}
 	}
