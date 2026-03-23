@@ -107,7 +107,7 @@ bool PathFinder::PerformAnalysis(TArray<FNewCellInfo>& OutArray)
 			if (!CellMap.Contains(Neighbour.Coord))
 			{
 				DiscoverCell(Neighbour.Coord, CellInfo.Coord, Neighbour.Direction);
-				if (Neighbour.Coord == EndCoord) { FoundPath = true; break; }
+				if (Neighbour.Coord == EndCoord && CellMap.Contains(Neighbour.Coord)) { FoundPath = true; break; }
 				continue;
 			}
 
