@@ -4,9 +4,18 @@ about: Create a report to help us improve
 title: ''
 labels: 'Bug'
 assignees: ''
-
----
 body:
+- type: dropdown
+  id: playType
+  attributes:
+   label: Did you find this bug on the engine or a build?
+   options:
+   - Engine
+   - Build
+  validations:
+   required: true
+---
+
 **Describe the bug**
 A clear and concise description of what the bug is.
 
@@ -23,15 +32,5 @@ A clear and concise description of what you expected to happen.
 **Screenshots**
 If applicable, add screenshots to help explain your problem.
 
-**Engine or Build**
-- type: dropdown
-  id: playType
-  attributes:
-   label: Did you find this bug on the engine or a build?
-   options:
-   - Engine
-   - Build
-  validations:
-   required: true
 **Additional context**
 Add any other context about the problem here.
