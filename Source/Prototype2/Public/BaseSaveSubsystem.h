@@ -4,13 +4,13 @@
 
 #include "CoreMinimal.h"
 #include "Subsystems/GameInstanceSubsystem.h"
-#include "SettingSaveSubsystem.generated.h"
+#include "BaseSaveSubsystem.generated.h"
 
 /**
  * 
  */
 UCLASS(Abstract, Blueprintable)
-class PROTOTYPE2_API USettingSaveSubsystem : public UGameInstanceSubsystem
+class PROTOTYPE2_API UBaseSaveSubsystem : public UGameInstanceSubsystem
 {
 	GENERATED_BODY()
 	
