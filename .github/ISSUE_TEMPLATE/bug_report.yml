@@ -13,6 +13,7 @@ body:
       options:
         - Engine (inside Unreal Editor)
         - Build (packaged game)
+        - Both
     validations:
       required: true
 
