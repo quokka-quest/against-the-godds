@@ -38,28 +38,3 @@ body:
         4. See error
     validations:
       required: true
-
-  - type: textarea
-    id: expected_behavior
-    attributes:
-      label: Expected behavior
-      description: A clear and concise description of what you expected to happen.
-    validations:
-      required: true
-
-  - type: textarea
-    id: screenshots
-    attributes:
-      label: Screenshots or videos
-      description: Add screenshots or videos to help explain your problem.
-      placeholder: Paste image/video links or drag files into the issue after it is created.
-    validations:
-      required: false
-
-  - type: textarea
-    id: additional_context
-    attributes:
-      label: Additional context
-      description: Add any other context about the problem here.
-    validations:
-      required: false
