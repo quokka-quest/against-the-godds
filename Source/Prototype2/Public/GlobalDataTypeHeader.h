@@ -50,7 +50,8 @@ enum EAttackRules
 {
 	DisplayAsPathToTarget,
 	UserMustFitOnTarget,
-	StraightLineOnly
+	StraightLineOnly,
+	SelfTargetOnly
 };
 
 UENUM(BlueprintType)

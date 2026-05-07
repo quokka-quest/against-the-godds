@@ -40,6 +40,9 @@ public:
 	UFUNCTION(BlueprintCallable)
 	void SetTileSelectionType(ETileSelectionType Type);
 
+	UFUNCTION(BlueprintCallable)
+	void SetSelfTargetInfo(AGridCellParent* Cell);
+
 protected:
 	UFUNCTION(BlueprintCallable)
 	void OnTileClick();

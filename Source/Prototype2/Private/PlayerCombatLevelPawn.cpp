@@ -250,3 +250,11 @@ FIntVector2 APlayerCombatLevelPawn::GetCurrentCombatantGridPos()
 {
 	return CombatManager->CurrentTurnCombatant->PositionCoord;
 }
+
+void APlayerCombatLevelPawn::SetSelfTargetInfo(AGridCellParent* Cell)
+{
+	if (!Cell) return;
+	
+	SelectedCell = Cell;
+	IsDisplayingAttack = true;
+}

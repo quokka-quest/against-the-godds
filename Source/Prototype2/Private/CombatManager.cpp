@@ -301,14 +301,46 @@ void ACombatManager::DisplayAttackPattern(FIntVector2 TargetCoord)
 	AreaOfAttackEffect = GridManager->DisplayAttackPattern(TargetCoord, AbilityRef->Pattern, AttackRotation, CurrentTurnCombatant->GetPathingData(), AbilityRef->TargetingRules);
 }
 
+// Sets the ability reference and tells the grid to display the range of the ability
+// also changes the cell highlighter if needed
 void ACombatManager::DisplayAttackInformation(UGameplayAbilityBase* AbilityInstance)
 {
 	AbilityRef = AbilityInstance;
 	DisplayAttackRange(AbilityInstance->Range);
 
-	if (AbilityInstance->DisplayPatternForTargeting) GridManager->ChangeHighlightMesh(AbilityInstance->Pattern);
+	// Get a player reference, if the current turn entity isn't a player then return
+	APlayerEntity* PlayerRef = Cast<APlayerEntity>(CurrentTurnCombatant);
+	if (!PlayerRef) return;
+
+	// Rule implementation: Must fit on target
+	// If the rule is to be applied, then set the highlight mesh to the size of the rotation sweep of the player
+	// otherwise set it to the default 1x1 size
+	if (AbilityRef->TargetingRules.Contains(EAttackRules::UserMustFitOnTarget)) GridManager->ChangeHighlightMesh(PlayerRef->RotationSweep);
+	else { FGridData Default = FGridData(); GridManager->ChangeHighlightMesh(Default); } // TODO: this will need changing when making attack patterns display the dynamic shape for targeting
 }
 
+// Sets the ability reference and displays the pattern of the self targeting attack
+// NOTE: this is to only be used by clicking the button to display an attack that exclusively targets the user
+// for example, taunt is used on the user's cell and taunts in a range around it. That range pattern will be displayed by this function
+void ACombatManager::DisplaySelfTargetAttackInfo(UGameplayAbilityBase* AbilityInstance)
+{
+	AbilityRef = AbilityInstance;
+
+	// reset all the cell highlights and walkable/attackable bools
+	GridManager->ResetWalkableAndAttackableOnAllCells();
+	GridManager->ResetHighlights();
+
+	// Set the attack pattern highlight to show the pattern of the ability
+	DisplayAttackPattern(CurrentTurnCombatant->PositionCoord);
+	GetCell(CurrentTurnCombatant->PositionCoord)->IsAttackable = true;
+
+	// reset the cell highlighter to the default 1x1 size
+	FGridData Default = FGridData();
+	GridManager->ChangeHighlightMesh(Default);
+}
+
+// this function uses the stored ability on the stored target area
+// the targets passed into the ability depend on that abilities targeting rule (cells or entities)
 void ACombatManager::ExecuteAttackOnTarget()
 {
 	TArray<AActor*> TargetActors;
@@ -620,10 +652,4 @@ void ACombatManager::BroadcastOnMoveClickedEvent()
 void ACombatManager::BroadcastOnAttackClickedEvent() 
 {
 	OnAttackButtonClicked.Broadcast();
-
-	APlayerEntity* PlayerRef = Cast<APlayerEntity>(CurrentTurnCombatant);
-	if (!PlayerRef) return;
-
-	if (AbilityRef->TargetingRules.Contains(EAttackRules::UserMustFitOnTarget)) GridManager->ChangeHighlightMesh(PlayerRef->RotationSweep);
-	else { FGridData Default = FGridData(); GridManager->ChangeHighlightMesh(Default); }
 }

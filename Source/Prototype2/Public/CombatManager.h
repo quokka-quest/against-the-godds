@@ -82,6 +82,10 @@ public:
 	UFUNCTION(BlueprintCallable)
 	void DisplayAttackInformation(UGameplayAbilityBase* AbilityInstance);
 
+	UFUNCTION(BlueprintCallable)
+	void DisplaySelfTargetAttackInfo(UGameplayAbilityBase* AbilityInstance);
+
+	UFUNCTION(BlueprintCallable)
 	void ExecuteAttackOnTarget();
 
 	UFUNCTION(BlueprintCallable)
@@ -110,10 +114,10 @@ public:
 	bool ApplyKnockback(AEntityBase* Entity, FGridData KnockbackData);
 
 	////////////////////////////////////////////////// Grid Information access
-	UFUNCTION(BlueprintCallable, Category="GridInfo")
+	UFUNCTION(BlueprintCallable, BlueprintPure, Category="GridInfo")
 	bool DoesCoordExist(FIntVector2 Coord);
 
-	UFUNCTION(BlueprintCallable, Category="GridInfo")
+	UFUNCTION(BlueprintCallable, BlueprintPure, Category="GridInfo")
 	AGridCellBase* GetCell(FIntVector2 Coord);
 
 	UFUNCTION(BlueprintCallable, BlueprintPure, Category="GridInfo")
