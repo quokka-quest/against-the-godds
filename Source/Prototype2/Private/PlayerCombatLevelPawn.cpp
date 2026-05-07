@@ -54,18 +54,24 @@ void APlayerCombatLevelPawn::Tick(float DeltaTime)
 
     AGridCellParent* HoveredCell = Cast<AGridCellParent>(Hit.GetActor());
 
+	// if the hovered cell is invalid or the mouse is hovering a cell that can not be highlighted (outside walkable or targetable area) or if the game is paused
+	// then hide the highlight actor
 	if (!HoveredCell ||
 		(TileSelectionType == ETileSelectionType::Movement && !HoveredCell->IsWalkable) ||
 		(isDisplayingPath && HoveredCell != SelectedCell) ||
 		(TileSelectionType == ETileSelectionType::Attack && !HoveredCell->IsAttackable) ||
-		(IsDisplayingAttack && HoveredCell != SelectedCell))
+		(IsDisplayingAttack && HoveredCell != SelectedCell) ||
+		UGameplayStatics::IsGamePaused(GetWorld()))
 	{
 		GridManager->SetHighlightVisibility(false);
 		HighlightedCell = nullptr;
 		return;
 	}
-	
+
+	// If displaying a movement area, only highlight cells inside that area
 	if (isDisplayingPath && !HoveredCell->IsWalkable) return;
+
+	// if displaying a targetable area, only highlight cells inside that area
 	if (IsDisplayingAttack && !HoveredCell->IsAttackable) return;
 	
 	HighlightedCell = HoveredCell;
