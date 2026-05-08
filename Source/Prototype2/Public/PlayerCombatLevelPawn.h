@@ -41,7 +41,13 @@ public:
 	void SetTileSelectionType(ETileSelectionType Type);
 
 	UFUNCTION(BlueprintCallable)
-	void SetSelfTargetInfo(AGridCellParent* Cell);
+	void SetSelfTargetInfo(AGridCellParent* Cell, UGameplayAbilityBase* Ability);
+
+	UFUNCTION(BlueprintCallable, BlueprintPure)
+	bool IsDisplayingSelfTargetAbility(UGameplayAbilityBase* Ability);
+
+	UFUNCTION(BlueprintCallable)
+	void TryUseSelfTargetAbility();
 
 protected:
 	UFUNCTION(BlueprintCallable)
@@ -69,16 +75,18 @@ private:
 	UPROPERTY()
 	ACombatManager* CombatManager;
 
+	UPROPERTY()
+	UGameplayAbilityBase* SelfTargetAbilityOnDisplay;
+
 	bool IsDisplayingAttack;
 	bool isDisplayingPath;
+	bool IsDisplayingSelfTargetArea;
 
 	void TryMoveToTile();
 
 	void DisplayPathToTile();
 
 	void DisplayAttackTargetArea();
-
-	void TryAttackTargetTile();
 
 	UFUNCTION()
 	void OnPlayerTurnEnd();
@@ -93,11 +101,14 @@ private:
 
 	UFUNCTION()
 	void OnAttackExecuted();
+	void TryAttackTargetTile();
 
 	void TurnOffAttackDisplay();
 	void TurnOffPathDisplay();
 
 	UFUNCTION()
 	FIntVector2 GetCurrentCombatantGridPos();
+
+	void ResetDisplayVariables(ETileSelectionType SelectionType);
 
 };

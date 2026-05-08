@@ -161,26 +161,29 @@ void APlayerCombatLevelPawn::TryAttackTargetTile()
 
 void APlayerCombatLevelPawn::OnPlayerTurnEnd()
 {
-	SelectedCell = nullptr;
-	TileSelectionType = ETileSelectionType::None;
-	IsDisplayingAttack = false;
-	isDisplayingPath = false;
+	ResetDisplayVariables(ETileSelectionType::None);
 }
 
 void APlayerCombatLevelPawn::OnMoveButtonClicked()
 {
-	SelectedCell = nullptr;
-	IsDisplayingAttack = false;
-	isDisplayingPath = false;
-	TileSelectionType = ETileSelectionType::Movement;
+	ResetDisplayVariables(ETileSelectionType::Movement);
 }
 
 void APlayerCombatLevelPawn::OnAttackButtonClicked()
 {
+	ResetDisplayVariables(ETileSelectionType::Attack);
+}
+
+void APlayerCombatLevelPawn::ResetDisplayVariables(ETileSelectionType SelectionType)
+{
 	SelectedCell = nullptr;
+	SelfTargetAbilityOnDisplay = nullptr;
+	
 	IsDisplayingAttack = false;
 	isDisplayingPath = false;
-	TileSelectionType = ETileSelectionType::Attack;
+	IsDisplayingSelfTargetArea = false;
+	
+	TileSelectionType = SelectionType;
 }
 
 void APlayerCombatLevelPawn::OnRotateAttack()
@@ -199,9 +202,7 @@ void APlayerCombatLevelPawn::OnRotateAttack()
 // Used for resetting the tile display for pathfinding and attack targeting
 void APlayerCombatLevelPawn::OnClickedOffTileGrid()
 {
-	SelectedCell = nullptr;
-	IsDisplayingAttack = false;
-	isDisplayingPath = false;
+	ResetDisplayVariables(TileSelectionType);
 
 	if (TileSelectionType == ETileSelectionType::None) return;
 	if (TileSelectionType == ETileSelectionType::SpawnSelection) return;
@@ -251,10 +252,24 @@ FIntVector2 APlayerCombatLevelPawn::GetCurrentCombatantGridPos()
 	return CombatManager->CurrentTurnCombatant->PositionCoord;
 }
 
-void APlayerCombatLevelPawn::SetSelfTargetInfo(AGridCellParent* Cell)
+void APlayerCombatLevelPawn::SetSelfTargetInfo(AGridCellParent* Cell, UGameplayAbilityBase* Ability)
 {
 	if (!Cell) return;
 	
 	SelectedCell = Cell;
+	SelfTargetAbilityOnDisplay = Ability;
+	
 	IsDisplayingAttack = true;
+	IsDisplayingSelfTargetArea = true;
+}
+
+bool APlayerCombatLevelPawn::IsDisplayingSelfTargetAbility(UGameplayAbilityBase* Ability)
+{
+	return SelfTargetAbilityOnDisplay == Ability;
+}
+
+void APlayerCombatLevelPawn::TryUseSelfTargetAbility()
+{
+	TryAttackTargetTile();
+	ResetDisplayVariables(ETileSelectionType::None);
 }
