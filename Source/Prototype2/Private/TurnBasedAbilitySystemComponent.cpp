@@ -6,7 +6,7 @@
 #include "GameplayEffect.h"
 
 FActiveGameplayEffectHandle UTurnBasedAbilitySystemComponent::BindGameplayEffectToOnStackLoss(
-    const FGameplayEffectSpecHandle& EffectSpecHandle, const FGameplayEffectSpecHandle& InstantEffectSpecHandle, bool bApplyPerStack)
+    const FGameplayEffectSpecHandle& EffectSpecHandle, const FGameplayEffectSpecHandle& InstantEffectSpecHandle, bool bApplyPerStackLost, bool bLoopEffectForTotalStackCount)
 {
     // Validate the outgoing spec handle before applying
     if (!EffectSpecHandle.IsValid())
@@ -52,8 +52,9 @@ FActiveGameplayEffectHandle UTurnBasedAbilitySystemComponent::BindGameplayEffect
                     ExistingData->InstantEffectClass = InstantEffectClass;
                     ExistingData->bFinalStackLossHandled = false;
                 }
-                ExistingData->bApplyPerStack = bApplyPerStack;
+                ExistingData->bApplyPerStack = bApplyPerStackLost;
                 ExistingData->LastKnownStackCount = InitialStackCount;
+                ExistingData->bLoopEffectForTotalStackCount = bLoopEffectForTotalStackCount;
             }
         }
         else
@@ -61,12 +62,12 @@ FActiveGameplayEffectHandle UTurnBasedAbilitySystemComponent::BindGameplayEffect
             // Store the instant effect spec handle to apply on stack loss (only if it's valid)
             if (InstantEffectSpecHandle.IsValid())
             {
-                StackLossEffectMap.Add(Handle, {InstantEffectSpecHandle, EffectClass, InstantEffectClass, bApplyPerStack, false, InitialStackCount});
+                StackLossEffectMap.Add(Handle, {InstantEffectSpecHandle, EffectClass, InstantEffectClass, bApplyPerStackLost, bLoopEffectForTotalStackCount, false, InitialStackCount});
             }
             else
             {
                 // Add with an invalid InstantEffectSpecHandle; allows future updates without rebinding
-                StackLossEffectMap.Add(Handle, {FGameplayEffectSpecHandle(), EffectClass, InstantEffectClass, bApplyPerStack, false, InitialStackCount});
+                StackLossEffectMap.Add(Handle, {FGameplayEffectSpecHandle(), EffectClass, InstantEffectClass, bApplyPerStackLost, bLoopEffectForTotalStackCount, false, InitialStackCount});
             }
 
             // Bind to stack change event ONCE per active effect handle
@@ -118,16 +119,20 @@ void UTurnBasedAbilitySystemComponent::OnStackCountChanged(FActiveGameplayEffect
             {
                 if (EffectData->bApplyPerStack)
                 {
-          // Apply once for each stack that was actually removed.
-          for (int32 i = 0; i < RemovedStackCount; ++i)
+                    // Apply once for each stack that was actually removed.
+                    for (int32 i = 0; i < RemovedStackCount; ++i)
                     {
                         ApplyGameplayEffectSpecToSelf(*InstantSpecHandle.Data.Get());
                     }
                 }
                 else
                 {
-                    // Apply once for any decrease
-                    ApplyGameplayEffectSpecToSelf(*InstantSpecHandle.Data.Get());
+                    // apply either once or for each stack on the target
+                    int ApplyCount = (EffectData->bLoopEffectForTotalStackCount ? PreviousStackCount : 1);
+                    for (int i = 0; i < ApplyCount; ++i)
+                    {
+                        ApplyGameplayEffectSpecToSelf(*InstantSpecHandle.Data.Get());
+                    }
                 }
             }
 

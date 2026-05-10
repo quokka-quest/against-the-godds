@@ -26,6 +26,9 @@ struct PROTOTYPE2_API FStackLossEffectData
 	bool bApplyPerStack = true;
 
 	UPROPERTY(EditAnywhere)
+	bool bLoopEffectForTotalStackCount = false;
+
+	UPROPERTY(EditAnywhere)
 	bool bFinalStackLossHandled = false;
 
 	UPROPERTY(EditAnywhere)
@@ -48,7 +51,7 @@ public:
 
 	// Apply a stacking gameplay effect and register to apply `InstantEffectToApply` whenever a stack is removed.
 	UFUNCTION(BlueprintCallable, Category = "TurnBasedAbilitySystemComponent")
-	FActiveGameplayEffectHandle BindGameplayEffectToOnStackLoss(const FGameplayEffectSpecHandle& EffectSpecHandle, const FGameplayEffectSpecHandle& InstantEffectSpecHandle, bool bApplyPerStack = true);
+	FActiveGameplayEffectHandle BindGameplayEffectToOnStackLoss(const FGameplayEffectSpecHandle& EffectSpecHandle, const FGameplayEffectSpecHandle& InstantEffectSpecHandle, bool bApplyPerStackLost = true, bool bLoopEffectForTotalStackCount = false);
 
 private:
 	
