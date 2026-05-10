@@ -32,8 +32,8 @@ void AEntityBase::SetCharacterData(FPersistentPlayerInfo& Info)
 	AbilityDiceMap = Info.AbilityDiceMap;
 	DefaultEffects = Info.ActiveEffects;
 
-	MaxAttacks = Info.MaxAttacks;
-	MaxMovement = Info.MaxMovement;
+	SetMaxAttacks(Info.MaxAttacks);
+	SetMaxMovement(Info.MaxMovement);
 
 	HealthSet->SetMaxHealth(Info.MaxHealth);
 	HealthSet->SetCurrentHealth(Info.CurrentHealth);

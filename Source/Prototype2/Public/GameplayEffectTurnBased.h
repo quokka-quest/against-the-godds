@@ -4,15 +4,15 @@
 
 #include "CoreMinimal.h"
 #include "GameplayEffect.h"
-#include "GameplayEffectTurnStart.generated.h"
+#include "GameplayEffectTurnBased.generated.h"
 
 /**
  * 
  */
 UCLASS()
-class PROTOTYPE2_API UGameplayEffectTurnStart : public UGameplayEffect
+class PROTOTYPE2_API UGameplayEffectTurnBased : public UGameplayEffect
 {
 	GENERATED_BODY()
 public:
-	UGameplayEffectTurnStart();
+	UGameplayEffectTurnBased();
 };

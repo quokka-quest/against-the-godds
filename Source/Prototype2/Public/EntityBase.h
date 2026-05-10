@@ -38,18 +38,8 @@ public:
 	UPROPERTY(BlueprintReadWrite, Category="PlayerInfo")
 	FIntVector2 PositionCoord;
 
-	UPROPERTY(EditAnywhere, BlueprintReadWrite, Category="PlayerInfo")
-	int MaxMovement;
-	UPROPERTY(BlueprintReadWrite, Category="PlayerInfo")
-	int AvailableMovement;
-
 	UPROPERTY(EditAnywhere, BlueprintReadWrite, Category = "PlayerInfo")
 	TMap<TSubclassOf<UGameplayAbilityBase>, FDiceFaceLevels> AbilityDiceMap;
-
-	UPROPERTY(EditAnywhere, BlueprintReadWrite, Category = "PlayerInfo")
-	int MaxAttacks;
-	UPROPERTY(BlueprintReadWrite, Category = "PlayerInfo")
-	int AvailableAttacks;
 
 	UPROPERTY(EditAnywhere, BlueprintReadWrite, Category = "PlayerInfo")
 	TMap<TEnumAsByte<EPatternRotation>, FGridData> EntityRotations;

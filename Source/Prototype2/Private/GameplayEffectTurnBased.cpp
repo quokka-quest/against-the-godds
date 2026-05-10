@@ -1,9 +1,9 @@
 // Fill out your copyright notice in the Description page of Project Settings.
 
 
-#include "GameplayEffectTurnStart.h"
+#include "GameplayEffectTurnBased.h"
 
-UGameplayEffectTurnStart::UGameplayEffectTurnStart()
+UGameplayEffectTurnBased::UGameplayEffectTurnBased()
 {
 	// Make stacking global per target
 	StackingType = EGameplayEffectStackingType::AggregateByTarget;

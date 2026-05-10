@@ -96,7 +96,7 @@ void AEnemyEntity::DetermineMovement()
 	// Create the FPathFinderInfo struct to use for pathfinding
 	FPathfinderInfo PathInfo = FPathfinderInfo();
 	PathInfo.StartCoord = PositionCoord;
-	PathInfo.Range = AvailableMovement;
+	PathInfo.Range = GetAvailableMovement();
 	PathInfo.PathingData = GetPathingData();
 	PathInfo.Rules.Add(EPathingRules::MustFitOnTarget);
 	PathInfo.Rules.Add(EPathingRules::ExcludeOccupiedCells);

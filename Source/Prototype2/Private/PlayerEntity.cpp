@@ -15,8 +15,8 @@ void APlayerEntity::SendStatsToGameInstance(TSubclassOf<APlayerEntity> CharClass
 	Info.Abilities = Abilities;
 	Info.AbilityDiceMap = AbilityDiceMap;
 	Info.ActiveEffects = DefaultEffects;
-	Info.MaxAttacks = MaxAttacks;
-	Info.MaxMovement = MaxMovement;
+	Info.MaxAttacks = GetMaxAttacks();
+	Info.MaxMovement = GetMaxMovement();
 	Info.MaxHealth = GetMaxHealth();
 	Info.CurrentHealth = GetCurrentHealth();
 	

@@ -5,6 +5,7 @@
 #include "AbilitySystemComponent.h"
 #include "AttributeHealthSet.h"
 #include "AttributeDamageModifiersSet.h"
+#include "AttributeTurnActionSet.h"
 #include "GameplayAbilityBase.h"
 
 // Sets default values
@@ -17,9 +18,12 @@ ACharacterBase::ACharacterBase()
 	AbilitySystemComponent = CreateDefaultSubobject<UTurnBasedAbilitySystemComponent>(TEXT("AbilitySystemComponent"));
 	HealthSet = CreateDefaultSubobject<UAttributeHealthSet>(TEXT("HealthSet"));
 	DamageModifiersSet = CreateDefaultSubobject<UAttributeDamageModifiersSet>(TEXT("DamageModifiersSet"));
+	TurnActionSet = CreateDefaultSubobject<UAttributeTurnActionSet>(TEXT("TurnActionSet"));
 	StartFilterTags.AddTag(FGameplayTag::RequestGameplayTag(FName("Effect.StartOfTurn")));
 	EndFilterTags.AddTag(FGameplayTag::RequestGameplayTag(FName("Effect.EndOfTurn")));
 	StatusFilterTags.AddTag(FGameplayTag::RequestGameplayTag(FName("Status")));
+	BuffFilterTags.AddTag(FGameplayTag::RequestGameplayTag(FName("Buff")));
+	DebuffFilterTags.AddTag(FGameplayTag::RequestGameplayTag(FName("Debuff")));
 	RemoveAllStartOfTurnStacksTag = FGameplayTag::RequestGameplayTag(FName("Effect.StartOfTurn.RemoveAllStacks"));
 	RemoveAllEndOfTurnStacksTag = FGameplayTag::RequestGameplayTag(FName("Effect.EndOfTurn.RemoveAllStacks"));
 }
@@ -72,6 +76,80 @@ TMap<FGameplayTag, int32> ACharacterBase::GetActiveStatusEffects() const
 	}
     
 	return StatusEffects;
+}
+
+TMap<FGameplayTag, int32> ACharacterBase::GetActiveBuffs() const
+{
+	TMap<FGameplayTag, int32> Buffs;
+
+	// early return if ability system component is invalid
+	if (!AbilitySystemComponent) return Buffs;
+    
+	// Get all active effects
+	TArray<FActiveGameplayEffectHandle> ActiveBuffs = AbilitySystemComponent->GetActiveEffectsWithAllTags(BuffFilterTags);
+    
+	for (const FActiveGameplayEffectHandle& EffectHandle : ActiveBuffs)
+	{
+		const FActiveGameplayEffect* ActiveEffect = AbilitySystemComponent->GetActiveGameplayEffect(EffectHandle);
+		if (ActiveEffect && ActiveEffect->Spec.Def)
+		{
+			// Get the asset tags from the effect
+			FGameplayTagContainer AssetTags;
+			ActiveEffect->Spec.GetAllAssetTags(AssetTags);
+            
+			// Get stack count
+			int32 StackCount = ActiveEffect->Spec.GetStackCount();
+            
+			// Store each tag with its stack count
+			for (const FGameplayTag& Tag : AssetTags)
+			{
+				// Only add tags that match the "Buff" category
+				if (Tag.MatchesTag(FGameplayTag::RequestGameplayTag(FName("Buff"))))
+				{
+					Buffs.Add(Tag, StackCount);
+				}
+			}
+		}
+	}
+    
+	return Buffs;
+}
+
+TMap<FGameplayTag, int32> ACharacterBase::GetActiveDebuffs() const
+{
+	TMap<FGameplayTag, int32> Debuffs;
+
+	// early return if ability system component is invalid
+	if (!AbilitySystemComponent) return Debuffs;
+    
+	// Get all active effects
+	TArray<FActiveGameplayEffectHandle> ActiveBuffs = AbilitySystemComponent->GetActiveEffectsWithAllTags(DebuffFilterTags);
+    
+	for (const FActiveGameplayEffectHandle& EffectHandle : ActiveBuffs)
+	{
+		const FActiveGameplayEffect* ActiveEffect = AbilitySystemComponent->GetActiveGameplayEffect(EffectHandle);
+		if (ActiveEffect && ActiveEffect->Spec.Def)
+		{
+			// Get the asset tags from the effect
+			FGameplayTagContainer AssetTags;
+			ActiveEffect->Spec.GetAllAssetTags(AssetTags);
+            
+			// Get stack count
+			int32 StackCount = ActiveEffect->Spec.GetStackCount();
+            
+			// Store each tag with its stack count
+			for (const FGameplayTag& Tag : AssetTags)
+			{
+				// Only add tags that match the "Debuff" category
+				if (Tag.MatchesTag(FGameplayTag::RequestGameplayTag(FName("Debuff"))))
+				{
+					Debuffs.Add(Tag, StackCount);
+				}
+			}
+		}
+	}
+    
+	return Debuffs;
 }
 
 
@@ -131,8 +209,6 @@ void ACharacterBase::ActivateAbilityTargetingSelf(TSubclassOf<UGameplayAbility> 
 	AbilitySystemComponent->TryActivateAbilityByClass(AbilityClass, false);
 }
 
-
-
 void ACharacterBase::InitialiseAbilities()
 {
 	// Iterate through all abilities in the array and give them to the character
@@ -171,26 +247,6 @@ void ACharacterBase::OnDamageTakenChanged(AActor* DamageInstigator, AActor* Dama
 void ACharacterBase::OnCurrentHealthAttributeChanged(const FOnAttributeChangeData& Data)
 {
 	OnCurrentHealthChanged(Data.OldValue, Data.NewValue);
-}
-
-float ACharacterBase::GetCurrentHealth() const
-{
-	return(HealthSet->GetCurrentHealth());
-}
-
-float ACharacterBase::GetMaxHealth() const
-{
-	return(HealthSet->GetMaxHealth());
-}
-
-float ACharacterBase::GetCurrentProtection() const
-{
-	return(HealthSet->GetCurrentProtection());
-}
-
-float ACharacterBase::GetCurrentWard() const
-{
-	return(HealthSet->GetCurrentWard());
 }
 
 void ACharacterBase::ActivateStartOfTurnEffects()
@@ -237,16 +293,6 @@ void ACharacterBase::ActivateEndOfTurnEffects()
 	}
 }
 
-float ACharacterBase::GetFlatDamageModifier() const
-{
-	return(DamageModifiersSet->GetFlatModifier());
-}
-
-float ACharacterBase::GetMultiDamageModifier() const
-{
-	return(DamageModifiersSet->GetMultiModifier());
-}
-
 TArray<AActor*> ACharacterBase::GetTargets() const
 {
 	return Targets;
@@ -276,3 +322,75 @@ TArray<UGameplayAbilityBase*> ACharacterBase::GetAllAbilityInstances() const
 	return AbilityInstances;
 }
 
+/////////////////////////////////////////////////////////////////////////// Blueprint-friendly Attribute Getters
+float ACharacterBase::GetFlatDamageModifier() const
+{
+	return(DamageModifiersSet->GetFlatModifier());
+}
+
+float ACharacterBase::GetMultiDamageModifier() const
+{
+	return(DamageModifiersSet->GetMultiModifier());
+}
+
+float ACharacterBase::GetCurrentHealth() const
+{
+	return(HealthSet->GetCurrentHealth());
+}
+
+float ACharacterBase::GetMaxHealth() const
+{
+	return(HealthSet->GetMaxHealth());
+}
+
+float ACharacterBase::GetCurrentProtection() const
+{
+	return(HealthSet->GetCurrentProtection());
+}
+
+float ACharacterBase::GetCurrentWard() const
+{
+	return(HealthSet->GetCurrentWard());
+}
+
+int ACharacterBase::GetMaxMovement() const
+{
+	return(FMath::RoundToInt(TurnActionSet->GetMaxMovement()));
+}
+
+int ACharacterBase::GetMaxAttacks() const
+{
+	return(FMath::RoundToInt(TurnActionSet->GetMaxAttacks()));
+}
+
+int ACharacterBase::GetAvailableMovement() const
+{
+	return(FMath::RoundToInt(TurnActionSet->GetAvailableMovement()));
+}
+
+int ACharacterBase::GetAvailableAttacks() const
+{
+	return(FMath::RoundToInt(TurnActionSet->GetAvailableAttacks()));
+}
+
+
+/////////////////////////////////////////////////////////////////////////// Blueprint-friendly Attribute Setters
+void ACharacterBase::SetAvailableAttacks(float NewValue)
+{
+	TurnActionSet->SetAvailableAttacks(NewValue);
+}
+
+void ACharacterBase::SetAvailableMovement(float NewValue)
+{
+	TurnActionSet->SetAvailableMovement(NewValue);
+}
+
+void ACharacterBase::SetMaxAttacks(float NewValue)
+{
+	TurnActionSet->SetMaxAttacks(NewValue);
+}
+
+void ACharacterBase::SetMaxMovement(float NewValue)
+{
+	TurnActionSet->SetMaxMovement(NewValue);
+}

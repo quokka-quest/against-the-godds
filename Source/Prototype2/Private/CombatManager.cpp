@@ -139,8 +139,8 @@ void ACombatManager::StartCurrentTurn()
 	APlayerEntity* PlayerRef = Cast<APlayerEntity>(CurrentTurnCombatant); // used to determine if it's a player entity
 
 	// reset the available movement and attacks
-	CurrentTurnCombatant->AvailableMovement = CurrentTurnCombatant->MaxMovement;
-	CurrentTurnCombatant->AvailableAttacks = CurrentTurnCombatant->MaxAttacks;
+	CurrentTurnCombatant->SetAvailableMovement(CurrentTurnCombatant->GetMaxMovement());
+	CurrentTurnCombatant->SetAvailableAttacks(CurrentTurnCombatant->GetMaxAttacks());
 
 	// reset the RoundHasEnded boolean
 	RoundHasEnded = false;
@@ -194,11 +194,14 @@ void ACombatManager::EndCurrentTurn()
 	BlueprintEndTurnEvents(); // calls a function defined in the game-mode blueprint that will transition UI and start the next turn
 }
 
+// Increments the turn index to the next alive entity in the turn order
 void ACombatManager::IncrementTurnIndex()
 {
 	CurrentCombatantTurnIndex += 1;
 	CurrentCombatantTurnIndex %= CurrentTurnOrder.Num();
 	if (CurrentCombatantTurnIndex == 0) RoundHasEnded = true;
+
+	// prevents a dead entity from starting its turn
 	if (CurrentTurnOrder[CurrentCombatantTurnIndex].Entity->HasEntityDied()) IncrementTurnIndex();
 }
 
@@ -224,7 +227,7 @@ void ACombatManager::MoveCurrentCombatant(FIntVector2 TargetPos)
 		
 		// enqueue movement animation
 		CurrentTurnCombatant->EnqueueMovement(StartPos, EndPos, TargetCell);
-		CurrentTurnCombatant->AvailableMovement -= GetCell(PathForCombatantToFollow[i].CoordToMoveTo)->MovementCost;
+		CurrentTurnCombatant->SetAvailableMovement(CurrentTurnCombatant->GetAvailableMovement()-(GetCell(PathForCombatantToFollow[i].CoordToMoveTo)->MovementCost));
 	}
 
 	// remove from old cell and change facing direction
@@ -248,7 +251,7 @@ void ACombatManager::DisplayPathForCurrentCombatant(FIntVector2 TargetPos)
 	FPathfinderInfo PathingInfo = FPathfinderInfo();
 	PathingInfo.StartCoord = CurrentTurnCombatant->PositionCoord;
 	PathingInfo.TargetCoord = TargetPos;
-	PathingInfo.Range = CurrentTurnCombatant->AvailableMovement;
+	PathingInfo.Range = (CurrentTurnCombatant->GetAvailableMovement());
 	PathingInfo.PathingData = CurrentTurnCombatant->GetPathingData();
 
 	// All rules to apply for player pathfinding
@@ -272,7 +275,7 @@ void ACombatManager::DisplayCurrentCombatantsMovement()
 	Rules.Add(EPathingRules::RangeIsAvailableMovement);
 	Rules.Add(EPathingRules::MustFitOnTarget);
 	
-	DisplayRangeOutline(CurrentTurnCombatant->PositionCoord, CurrentTurnCombatant->AvailableMovement, CurrentTurnCombatant->GetPathingData(), Rules);
+	DisplayRangeOutline(CurrentTurnCombatant->PositionCoord, CurrentTurnCombatant->GetAvailableMovement(), CurrentTurnCombatant->GetPathingData(), Rules);
 }
 
 // Defines the rules to be used for displaying the attack's range then calls another function to display that range
@@ -361,7 +364,7 @@ void ACombatManager::ExecuteAttackOnTarget()
 		TargetActors.Add(Cast<AActor>(GetCell(AreaOfAttackEffect[i])->OccupyingActor));
 	}
 
-	CurrentTurnCombatant->AvailableAttacks--;
+	CurrentTurnCombatant->SetAvailableAttacks(CurrentTurnCombatant->GetAvailableAttacks()-1);
 	CurrentTurnCombatant->ActivateAbilityWithTargets(AbilityRef->GetClass(), TargetActors);
 
 	FGridData defaultHighlight = FGridData();
@@ -579,7 +582,7 @@ void ACombatManager::EnemyAbilityUse(UGameplayAbilityBase* Ability, FIntVector2 
 		TargetActors.Add(GetCell(AreaOfAttackEffect[i])->OccupyingActor);
 	}
 
-	CurrentTurnCombatant->AvailableAttacks--;
+	CurrentTurnCombatant->SetAvailableAttacks(CurrentTurnCombatant->GetAvailableAttacks()-1);
 	CurrentTurnCombatant->ActivateAbilityWithTargets(AbilityRef->GetClass(), TargetActors);
 
 	FGridData defaultHighlight = FGridData();
@@ -644,7 +647,7 @@ void ACombatManager::BroadcastOnMoveClickedEvent()
 
 	APlayerEntity* PlayerRef = Cast<APlayerEntity>(CurrentTurnCombatant);
 	if (!PlayerRef) return;
-	if (PlayerRef->AvailableMovement == 0) return;
+	if (PlayerRef->GetAvailableMovement() == 0) return;
 	
 	GridManager->ChangeHighlightMesh(PlayerRef->RotationSweep);
 }
