@@ -64,6 +64,9 @@ protected:
 
 	UFUNCTION(BlueprintCallable, Category = "Character|Status Effects")
 	TMap<FGameplayTag, int32> GetActiveDebuffs() const;
+
+	UFUNCTION(BlueprintCallable, Category = "Character|Status Effects")
+	bool RemoveStacksOfEffectWithTag(FGameplayTag StatusTag, int NumStacks);
 	
 public:	
 	// Called every frame

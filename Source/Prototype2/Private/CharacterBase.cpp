@@ -322,6 +322,34 @@ TArray<UGameplayAbilityBase*> ACharacterBase::GetAllAbilityInstances() const
 	return AbilityInstances;
 }
 
+// removes a given number of stacks of an effect that gives that status tag
+// returns true if successful and false otherwise
+bool ACharacterBase::RemoveStacksOfEffectWithTag(FGameplayTag StatusTag, int NumStacks)
+{
+	if (!AbilitySystemComponent) return false;
+	FGameplayTagContainer AssetTags;
+	AssetTags.AddTag(StatusTag);
+
+	for (FActiveGameplayEffectHandle Effect : AbilitySystemComponent->GetActiveEffectsWithAllTags(AssetTags))
+	{
+		int32 StacksToRemove = NumStacks;
+
+		if (const FActiveGameplayEffect* ActiveEffect = AbilitySystemComponent->GetActiveGameplayEffect(Effect))
+		{
+			// remove all stacks if 'stacks to remove' is more than the number of stacks active
+			if (ActiveEffect->Spec.GetStackCount() <= StacksToRemove)
+			{
+				// -1 means remove all stacks for this active gameplay effect.
+				StacksToRemove = -1;
+			}
+		}
+
+		AbilitySystemComponent->RemoveActiveGameplayEffect(Effect, StacksToRemove);
+	}
+
+	return true;
+}
+
 /////////////////////////////////////////////////////////////////////////// Blueprint-friendly Attribute Getters
 float ACharacterBase::GetFlatDamageModifier() const
 {

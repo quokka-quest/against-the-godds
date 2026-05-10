@@ -53,6 +53,8 @@ public:
 	UFUNCTION(BlueprintCallable, Category = "TurnBasedAbilitySystemComponent")
 	FActiveGameplayEffectHandle BindGameplayEffectToOnStackLoss(const FGameplayEffectSpecHandle& EffectSpecHandle, const FGameplayEffectSpecHandle& InstantEffectSpecHandle, bool bApplyPerStackLost = true, bool bLoopEffectForTotalStackCount = false);
 
+	UFUNCTION(BlueprintCallable, Category = "TurnBasedAbilitySystemComponent")
+	void SetUseOfStackLossEffect(bool EnableEffect);
 private:
 	
 protected:
@@ -63,6 +65,9 @@ protected:
 	// Maps active effect handles to instant effects that should be applied on stack loss
 	UPROPERTY(BlueprintReadWrite, EditAnywhere, Category = "TurnBasedAbilitySystemComponent")
 	TMap<FActiveGameplayEffectHandle, FStackLossEffectData> StackLossEffectMap;
+
+	UPROPERTY(BlueprintReadWrite, Category = "TurnBasedAbilitySystemComponent")
+	bool bDontTriggerStackLossEffect;
 	
 	
 	

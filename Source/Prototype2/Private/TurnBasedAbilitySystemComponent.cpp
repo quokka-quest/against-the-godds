@@ -109,10 +109,14 @@ void UTurnBasedAbilitySystemComponent::OnStackCountChanged(FActiveGameplayEffect
         EffectData->LastKnownStackCount = NewStackCount;
     }
 
-  const int32 RemovedStackCount = FMath::Max(PreviousStackCount - NewStackCount, 0);
-  if (RemovedStackCount > 0)
+    const int32 RemovedStackCount = FMath::Max(PreviousStackCount - NewStackCount, 0);
+    FStackLossEffectData* EffectData = StackLossEffectMap.Find(Handle);
+
+    // if the removed stack count is positive (stack count went down, not up) then apply the effect
+    // bDontTriggerStackLossEffect boolean allows for stack removal without triggering the effect (used for cleansing debuffs)
+    if (RemovedStackCount > 0 && !bDontTriggerStackLossEffect)
     {
-        if (FStackLossEffectData* EffectData = StackLossEffectMap.Find(Handle))
+        if (EffectData)
         {
             const FGameplayEffectSpecHandle& InstantSpecHandle = EffectData->InstantEffectSpecHandle;
             if (InstantSpecHandle.IsValid() && InstantSpecHandle.Data.IsValid())
@@ -135,12 +139,13 @@ void UTurnBasedAbilitySystemComponent::OnStackCountChanged(FActiveGameplayEffect
                     }
                 }
             }
-
-                  if (NewStackCount == 0)
-                  {
-                    EffectData->bFinalStackLossHandled = true;
-                  }
         }
+    }
+
+    // if the final stack of an effect was removed, set the appropriate boolean
+    if (NewStackCount == 0 && EffectData)
+    {
+        EffectData->bFinalStackLossHandled = true;
     }
 }
 
@@ -175,4 +180,9 @@ void UTurnBasedAbilitySystemComponent::OnEffectRemoved(FActiveGameplayEffectHand
     
     // Clean up the mapping
     StackLossEffectMap.Remove(Handle);
+}
+
+void UTurnBasedAbilitySystemComponent::SetUseOfStackLossEffect(bool EnableEffect)
+{
+    bDontTriggerStackLossEffect = !EnableEffect;
 }
