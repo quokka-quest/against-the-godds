@@ -221,7 +221,8 @@ void APlayerCombatLevelPawn::TurnOffAttackDisplay()
 	GridManager->ResetHighlights();
 	FGridData DefaultHighlight = FGridData();
 	GridManager->ChangeHighlightMesh(DefaultHighlight);
-	TileSelectionType = ETileSelectionType::None;
+	CombatManager->DisplayAttackRange(CombatManager->AbilityRef->Range);
+	TileSelectionType = ETileSelectionType::Attack;
 	IsDisplayingAttack = false;
 }
 
