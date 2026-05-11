@@ -99,6 +99,8 @@ void ADiceRoller::OnDiceRollCompleteHandler(FDiceFaceValues Result)
 	if (CurrentDiceActor)
 	{
 		CurrentDiceActor->OnRollComplete.RemoveDynamic(this, &ADiceRoller::OnDiceRollCompleteHandler);
+		CurrentDiceActor->Destroy();
+		CurrentDiceActor = nullptr;
 	}
 
 	CompletionCallback.ExecuteIfBound(Result);
