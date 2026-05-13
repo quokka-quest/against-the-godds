@@ -5,6 +5,7 @@
 #include "Engine/Engine.h"
 #include "GameFramework/PlayerController.h"
 #include "Kismet/GameplayStatics.h"
+#include "EntityBase.h"
 
 // Sets default values
 APlayerCombatLevelPawn::APlayerCombatLevelPawn()
@@ -65,6 +66,7 @@ void APlayerCombatLevelPawn::Tick(float DeltaTime)
 	{
 		GridManager->SetHighlightVisibility(false);
 		HighlightedCell = nullptr;
+		if (PrevHoveredCell && PrevHoveredCell->IsOccupied) Cast<AEntityBase>(PrevHoveredCell->OccupyingActor)->ToggleStatusVisibility(false);
 		return;
 	}
 
@@ -77,6 +79,10 @@ void APlayerCombatLevelPawn::Tick(float DeltaTime)
 	HighlightedCell = HoveredCell;
 	GridManager->SetHighlightVisibility(true);
 	GridManager->SetHighlightPosition(HighlightedCell->CellCoordinate);
+	if (HoveredCell->IsOccupied) Cast<AEntityBase>(HoveredCell->OccupyingActor)->ToggleStatusVisibility(true);
+	if (PrevHoveredCell && HoveredCell != PrevHoveredCell && PrevHoveredCell->IsOccupied) Cast<AEntityBase>(PrevHoveredCell->OccupyingActor)->ToggleStatusVisibility(false);
+
+	PrevHoveredCell = HoveredCell;
 }
 
 // Called to bind functionality to input
@@ -127,6 +133,7 @@ void APlayerCombatLevelPawn::TryMoveToTile()
 	CombatManager->MoveCurrentCombatant(HighlightedCell->CellCoordinate);
 	TileSelectionType = ETileSelectionType::None;
 	SelectedCell = nullptr;
+	OnClickedOffTileGrid();
 }
 
 void APlayerCombatLevelPawn::DisplayPathToTile()

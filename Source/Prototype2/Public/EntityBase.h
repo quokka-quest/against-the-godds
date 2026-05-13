@@ -33,7 +33,7 @@ public:
 	void EnqueueRotation(float StartYaw, float EndYaw);
 
 	UFUNCTION(BlueprintImplementableEvent, BlueprintCallable)
-	void ToggleHealthVisibility(bool Enable);
+	void ToggleStatusVisibility(bool Enable);
 
 	UPROPERTY(BlueprintReadWrite, Category="PlayerInfo")
 	FIntVector2 PositionCoord;

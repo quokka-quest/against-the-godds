@@ -15,7 +15,6 @@ AEntityBase::AEntityBase()
 	DirectionYaws.Add(R270, 180.0f);
 }
 
-
 bool AEntityBase::HasEntityDied()
 {
 	return (HealthSet->GetCurrentHealth() <= 0);
