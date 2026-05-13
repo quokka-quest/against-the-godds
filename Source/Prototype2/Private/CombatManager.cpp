@@ -294,7 +294,7 @@ void ACombatManager::DisplayRangeOutline(FIntVector2 Origin, int Range, FPathing
 {
 	GridManager->ResetWalkableAndAttackableOnAllCells();
 	GridManager->ResetHighlights();
-	GridManager->DisplayCellsInRange(Origin, Range, PathData, Rules);
+	GridManager->DisplayCellsInRange(Origin, Range, PathData, Rules, AbilityRef->TargetingRules.Contains(EAttackRules::CanNotTargetSelf));
 }
 
 

@@ -26,7 +26,7 @@ public:
 	void ResetHighlights();
 
 	UFUNCTION(BlueprintCallable)
-	void DisplayCellsInRange(FIntVector2 Start, int Range, FPathingData PathData, TArray<TEnumAsByte<EPathingRules>> Rules);
+	void DisplayCellsInRange(FIntVector2 Start, int Range, FPathingData PathData, TArray<TEnumAsByte<EPathingRules>> Rules, bool ExcludeStart);
 
 	UFUNCTION(BlueprintCallable)
 	void DisplayCellPath(TArray<FPathInfo>& PathToDisplay, AEntityBase* Entity);
