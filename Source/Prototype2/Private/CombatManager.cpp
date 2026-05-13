@@ -274,7 +274,8 @@ void ACombatManager::DisplayCurrentCombatantsMovement()
 	Rules.Add(EPathingRules::ExcludeOccupiedCells);
 	Rules.Add(EPathingRules::RangeIsAvailableMovement);
 	Rules.Add(EPathingRules::MustFitOnTarget);
-	
+
+	AbilityRef = nullptr;
 	DisplayRangeOutline(CurrentTurnCombatant->PositionCoord, CurrentTurnCombatant->GetAvailableMovement(), CurrentTurnCombatant->GetPathingData(), Rules);
 }
 
@@ -294,7 +295,8 @@ void ACombatManager::DisplayRangeOutline(FIntVector2 Origin, int Range, FPathing
 {
 	GridManager->ResetWalkableAndAttackableOnAllCells();
 	GridManager->ResetHighlights();
-	GridManager->DisplayCellsInRange(Origin, Range, PathData, Rules, AbilityRef->TargetingRules.Contains(EAttackRules::CanNotTargetSelf));
+	bool SelfRule = (AbilityRef)? AbilityRef->TargetingRules.Contains(EAttackRules::CanNotTargetSelf) : false;
+	GridManager->DisplayCellsInRange(Origin, Range, PathData, Rules, SelfRule);
 }
 
 
@@ -371,6 +373,8 @@ void ACombatManager::ExecuteAttackOnTarget()
 	GridManager->ResetHighlights();
 	GridManager->ChangeHighlightMesh(defaultHighlight);
 	SetAttackRotation(R0);
+
+	AbilityRef = nullptr;
 	
 	OnAttackExecuted.Broadcast();
 }
