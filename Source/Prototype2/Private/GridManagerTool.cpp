@@ -39,7 +39,7 @@ void AGridManagerTool::SetHighlightRotation(float Rotation)
 
 // This function displays all the cells in a given range from the 'Start' coord
 // It uses the GridOutlineGenerator class to generate a mesh that outlines the area inside the range
-void AGridManagerTool::DisplayCellsInRange(FIntVector2 Start, int Range, FPathingData PathData, TArray<TEnumAsByte<EPathingRules>> Rules)
+void AGridManagerTool::DisplayCellsInRange(FIntVector2 Start, int Range, FPathingData PathData, TArray<TEnumAsByte<EPathingRules>> Rules, bool ExcludeStart)
 {
 	if (Range < 0) return; // early return for negative range
 
@@ -49,6 +49,8 @@ void AGridManagerTool::DisplayCellsInRange(FIntVector2 Start, int Range, FPathin
 	PathingInfo.PathingData = PathData;
 	PathingInfo.Rules = Rules;
 	TArray<FIntVector2> CellsInRange = GetCellsInRange(PathingInfo);
+
+	if (ExcludeStart) CellsInRange.Remove(Start);
 	
 	if (CellsInRange.Num() == 0) return; // early return for 0 valid cells found
 

@@ -62,6 +62,9 @@ protected:
 private:
 	UPROPERTY()
 	APlayerController* PlayerCon;
+
+	UPROPERTY()
+	AGridCellParent* PrevHoveredCell;
 	
 	UPROPERTY()
 	AGridCellParent* HighlightedCell;
