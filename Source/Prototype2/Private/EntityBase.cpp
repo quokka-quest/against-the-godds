@@ -26,7 +26,7 @@ void AEntityBase::OnEntityDeath_Implementation()
 	Cast<ACombatManager>(UGameplayStatics::GetGameMode(GetWorld()))->OnEntityDeath(this);
 }
 
-void AEntityBase::SetCharacterData(FPersistentPlayerInfo& Info)
+void AEntityBase::SetCharacterData(FPersistentPlayerInfo Info)
 {
 	Abilities = Info.Abilities;
 	AbilityDiceMap = Info.AbilityDiceMap;

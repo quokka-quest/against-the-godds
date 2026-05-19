@@ -62,7 +62,8 @@ public:
 	UFUNCTION(BlueprintNativeEvent, BlueprintCallable, Category = "PlayerInfo")
 	void OnEntityDeath();
 
-	void SetCharacterData(FPersistentPlayerInfo& Info);
+	UFUNCTION(BlueprintCallable, Category="PlayerInfo")
+	void SetCharacterData(FPersistentPlayerInfo Info);
 
 	UFUNCTION(BlueprintCallable, Category = "PlayerInfo")
 	void InitialiseStats();
