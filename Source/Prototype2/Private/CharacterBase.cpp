@@ -180,6 +180,11 @@ void ACharacterBase::PostInitializeComponents()
 		// The current level is L_AbilityDraft
 		InitialiseAbilities();
 	}
+	else
+	{
+		InitialiseAbilities();
+		InitialiseEffects();
+	}
 
 }
 
