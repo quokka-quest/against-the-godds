@@ -52,6 +52,7 @@ void ACombatManager::SpawnPlayerCharacters()
 		APlayerEntity* APlayer = Cast<APlayerEntity>(SpawnEntity(Player.Key, Coord));
 
 		APlayer->SetCharacterData(Player.Value);
+		APlayer->InitialiseAbilities();
 	}
 }
 

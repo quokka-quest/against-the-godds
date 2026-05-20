@@ -4,6 +4,7 @@
 
 #include "CoreMinimal.h"
 #include "GameplayAbilityBase.h"
+#include "GameplayAbilityBlueprint.h"
 #include "PersistentDataStruct.generated.h"
 
 USTRUCT(BlueprintType)
@@ -27,4 +28,6 @@ struct FPersistentPlayerInfo
 	float MaxHealth;
 	UPROPERTY(BlueprintReadWrite, Category="PlayerSave")
 	float CurrentHealth;
+	UPROPERTY(BlueprintReadWrite, Category="PlayerSave")
+	TArray<TObjectPtr<UGameplayAbilityBlueprint>> DraftedAbilities;
 };

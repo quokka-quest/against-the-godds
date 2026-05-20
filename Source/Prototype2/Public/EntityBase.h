@@ -62,11 +62,21 @@ public:
 	UFUNCTION(BlueprintNativeEvent, BlueprintCallable, Category = "PlayerInfo")
 	void OnEntityDeath();
 
-	void SetCharacterData(FPersistentPlayerInfo& Info);
+	UFUNCTION(BlueprintCallable, Category="PlayerInfo")
+	void SetCharacterData(FPersistentPlayerInfo Info);
 
 	UFUNCTION(BlueprintCallable, Category = "PlayerInfo")
 	void InitialiseStats();
 
 	UFUNCTION(BlueprintCallable, BlueprintPure)
 	FPathingData GetPathingData();
+
+	UFUNCTION(BlueprintCallable, Category = "PlayerInfo|Abilities")
+	bool AddDraftedAbilityToCharacter(UGameplayAbilityBase* DraftedAbility);
+
+	UFUNCTION(BlueprintCallable, Category = "PlayerInfo|Abilities")
+	bool ReplaceAbilityOnCharacter(
+		UGameplayAbilityBase* AbilityToReplace,
+		UGameplayAbilityBase* NewDraftedAbility
+	);
 };
