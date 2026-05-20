@@ -90,6 +90,8 @@ public:
 	TArray<UGameplayAbilityBase*> GetAllAbilityInstances() const;
 	
 	virtual void InitialiseAbilities();
+
+	UFUNCTION(BlueprintCallable, Category = "GAS")
 	virtual void InitialiseEffects();
 
 	////////////////////////////////////////////////// Blueprint-friendly attribute getters

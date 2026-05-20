@@ -53,7 +53,6 @@ void ACombatManager::SpawnPlayerCharacters()
 
 		APlayer->SetCharacterData(Player.Value);
 		APlayer->InitialiseAbilities();
-		APlayer->InitialiseEffects();
 	}
 }
 
@@ -65,7 +64,8 @@ void ACombatManager::SpawnEnemies()
 		AGridCellParent* Value = Cast<AGridCellParent>(Cell.Value);
 		if (Value->IsEnemySpawnCell)
 		{
-			Cast<AEnemyEntity>(SpawnEntity(Value->EnemyToSpawn, Cell.Key));
+			AEnemyEntity* AEnemy = Cast<AEnemyEntity>(SpawnEntity(Value->EnemyToSpawn, Cell.Key));
+			AEnemy->InitialiseAbilities();
 		}
 	}
 }
