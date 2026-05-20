@@ -70,4 +70,13 @@ public:
 
 	UFUNCTION(BlueprintCallable, BlueprintPure)
 	FPathingData GetPathingData();
+
+	UFUNCTION(BlueprintCallable, Category = "PlayerInfo|Abilities")
+	void AddDraftedAbilityToCharacter(UGameplayAbilityBase* DraftedAbility);
+
+	UFUNCTION(BlueprintCallable, Category = "PlayerInfo|Abilities")
+	bool ReplaceAbilityOnCharacter(
+		UGameplayAbilityBase* AbilityToReplace,
+		UGameplayAbilityBase* NewDraftedAbility
+	);
 };

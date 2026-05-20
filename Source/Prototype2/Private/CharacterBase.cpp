@@ -173,8 +173,14 @@ void ACharacterBase::PostInitializeComponents()
 
 	AbilitySystemComponent->InitAbilityActorInfo(this, this);
 
-	InitialiseEffects();
-	InitialiseAbilities();
+	// Check if the current persistent level is "L_AbilityDraft"
+	UWorld* World = GetWorld();
+	if (World && World->GetMapName().EndsWith(TEXT("L_AbilityDraft")))
+	{
+		// The current level is L_AbilityDraft
+		InitialiseAbilities();
+	}
+
 }
 
 UAbilitySystemComponent* ACharacterBase::GetAbilitySystemComponent() const
