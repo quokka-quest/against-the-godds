@@ -36,6 +36,21 @@ public:
     FText AbilityDescription;
     
     UPROPERTY(EditAnywhere, BlueprintReadWrite, Category = "Ability")
+    FText Effect1Description;
+    
+    UPROPERTY(EditAnywhere, BlueprintReadWrite, Category = "Ability")
+    FText Effect2Description;
+    
+    UPROPERTY(EditAnywhere, BlueprintReadWrite, Category = "Ability")
+    FText Effect3Description;
+    
+    UPROPERTY(EditAnywhere, BlueprintReadWrite, Category = "Ability")
+    FText Effect4Description;
+
+	UPROPERTY(EditAnywhere, BlueprintReadWrite, Category = "Ability")
+	FText Effect5Description;
+    
+    UPROPERTY(EditAnywhere, BlueprintReadWrite, Category = "Ability")
     UTexture2D* AbilityIcon;
 
 	UPROPERTY(EditAnywhere, BlueprintReadWrite, Category = "Ability")
