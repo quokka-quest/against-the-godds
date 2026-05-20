@@ -50,22 +50,24 @@ FPathingData AEntityBase::GetPathingData()
 	return Result;
 }
 
-void AEntityBase::AddDraftedAbilityToCharacter(UGameplayAbilityBase* DraftedAbility)
+bool AEntityBase::AddDraftedAbilityToCharacter(UGameplayAbilityBase* DraftedAbility)
 {
 	if (!DraftedAbility)
 	{
 		UE_LOG(LogTemp, Warning, TEXT("AddDraftedAbilityToCharacter: DraftedAbility was null"));
-		return;
+		return false;
 	}
 
 	// The persistent Abilities array stores classes, not instances
 	TSubclassOf<UGameplayAbility> AbilityClass = DraftedAbility->GetClass();
 
 	// Avoid duplicates in the stored ability array
-	if (!Abilities.Contains(AbilityClass))
+	if (Abilities.Contains(AbilityClass))
 	{
-		Abilities.Add(AbilityClass);
+		return false;
 	}
+
+	Abilities.Add(AbilityClass);
 
 	// Grant the ability to the live Ability System Component
 	if (AbilitySystemComponent)
@@ -91,6 +93,7 @@ void AEntityBase::AddDraftedAbilityToCharacter(UGameplayAbilityBase* DraftedAbil
 	else
 	{
 		UE_LOG(LogTemp, Warning, TEXT("AddDraftedAbilityToCharacter: AbilitySystemComponent was null"));
+		return false;
 	}
 
 	// AbilityDiceMap uses GameplayAbilityBase classes as keys
@@ -115,7 +118,10 @@ void AEntityBase::AddDraftedAbilityToCharacter(UGameplayAbilityBase* DraftedAbil
 
 		AbilityDiceMap.Add(AbilityBaseClass, StartingDiceLevels);
 	}
+
+	return true;
 }
+
 
 void AEntityBase::InitialiseStats()
 {
