@@ -88,6 +88,9 @@ public:
 
 	UFUNCTION(BlueprintCallable, Category = "GAS")
 	TArray<UGameplayAbilityBase*> GetAllAbilityInstances() const;
+	
+	virtual void InitialiseAbilities();
+	virtual void InitialiseEffects();
 
 	////////////////////////////////////////////////// Blueprint-friendly attribute getters
 	UFUNCTION(BlueprintCallable, Category = "GAS")
@@ -132,16 +135,12 @@ public:
 
 	UFUNCTION(BlueprintCallable, Category = "GAS")
 	void SetMaxMovement(float NewValue);
-
-	virtual void InitialiseAbilities();
 	
 protected:
 	virtual UAbilitySystemComponent* GetAbilitySystemComponent() const override;
 
 	UPROPERTY(BlueprintReadOnly, Category = "GAS")
 	TArray<AActor*> Targets;
-
-	virtual void InitialiseEffects();
 
 	virtual void OnDamageTakenChanged(AActor* DamageInstigator, AActor* DamageCauser, const FGameplayTagContainer& GameplayTagContainer, float Damage);
 
