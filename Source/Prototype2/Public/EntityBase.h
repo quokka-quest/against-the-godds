@@ -79,4 +79,13 @@ public:
 		UGameplayAbilityBase* AbilityToReplace,
 		UGameplayAbilityBase* NewDraftedAbility
 	);
+
+	UFUNCTION(BlueprintImplementableEvent, BlueprintCallable, Category = "PlayerInfo|Animations")
+	void PlayAttackAnim();
+	UFUNCTION(BlueprintImplementableEvent, BlueprintCallable, Category = "PlayerInfo|Animations")
+	void PlayDamagedAnim();
+	UFUNCTION(BlueprintImplementableEvent, BlueprintCallable, Category = "PlayerInfo|Animations")
+	void PlayDeathAnim();
+	UFUNCTION(BlueprintImplementableEvent, BlueprintCallable, Category = "PlayerInfo|Animations")
+	void PlayWinAnim();
 };
