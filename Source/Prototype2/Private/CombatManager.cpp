@@ -609,10 +609,12 @@ TArray<AEnemyEntity*> ACombatManager::GetEnemiesInAreaNearEntity(AEntityBase* St
 	for (FIntVector2 Offset : AreaOffset)
 	{
 		FIntVector2 Coord = StartCoord + Offset;
+		if (!DoesCoordExist(Coord)) continue;
 		if (!GetCell(Coord)->IsOccupied) continue;
 		if (!IncludeStartEntity && GetCell(Coord)->OccupyingActor == StartingEntity) continue;
 		if (EntitiesToIgnore.Contains(GetCell(Coord)->OccupyingActor)) continue;
-		Result.Add(Cast<AEnemyEntity>(GetCell(Coord)->OccupyingActor));
+		AEnemyEntity* EnemyRef = Cast<AEnemyEntity>(GetCell(Coord)->OccupyingActor);
+		if (EnemyRef) Result.Add(EnemyRef);
 	}
 
 	return Result;

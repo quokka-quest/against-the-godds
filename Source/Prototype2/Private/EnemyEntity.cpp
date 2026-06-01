@@ -136,11 +136,9 @@ void AEnemyEntity::DetermineMovement()
 			PositionInfo.Score -= 20;
 			CellScoreMap.Add(CellChoice, PositionInfo.Score);
 			CellActionMap.Add(CellChoice, PositionInfo);
-			UE_LOG(LogTemp, Warning, TEXT("Coord: %i, %i, Score: %i"), CellChoice.X, CellChoice.Y, PositionInfo.Score)
 			continue; // continue to avoid errors from below penalty/bonuses that are dependent on having a target
 		}
 		
-		UE_LOG(LogTemp, Warning, TEXT("Coord with target: %i, %i, Score: %i"), CellChoice.X, CellChoice.Y, PositionInfo.Score)
 		CellScoreMap.Add(CellChoice, PositionInfo.Score);
 		CellActionMap.Add(CellChoice, PositionInfo);
 	}
