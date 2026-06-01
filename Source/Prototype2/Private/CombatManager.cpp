@@ -599,6 +599,25 @@ void ACombatManager::EnemyAbilityUse(UGameplayAbilityBase* Ability, FIntVector2 
 	OnAttackExecuted.Broadcast();
 }
 
+TArray<AEnemyEntity*> ACombatManager::GetEnemiesInAreaNearEntity(AEntityBase* StartingEntity, FGridData Area, bool IncludeStartEntity, TArray<AEnemyEntity*> EntitiesToIgnore)
+{
+	TArray<FIntVector2> AreaOffset = Area.GetSelectedCellOffsets();
+	FIntVector2 StartCoord = StartingEntity->PositionCoord;
+
+	TArray<AEnemyEntity*> Result;
+
+	for (FIntVector2 Offset : AreaOffset)
+	{
+		FIntVector2 Coord = StartCoord + Offset;
+		if (!GetCell(Coord)->IsOccupied) continue;
+		if (!IncludeStartEntity && GetCell(Coord)->OccupyingActor == StartingEntity) continue;
+		if (EntitiesToIgnore.Contains(GetCell(Coord)->OccupyingActor)) continue;
+		Result.Add(Cast<AEnemyEntity>(GetCell(Coord)->OccupyingActor));
+	}
+
+	return Result;
+}
+
 
 /////////////////////////////////////////////////////////////////////////// Grid Information access
 bool ACombatManager::DoesCoordExist(FIntVector2 Coord)

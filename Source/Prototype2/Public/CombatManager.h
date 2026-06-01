@@ -113,6 +113,9 @@ public:
 	UFUNCTION(BlueprintCallable, Category="Movement")
 	bool ApplyKnockback(AEntityBase* Entity, FGridData KnockbackData);
 
+	UFUNCTION(BlueprintCallable, Category="GridInfo")
+	TArray<AEnemyEntity*> GetEnemiesInAreaNearEntity(AEntityBase* StartingEntity, FGridData Area, bool IncludeStartEntity, TArray<AEnemyEntity*> EntitiesToIgnore);
+
 	////////////////////////////////////////////////// Grid Information access
 	UFUNCTION(BlueprintCallable, BlueprintPure, Category="GridInfo")
 	bool DoesCoordExist(FIntVector2 Coord);
