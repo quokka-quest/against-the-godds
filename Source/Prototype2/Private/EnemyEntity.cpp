@@ -53,6 +53,7 @@ void AEnemyEntity::AnalyseOwnAbilities()
 	
 	for (UGameplayAbilityBase* Ability : GetAllAbilityInstances())
 	{
+		UE_LOG(LogTemp, Warning, TEXT("Own Ability name: %s"), *Ability->GetName()) 
 		FAbilityInfo AbilityInfo = FAbilityInfo(Ability); // TODO: the constructor for this struct extracts all of the abilities information
 		OwnAnalysedAbilities.Add(AbilityInfo);
 	}
