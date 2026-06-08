@@ -89,6 +89,7 @@ public:
 	UFUNCTION(BlueprintCallable, Category = "GAS")
 	TArray<UGameplayAbilityBase*> GetAllAbilityInstances() const;
 	
+	UFUNCTION(BlueprintCallable, Category = "GAS")
 	virtual void InitialiseAbilities();
 
 	UFUNCTION(BlueprintCallable, Category = "GAS")

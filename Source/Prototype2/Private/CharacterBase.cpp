@@ -178,7 +178,7 @@ void ACharacterBase::PostInitializeComponents()
 	if (World && World->GetMapName().EndsWith(TEXT("L_AbilityDraft")))
 	{
 		// The current level is L_AbilityDraft
-		InitialiseAbilities();
+		//InitialiseAbilities();
 	}
 
 }
