@@ -428,3 +428,8 @@ void ACharacterBase::SetMaxMovement(float NewValue)
 {
 	TurnActionSet->SetMaxMovement(NewValue);
 }
+
+void ACharacterBase::SetCurrentHealth(float NewValue) 
+{
+	HealthSet->SetCurrentHealth(NewValue);
+}

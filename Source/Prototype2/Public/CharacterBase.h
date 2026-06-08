@@ -138,6 +138,9 @@ public:
 
 	UFUNCTION(BlueprintCallable, Category = "GAS")
 	void SetMaxMovement(float NewValue);
+
+	UFUNCTION(BlueprintCallable, Category = "GAS")
+	void SetCurrentHealth(float NewValue);
 	
 protected:
 	virtual UAbilitySystemComponent* GetAbilitySystemComponent() const override;
